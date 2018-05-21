@@ -3,7 +3,6 @@
     Created on : 12-jul-2016, 16:23:16
     Author     : Jesús Aragón
 --%>
-<%@page import="Montessori.Tupla"%>
 <%@page import="java.util.ArrayList"%>
 <%@ page session="true" %>
 <%@taglib prefix="form" uri="http://www.springframework.org/tags/form"%>

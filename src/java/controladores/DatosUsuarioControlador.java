@@ -18,6 +18,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
+
 public class DatosUsuarioControlador implements Controller {
 
     @Override

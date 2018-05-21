@@ -38,6 +38,10 @@
                                 </c:if>
                                 </div>
                                 <div class="form-group">
+                                    <label for="exampleSchoolCode"><spring:message code="etiq.txtSchoolCode"/></label> 
+                                    <input type="text" class="form-control" name="txtSchoolCode" id="txtSchoolCode" placeholder="<spring:message code='etiq.txtInsertSchoolCode'/>" required="required">    
+                                </div>
+                                <div class="form-group">
                                     <label for="exampleInputEmail1"><spring:message code="etiq.txtuser"/></label> 
                                     <input type="text" class="form-control" name="txtusuario" id="txtusuario" placeholder="<spring:message code='etiq.txtinsertuser'/>" required="required">    
                                 </div>
@@ -49,9 +53,9 @@
 
                             </form>
                                 <div class="center-block text-center">
-                                    <%--<a class="btn" href="datosIdioma.htm?lenguaje=en"><spring:message code="etiq.txtenglish"/></a>
+                                    <a class="btn" href="datosIdioma.htm?lenguaje=en"><spring:message code="etiq.txtenglish"/></a>
                                     <a class="btn" href="datosIdioma.htm?lenguaje=es"><spring:message code="etiq.txtspanish"/></a>
-                                    <a class="btn" href="datosIdioma.htm?lenguaje=ar"><spring:message code="etiq.txtarabic"/></a>--%>
+                                    <a class="btn" href="datosIdioma.htm?lenguaje=ar"><spring:message code="etiq.txtarabic"/></a>
                                 </div> 
                         </div>
                     </div>
