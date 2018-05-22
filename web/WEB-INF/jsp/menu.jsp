@@ -15,6 +15,45 @@
     <head>
         <%@ include file="infouser.jsp" %>
         <script>
+            $(document).ready(function () {
+                $('#selectIS').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                $('#selectIS').modal("show");
+                $("#selectIS .close").hide();
+                // var schoolsList = JSON.parse(${schools});
+
+            });
+
+            function getYears() {
+                var id = $("#divSelectDepartament option:selected").val();
+                $("#schoolcode").val(id);
+                
+                if (id !== "") {
+                    $.ajax({
+                        type: "POST",
+                        url: "menu/years.htm?id=" + id,
+                        data: id,
+                        dataType: 'text',
+                        success: function (data) {
+                            var years = JSON.parse(data);
+                            for (var t in years) {
+                                $('#selectyear').append("<option value='" + years[t].x + "'>" + years[t].y + "</option>");
+                            }
+                            $('#selectIS').modal("hide");
+                            $(".modal-backdrop").hide();
+                        },
+                        error: function (xhr, ajaxOptions, thrownError) {
+                            console.log(xhr.status);
+                            console.log(xhr.responseText);
+                            console.log(thrownError);
+                        }
+                    });
+                }
+            }
+
+
             function templates() {
                 var id = $("#selectyear option:selected").val();
                 $.ajax({
@@ -82,6 +121,30 @@
         </script>
     </head>
     <body>
+        <div class="modal fade" id="selectIS" role="dialog">
+            <div class="modal-dialog">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Select Department</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="divSelectDepartament" style="text-align: center;">
+                            <select style="width: 50%;" onchange="getYears()">
+                                <option></option>
+                                <c:forEach var="year" items="${schools}">
+                                    <option value="${year.x}">${year.y}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
         <!-- Modal -->
         <div class="modal fade" id="pleaseWaitDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -100,8 +163,9 @@
             </div>
         </div>
         <div class="col-xs-12">
-            <form:form action="menu/create.htm" method="POST" id="crearhorario">
-                <div class="col-xs-3">
+            <form:form action="menu/create.htm" method="POST" id="crearhorario">                
+                <input id="schoolcode" name="schoolcode" type="hidden" value="">
+                <div class="col-xs-3">         
                     <fieldset>
                         <legend>Select Year</legend>
                         <select class="form-control" id="selectyear" name="yearid" onchange="templates()">

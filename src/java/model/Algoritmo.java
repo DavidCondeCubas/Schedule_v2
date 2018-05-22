@@ -10,11 +10,29 @@ import dataManage.Tupla;
 import dataManage.Consultas;
 import com.google.gson.Gson;
 import dataManage.Restrictions;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.servlet.http.Part;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.web.servlet.ModelAndView;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 /**
  *
@@ -47,7 +65,7 @@ public class Algoritmo {
      * @param r
      * @param roommode
      */
-    public void algo(ModelAndView mv, Restrictions r, int roommode) {
+    public void algo(ModelAndView mv, Restrictions r, int roommode,String schoolCode,String yearId, String templateId) {
         for (Course course : r.courses) {
             int minsections = 1; //falla al dividir entre 0
             try {
@@ -131,6 +149,9 @@ public class Algoritmo {
             }
         }
 //        XMLWriterDOM.xmlCreate(trst, retst);
+        
+        saveXML_FTP(yearId,templateId,schoolCode,r);
+        
         mv.addObject("TAMX", TAMX);
         mv.addObject("TAMY", TAMY);
         mv.addObject("profesores", r.teachers);
@@ -142,8 +163,140 @@ public class Algoritmo {
         mv.addObject("log", Log);
     }
 
-    private class CompConjuntos implements Comparator<Tupla<Integer, ArrayList<Integer>>> {
+   private void saveXML_FTP(String yearId, String templateId, String schoolCode,Restrictions r) {
+        //get the file chosen by the user
+        String server = "192.168.1.36";
+        int port = 21;
+        String user = "david";
+        String pass = "david";
+        DocumentBuilderFactory icFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder icBuilder;
+        FTPClient ftpClient = new FTPClient();
+        try {
+            ftpClient.connect(server, port);
+            ftpClient.login(user, pass);
 
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            String filename = yearId + "-" + templateId+".xml";
+            String rutaCarpeta = "/Schedules/" + schoolCode;
+
+            if (!ftpClient.changeWorkingDirectory(rutaCarpeta));
+            {
+                ftpClient.changeWorkingDirectory("/Schedules");
+                ftpClient.mkd(schoolCode);
+                ftpClient.changeWorkingDirectory(schoolCode);
+            }
+
+            icBuilder = icFactory.newDocumentBuilder();
+            Document doc = icBuilder.newDocument();
+            Element mainRootElement = doc.createElementNS("http://eduwebgroup.ddns.net/ScheduleWeb/enviarmensaje.htm", "Horarios");
+            doc.appendChild(mainRootElement);
+            Element students = doc.createElement("Students");
+            // append child elements to root element
+            
+            for (Course t : r.courses) {
+                for (int j = 1; j < t.getSections(); j++) {
+                    for (int k = 0; k < t.getStudentsAsignados().size(); k++) {
+                        if(r.students.get(t.getStudentsAsignados().get(k)).getNumSectionByCourse(t.getIdCourse()) == j)
+                        {
+                            students.appendChild(getStudent(doc,""+t.getStudentsAsignados().get(k),""+t.getIdCourse(),""+j));
+                        }
+                    }                  
+                }
+            }
+            
+            Element cursos = doc.createElement("Courses");
+            for (Course t : r.courses) {
+                for (int j = 1; j < t.getSections(); j++) {
+                    cursos.appendChild(getCursos(doc,""+t.getIdCourse(),""+j,""+t.getTeacher(r.teachers, t.getIdCourse(), j).getIdTeacher()));
+                }
+            }
+        
+//private Node getBloques(Document doc, String day, String begin, String tempId, String courseId, String section) {
+    
+
+            Element bloques = doc.createElement("Blocks");
+            for (Course t : r.courses) {
+                for (int i = 0; i < TAMY; i++) {
+                    for (int j = 0; j < TAMX; j++) {
+                        if (!t.getHuecos()[j][i].equals("0")) {
+                           if(t.getHuecos()[j][i].contains("and")){
+                               String[] partsSections = t.getHuecos()[j][i].split("and");
+                               for (String partsSection : partsSections) {
+                                   String seccionClean = partsSection.replace(" ", "");
+                                   bloques.appendChild(getBloques(doc,""+(j+1),""+(i+1),templateId,""+t.getIdCourse(),seccionClean));
+                               }
+                           }
+                           else
+                           bloques.appendChild(getBloques(doc,""+(j+1),""+(i+1),templateId,""+t.getIdCourse(),""+t.getHuecos()[j][i]));
+                        }
+                    }
+                }
+            }
+            
+           /* students.appendChild(getCompany(doc,  "Paypal", "Payment", "1000"));
+            students.appendChild(getCompany(doc, "eBay", "Shopping", "2000"));
+            students.appendChild(getCompany(doc, "Google", "Search", "3000"));*/
+            
+            mainRootElement.appendChild(students);
+             mainRootElement.appendChild(cursos);
+              mainRootElement.appendChild(bloques);
+            // output DOM XML to console 
+            /*Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            DOMSource source = new DOMSource(doc);
+            StreamResult console = new StreamResult(System.out);
+            transformer.transform(source, console);
+*/
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Source xmlSource = new DOMSource(doc);
+            Result outputTarget = new StreamResult(outputStream);
+            TransformerFactory.newInstance().newTransformer().transform(xmlSource, outputTarget);
+            InputStream is = new ByteArrayInputStream(outputStream.toByteArray());
+
+            ftpClient.storeFile(filename, is);
+            ftpClient.logout();
+
+        } catch (Exception ex) {
+        }
+
+    }
+    private Node getStudent(Document doc, String name, String courseId, String section) {
+        Element company = doc.createElement("Student");
+        company.appendChild(getCompanyElements(doc, company, "student_ID", name));
+        company.appendChild(getCompanyElements(doc, company, "course_ID", courseId));
+        company.appendChild(getCompanyElements(doc, company, "section", section));
+        return company;
+    }
+    
+    private Node getCursos(Document doc, String courseId, String section, String idTeacher) {
+        Element company = doc.createElement("Course");
+        company.appendChild(getCompanyElements(doc, company, "course_ID", courseId));
+        company.appendChild(getCompanyElements(doc, company, "section", section));
+        company.appendChild(getCompanyElements(doc, company, "teacher_ID", idTeacher));
+        return company;
+    }
+    
+    private Node getBloques(Document doc, String day, String begin, String tempId, String courseId, String section) {
+        Element company = doc.createElement("Block");      
+        company.appendChild(getCompanyElements(doc, company, "day", day));
+        company.appendChild(getCompanyElements(doc, company, "begin", begin));
+        company.appendChild(getCompanyElements(doc, company, "template_ID", tempId));
+        company.appendChild(getCompanyElements(doc, company, "course_ID", courseId));
+        company.appendChild(getCompanyElements(doc, company, "section", section));
+
+        return company;
+    }
+     
+    // utility method to create text node
+    private Node getCompanyElements(Document doc, Element element, String name, String value) {
+        Element node = doc.createElement(name);
+        node.appendChild(doc.createTextNode(value));
+        return node;
+    }
+    
+    private class CompConjuntos implements Comparator<Tupla<Integer, ArrayList<Integer>>> {
         @Override
         public int compare(Tupla<Integer, ArrayList<Integer>> e1, Tupla<Integer, ArrayList<Integer>> e2) {
             if (e1.y.size() < e2.y.size()) {

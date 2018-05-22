@@ -9,8 +9,6 @@ package controladores;
  *
  * @author nmohamed
  */
-
-
 import atg.taglib.json.util.JSONException;
 import atg.taglib.json.util.JSONObject;
 import com.google.gson.Gson;
@@ -44,91 +42,115 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.multiaction.MultiActionController;
 import dataManage.XMLReaderDOM;
 
-
 @RequestMapping("/")
-public class Homepage extends MultiActionController  {
-    
-    private Object getBean(String nombrebean, ServletContext servlet){
+public class Homepage extends MultiActionController {
+
+    private Object getBean(String nombrebean, ServletContext servlet) {
         ApplicationContext contexto = WebApplicationContextUtils.getRequiredWebApplicationContext(servlet);
         Object beanobject = contexto.getBean(nombrebean);
         return beanobject;
     }
-    
+
     public ModelAndView inicio(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
-       // DBConnect db = new DBConnect(hsr);
-      //  return menu(hsr,hsr1);
-      return new ModelAndView("userform");
+        DBConnect db = new DBConnect(hsr);
+        //    return menu(hsr,hsr1);
+        return new ModelAndView("userform");
     }
-    
-    private class Comp implements Comparator<Tupla<Integer,String>>{
+
+    private class CompString implements Comparator<Tupla<String, String>> {
+
         @Override
-        public int compare(Tupla<Integer,String> e1, Tupla<Integer,String> e2) {
+        public int compare(Tupla<String, String> e1, Tupla<String, String> e2) {
             return e2.y.compareTo(e1.y);
         }
     }
     
-    @RequestMapping("/menu.htm")
-    public ModelAndView menu(HttpServletRequest hsr, HttpServletResponse hsr1){
-        ModelAndView mv= new ModelAndView("menu");
-        ArrayList<Tupla<Integer,String>> ar=Consultas.getYears();
-        ar.sort(new Comp());
-        mv.addObject("years",ar);
-        return mv;
+    private class Comp implements Comparator<Tupla<Integer, String>> {
+
+        @Override
+        public int compare(Tupla<Integer, String> e1, Tupla<Integer, String> e2) {
+            return e2.y.compareTo(e1.y);
+        }
     }
     
-    
+
+    @RequestMapping("/menu.htm")
+    public ModelAndView menu(HttpServletRequest hsr, HttpServletResponse hsr1, String districtCode) {
+        ModelAndView mv = new ModelAndView("menu");
+        ArrayList<Tupla<String, String>> schools = Consultas.getSchools(districtCode);
+    //    ArrayList<Tupla<Integer, String>> ar = Consultas.getYears(districtCode);
+
+       // ar.sort(new Comp());
+        schools.sort(new CompString());
+
+       // mv.addObject("years", ar);
+      
+        mv.addObject("schools", schools);
+        return mv;
+    }
+
     @RequestMapping("/menu/create.htm") // DATA ES ID DE TEMPLATE
-    public ModelAndView create(HttpServletRequest hsr, HttpServletResponse hsr1){
+    public ModelAndView create(HttpServletRequest hsr, HttpServletResponse hsr1) {
         String data = hsr.getParameter("templateInfo");
-        
+
         String posSelectTemplate = data.split("#")[1];
         data = data.split("#")[0];
-        
+
         posSelectTemplate = posSelectTemplate.split(" ")[0];
         String yearid = hsr.getParameter("yearid");
-        String roomMode = hsr.getParameter("rooms"); 
+        String roomMode = hsr.getParameter("rooms");
         String groupRoom = hsr.getParameter("groupofrooms");
+        String schoolcode = hsr.getParameter("schoolcode");
         String[] datost = data.split("-");
-        ModelAndView mv= new ModelAndView("redirect:/schedule/renweb.htm?grouproom="+groupRoom+"&roommode="+roomMode+"&tempid="+datost[0]+"&posSelectTemplate="+posSelectTemplate+"&yearid="+yearid+"&id="+datost[0]+"&rows="+datost[1]+"&cols="
-                                    + datost[2]);
-        ArrayList<Tupla<Integer,String>> ar=Consultas.getYears();
+        ModelAndView mv = new ModelAndView("redirect:/schedule/renweb.htm?schoolcode=" + schoolcode + "&grouproom=" + groupRoom + "&roommode=" + roomMode + "&tempid=" + datost[0] + "&posSelectTemplate=" + posSelectTemplate + "&yearid=" + yearid + "&id=" + datost[0] + "&rows=" + datost[1] + "&cols="
+                + datost[2]);
+        ArrayList<Tupla<Integer, String>> ar = Consultas.getYears("IS-PAN");
         ar.sort(new Comp());
-        mv.addObject("years",ar);
+        mv.addObject("years", ar);
         return mv;
     }
-    
+
     @RequestMapping("/menu/temp.htm")
     @ResponseBody
-    public String getTemplates(HttpServletRequest hsr, HttpServletResponse hsr1) throws JSONException{
+    public String getTemplates(HttpServletRequest hsr, HttpServletResponse hsr1) throws JSONException {
         String id = hsr.getParameter("id");
         ArrayList<Template> tmps = Consultas.getTemplates(id);
         return (new Gson()).toJson(tmps);
     }
-    
-    
-    
-    public static ModelAndView checklogin(HttpServletRequest hsr){
-        if(hsr.getSession().getAttribute("user") == null)
-            return new ModelAndView("redirect:/");
-        return null;
+
+    @RequestMapping("/menu/years.htm")
+    @ResponseBody
+    public String getYears(HttpServletRequest hsr, HttpServletResponse hsr1) throws JSONException {
+        String id = hsr.getParameter("id");
+        ArrayList<Tupla<Integer,String>> tmps = Consultas.getYears(id);
+        tmps.sort(new Comp());
+        return (new Gson()).toJson(tmps);
     }
     
+    public static ModelAndView checklogin(HttpServletRequest hsr) {
+        if (hsr.getSession().getAttribute("user") == null) {
+            return new ModelAndView("redirect:/");
+        }
+        return null;
+    }
+
     @RequestMapping
     public ModelAndView login(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
-            HttpSession session = hsr.getSession();
-            User user = new User();//cambiar
-            int scgrpid = 0;
-            boolean result = false;
-            LoginVerification login = new LoginVerification();
-            ModelAndView mv = new ModelAndView("inicio");
-              
+        HttpSession session = hsr.getSession();
+        User user = new User();//cambiar
+        int scgrpid = 0;
+        boolean result = false;
+        LoginVerification login = new LoginVerification();
+        //ModelAndView mv = new ModelAndView("redirect:/menu.htm");
+
 //            setTipo(user);//borrar
 //            session.setAttribute("user", user); //borrar
-            String txtusuario = hsr.getParameter("txtusuario");
-            String schoolCode = hsr.getParameter("txtSchoolCode");
-            return mv;
-            /*
-            if(txtusuario==null){
+        String txtusuario = hsr.getParameter("txtusuario");
+        String schoolCode = hsr.getParameter("selectDistrictCode");
+        // menu(hsr,hsr1,schoolCode);
+        return menu(hsr, hsr1, schoolCode);
+
+        /*if(txtusuario==null){
                return new ModelAndView("userform");
             }else{
                user = login.consultUserDB(hsr.getParameter("txtusuario"), hsr.getParameter("txtpassword"));
@@ -196,13 +218,12 @@ public class Homepage extends MultiActionController  {
                         return mv;
                     }
                 }
-             }
-        //return mv;*/
+             }*/
+        // return mv;
     }
 
-        //user.setId(10333);
-        //user.setId(10366);
-
+    //user.setId(10333);
+    //user.setId(10366);
     public void setTipo(User user) {
         boolean padre = false, profesor = false;
         try {
@@ -223,7 +244,7 @@ public class Homepage extends MultiActionController  {
             user.setType(0);
         } else if (padre) {
             user.setType(1);
-        } else if(profesor){
+        } else if (profesor) {
             user.setType(2);
         } else {
             user.setType(3);
@@ -231,7 +252,3 @@ public class Homepage extends MultiActionController  {
     }
 
 }
-
-
-
-

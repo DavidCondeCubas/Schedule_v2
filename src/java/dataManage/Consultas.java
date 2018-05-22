@@ -90,14 +90,30 @@ public class Consultas {
     ---DE RENWEB.-------------------------
     --------------------------------------
      */
-    public static ArrayList<Tupla<Integer, String>> getYears() { // OBTIENE EL GETYEARS FALTA FILTRAR POR COLEGIO 
+    public static ArrayList<Tupla<Integer, String>> getYears(String schoolCode) { // OBTIENE EL GETYEARS FALTA FILTRAR POR COLEGIO 
         ArrayList<Tupla<Integer, String>> ret = new ArrayList<>();
-        String consulta = "select * from SchoolYear";
+        String consulta = "select * from SchoolYear where SchoolCode= '"+schoolCode+"'";
         try {
             ResultSet rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 int yearid = rs.getInt("yearid");
                 String yearName = rs.getString("SchoolYear");
+                ret.add(new Tupla<>(yearid, yearName));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
+
+    public static ArrayList<Tupla<String, String>> getSchools(String districtCode) { // OBTIENE EL GETYEARS FALTA FILTRAR POR COLEGIO 
+        ArrayList<Tupla<String, String>> ret = new ArrayList<>();
+        String consulta = "SELECT SchoolName,SchoolCode FROM ConfigSchool where DistrictName='"+districtCode+"';";
+        try {
+            ResultSet rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                String yearid = rs.getString("SchoolCode");
+                String yearName = rs.getString("SchoolName");
                 ret.add(new Tupla<>(yearid, yearName));
             }
         } catch (SQLException ex) {
@@ -679,11 +695,11 @@ public class Consultas {
                 while (rs.next()) {
                     mandatoryBlock = rs.getString(1);
                 }
-                */
+                 */
                 if (hashMandatoryBlocksRange.containsKey(ret.get(i).getIdCourse())) {
                     mandatoryBlock = (String) hashMandatoryBlocksRange.get(ret.get(i).getIdCourse());
                 }
-                
+
                 ret.get(i).setMandatoryBlockRange(mandatoryBlock);
 
                 int numBxD = 1;
@@ -702,7 +718,7 @@ public class Consultas {
                 while (rs.next()) {
                     numBxD = rs.getInt(1);
                 }
-*/ 
+                 */
                 if (hashmaxBxD.containsKey(ret.get(i).getIdCourse())) {
                     numBxD = (int) hashmaxBxD.get(ret.get(i).getIdCourse());
                 }
