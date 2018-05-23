@@ -20,6 +20,7 @@
                     backdrop: 'static',
                     keyboard: false
                 });
+
                 $('#selectIS').modal("show");
                 $("#selectIS .close").hide();
                 // var schoolsList = JSON.parse(${schools});
@@ -29,7 +30,7 @@
             function getYears() {
                 var id = $("#divSelectDepartament option:selected").val();
                 $("#schoolcode").val(id);
-                
+
                 if (id !== "") {
                     $.ajax({
                         type: "POST",
@@ -56,26 +57,32 @@
 
             function templates() {
                 var id = $("#selectyear option:selected").val();
-                $.ajax({
-                    type: "POST",
-                    url: "menu/temp.htm?id=" + id,
-                    data: id,
-                    dataType: 'text',
-                    success: function (data) {
-                        var tmps = JSON.parse(data);
-                        $('#selecttemplate').empty();
-                        var ind = 1;
-                        for (var t in tmps) {
-                            $('#selecttemplate').append("<option value='" + tmps[t].id + "-" + tmps[t].rows + "-" + tmps[t].cols + "#" + ind + "'>" + tmps[t].name + "</option>");
-                            ind++;
+                if (id !== "") {
+                    $.ajax({
+                        type: "POST",
+                        url: "menu/temp.htm?id=" + id,
+                        data: id,
+                        dataType: 'text',
+                        success: function (data) {
+                            var tmps = JSON.parse(data);
+                            $('#selecttemplate').empty();
+                            var ind = 1;
+                            for (var t in tmps) {
+                                $('#selecttemplate').append("<option value='" + tmps[t].id + "-" + tmps[t].rows + "-" + tmps[t].cols + "#" + ind + "'>" + tmps[t].name + "</option>");
+                                ind++;
+                            }
+                            $("#buttonCreate").attr("disabled", false);
+                        },
+                        error: function (xhr, ajaxOptions, thrownError) {
+                            console.log(xhr.status);
+                            console.log(xhr.responseText);
+                            console.log(thrownError);
                         }
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        console.log(xhr.status);
-                        console.log(xhr.responseText);
-                        console.log(thrownError);
-                    }
-                });
+                    });
+                } else {
+                    $("#buttonCreate").attr("disabled", true);
+                    $("#selecttemplate").empty();
+                }
             }
 
             function hideroomsgroup() {
@@ -90,9 +97,16 @@
             {
 
                 $('#crearhorario').submit();
+
+                $('#pleaseWaitDialog').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
                 $('#pleaseWaitDialog').modal('show');
+
+
                 var start = new Date();
-                var maxTime = 60000;
+                var maxTime = 37000;
                 var timeoutVal = Math.floor(maxTime / 100);
                 animateUpdate();
 
@@ -128,7 +142,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h4 class="modal-title">Select Department</h4>
+                        <h4 class="modal-title">Select School</h4>
                     </div>
                     <div class="modal-body">
                         <div id="divSelectDepartament" style="text-align: center;">
@@ -154,7 +168,7 @@
                     </div>
                     <div class="modal-body">
                         <div class="progress">
-                            <div class="progress-bar progress-bar-success progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" id="pbar_innerdiv">
+                            <div class="progress-bar progress-bar-success progress-bar-striped progress-bar-animated" style="background-color: #2d2f42 !important;" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" id="pbar_innerdiv">
                                 <div id="pbar_innertext" >0%</div>
                             </div>
                         </div>
@@ -165,7 +179,7 @@
         <div class="col-xs-12">
             <form:form action="menu/create.htm" method="POST" id="crearhorario">                
                 <input id="schoolcode" name="schoolcode" type="hidden" value="">
-                <div class="col-xs-3">         
+                <div class="col-xs-4">         
                     <fieldset>
                         <legend>Select Year</legend>
                         <select class="form-control" id="selectyear" name="yearid" onchange="templates()">
@@ -176,14 +190,14 @@
                         </select>
                     </fieldset>
                 </div>
-                <div class="col-xs-3">
+                <div class="col-xs-4">
                     <fieldset>
                         <legend>Select Template</legend>
                         <select class="form-control" name="templateInfo" id="selecttemplate">
                         </select>
                     </fieldset>
                 </div>
-                <div class="col-xs-3">
+                <div class="col-xs-3 hide">
                     <fieldset>
                         <legend>schedule mode</legend>
                         <select class="form-control" id="roomsmode" name="rooms" onchange="hideroomsgroup()">
@@ -202,10 +216,10 @@
                     </fieldset>
                 </div>
 
-                <div class="col-xs-3">
+                <div class="col-xs-4">
                     <fieldset>
                         <legend>Create Schedule</legend>
-                        <input class="btn col-xs-12" type="button" name="Submit" value="Create" style="background-color: #35363b !important;color: azure;" onclick="enviando()">
+                        <input id="buttonCreate" disabled="" class="btn col-xs-12" type="button" name="Submit" value="Create" style="background-color: #2d2f42 !important;color: azure;" onclick="enviando()">
                     </fieldset>
                 </div>
             </form:form>

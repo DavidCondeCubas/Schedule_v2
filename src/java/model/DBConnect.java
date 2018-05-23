@@ -33,6 +33,7 @@ public class DBConnect {
 
     public DBConnect(HttpServletRequest hsr) {
         try {
+            
             cn = SQLConnection();
             cn2 = SQLConnection2(hsr);
             renweb = cn.createStatement();
@@ -49,16 +50,15 @@ public class DBConnect {
     }
 
     public static Connection SQLConnection() throws SQLException {
-        System.out.println("database.SQLMicrosoft.SQLConnection()");
+        /*System.out.println("database.SQLMicrosoft.SQLConnection()");
         String url = "jdbc:sqlserver://is-pan.odbc.renweb.com:1433;databaseName=is_pan";
         String loginName = "IS_PAN_CUST";
-        String password = "HotelBravo+943";
+        String password = "HotelBravo+943";*/
 
         DriverManager.registerDriver(new SQLServerDriver());
         Connection cn = null;
         try {
-
-            cn = DriverManager.getConnection(url, loginName, password);
+            cn = DriverManager.getConnection(LoginVerification.url,LoginVerification.loginName,LoginVerification.password);
         } catch (SQLException ex) {
             System.out.println("No se puede conectar con el Motor");
             System.err.println(ex.getMessage());

@@ -18,11 +18,20 @@ public class Seccion {
     int idRoom;
     int numStudents;
     ArrayList<Tupla> patronUsado;
+    String gender;
     
     public Seccion(Teacher currentT,int numStudents,ArrayList<Tupla> patron){
         this.teacher = currentT;
         this.numStudents = numStudents;
         this.patronUsado = patron;
+        this.gender = "mixto";
+    }
+        
+    public Seccion(Teacher currentT,int numStudents,ArrayList<Tupla> patron,String gender){
+        this.teacher = currentT;
+        this.numStudents = numStudents;
+        this.patronUsado = patron;
+        this.gender = gender;
     }
      public Seccion(){
         this.idStudents = new ArrayList<>();
@@ -69,6 +78,14 @@ public class Seccion {
     }
     public void IncrNumStudents(){
         this.numStudents++;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
     
     

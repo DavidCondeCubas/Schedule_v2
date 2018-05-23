@@ -52,7 +52,7 @@ public class Homepage extends MultiActionController {
     }
 
     public ModelAndView inicio(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
-        DBConnect db = new DBConnect(hsr);
+        
         //    return menu(hsr,hsr1);
         return new ModelAndView("userform");
     }
@@ -140,19 +140,23 @@ public class Homepage extends MultiActionController {
         User user = new User();//cambiar
         int scgrpid = 0;
         boolean result = false;
-        LoginVerification login = new LoginVerification();
-        //ModelAndView mv = new ModelAndView("redirect:/menu.htm");
+        
+        ModelAndView mv = new ModelAndView();
 
 //            setTipo(user);//borrar
 //            session.setAttribute("user", user); //borrar
         String txtusuario = hsr.getParameter("txtusuario");
-        String schoolCode = hsr.getParameter("selectDistrictCode");
+        String districtCode = hsr.getParameter("selectDistrictCode");
+        
+        LoginVerification login = new LoginVerification(districtCode,hsr);
+        DBConnect db = new DBConnect(hsr);
         // menu(hsr,hsr1,schoolCode);
-        return menu(hsr, hsr1, schoolCode);
+      
 
-        /*if(txtusuario==null){
+        if(txtusuario==null){
                return new ModelAndView("userform");
             }else{
+            
                user = login.consultUserDB(hsr.getParameter("txtusuario"), hsr.getParameter("txtpassword"));
                // if the username or password incorrect
                if(user.getId()==0){
@@ -163,53 +167,15 @@ public class Homepage extends MultiActionController {
                 }
                 //if the user is not part of the group
                 else{
-                    scgrpid=login.getSecurityGroupID("Communications APP");
+                    scgrpid = login.getSecurityGroupID("EWSchedule");
                     result = login.fromGroup(scgrpid, user.getId());
-                    String consulta = "select * from pwb.DesignConfig";
-                    DriverManagerDataSource dataSource2 = (DriverManagerDataSource)this.getBean("dataSourceAH",hsr.getServletContext());
-                    Connection co = dataSource2.getConnection();
-                    Statement st3 = co.createStatement();
-                    ResultSet rs = st3.executeQuery(consulta);
-                    String LeftMenuHeaderColor = "";
-                    String leftmenubackground = "";
-                    String oddrowbackground = "";
-                    while(rs.next()){
-                        LeftMenuHeaderColor = rs.getString("LeftMenuHeaderColor");
-                        leftmenubackground = rs.getString("leftmenubackground");
-                        oddrowbackground = rs.getString("oddrowbackground");
-                    }
-                    String estilo = "#infousuario{background-image: url(https://ca-pan.client.renweb.com/pw/design/ca-pan/header%20color960.png);background-repeat: repeat-y; background-color:white;}"+
-                        "#table_folders>tbody>tr:nth-child(odd)>td," +
-                        "#table_folders>tbody>tr:nth-child(odd)>th {" +
-                        "background-color: white;" +
-                        "}" +
-                        "#table_folders>tbody>tr:nth-child(even)>td," +
-                        "#table_folders>tbody>tr:nth-child(even)>th {" +
-                        "background-color: #"+oddrowbackground+";" +
-                        "}" +
-                        "#table_folders>thead>tr>th {" +
-                        "background-color: #"+leftmenubackground+";" +
-                        "}"+
-                        "#table_id>tbody>tr:nth-child(odd)>td," +
-                        "#table_id>tbody>tr:nth-child(odd)>th {" +
-                        "background-color: white;" +
-                        "}" +
-                        "#table_id>tbody>tr:nth-child(even)>td," +
-                        "#table_id>tbody>tr:nth-child(even)>th {" +
-                        "background-color: #"+oddrowbackground+";" +
-                        "}" +
-                        "#table_id>thead>tr>th {" +
-                        "background-color: #"+leftmenubackground+";" +
-                        "}"+
-                        ".form-control{background-color:#"+leftmenubackground+"}"+ 
-                        "#tabla_carpetas{background-color:#"+leftmenubackground+"}";
-                    session.setAttribute("estilo", estilo);
+                    
                     if (result == true){
 //                       user.setId(10393);//padre
 //                       user.setId(10332);//profe
                         setTipo(user);
                         session.setAttribute("user", user);
-                        return mv;
+                        return menu(hsr, hsr1, districtCode);
                     }
                     else{
                         mv = new ModelAndView("userform");
@@ -218,7 +184,7 @@ public class Homepage extends MultiActionController {
                         return mv;
                     }
                 }
-             }*/
+             }
         // return mv;
     }
 

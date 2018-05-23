@@ -1154,8 +1154,8 @@ public class Consultas {
                 + "    and ps.studentid = p.personid\n"
                 + "    and sr.yearid = " + yearid
                 + "    and ps.status = 'enrolled'\n"
-                + "    and ps.nextstatus = 'enrolled'\n"
-                + "    order by gender";
+                + "    and ps.nextstatus = 'enrolled'";
+                //+ "    order by gender";
         ResultSet rs;
         try {
             rs = DBConnect.renweb.executeQuery(consulta);

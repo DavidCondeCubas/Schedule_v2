@@ -166,8 +166,8 @@
                         <%
                         for (Course t : courses) {
                             out.println("<div class='col-xs-12 course'>"); 
-                           // out.println("<h3>" + cs.nameCourse(t.getIdCourse()) + "</h3>");
-                           out.println("<h3>" + t.getIdCourse() + "</h3>");
+                            out.println("<h3>" + cs.nameCourse(t.getIdCourse()) + "</h3>");
+                        //   out.println("<h3>" + t.getIdCourse() + "</h3>");
                             out.println("<table id='table_id' width='100%' border='0' class=''>");
                             out.println("<tr class='students'>");
                             for (int j = 1; j < t.getSections(); j++) {
@@ -178,8 +178,8 @@
                                 */
 //                                out.println("<td></td>");
                                 out.println("<td><strong>Section " + j + ":<br>"
-                                       // + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</strong>");
-                                        + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getIdTeacher()+"</strong>");
+                                       + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</strong>");
+                                       // + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getIdTeacher()+"</strong>");
                                 
                                 for (int k = 0; k < t.getStudentsAsignados().size(); k++) {
                                    /* if(k == 0)
@@ -187,10 +187,10 @@
                                     if(lista2.get(t.getStudentsAsignados().get(k)).getNumSectionByCourse(t.getIdCourse()) == j)
                                     {
                                        // studentNames +=  lista2.get(t.getStudentsAsignados().get(k)).getNumSectionByCourse(t.getIdCourse());
-                                       /* if(!studentNames.contains(lista2.get(t.getStudentsAsignados().get(k)).getName()))
-                                            studentNames += "<br>" + lista2.get(t.getStudentsAsignados().get(k)).getName();*/
-                                        if(!studentNames.contains(""+lista2.get(t.getStudentsAsignados().get(k)).getId()))
-                                            studentNames += "<br>" + lista2.get(t.getStudentsAsignados().get(k)).getId();
+                                        if(!studentNames.contains(lista2.get(t.getStudentsAsignados().get(k)).getName()))
+                                            studentNames += "<br>" + lista2.get(t.getStudentsAsignados().get(k)).getName();
+                                        /*if(!studentNames.contains(""+lista2.get(t.getStudentsAsignados().get(k)).getId()))
+                                            studentNames += "<br>" + lista2.get(t.getStudentsAsignados().get(k)).getId();*/
                                     }
                                     
                                 }

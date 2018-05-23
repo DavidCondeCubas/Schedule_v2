@@ -53,7 +53,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="exampleDistrictCode"><spring:message code="etiq.txtDistrictCode"/></label> 
-                                        <select name="selectDistrictCode" id="selectSchoolCode">
+                                        <select class="form-control" name="selectDistrictCode" id="selectSchoolCode">
                                             <option value="IS-PAN">IS-PAN</option>
                                             <option value="MD-PAN">MD-PAN</option>
                                         </select>                                     

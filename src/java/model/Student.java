@@ -62,6 +62,7 @@ public class Student {
     public Student(int id, int numPatrones) {
         this.id = id;
         this.numPatrones = numPatrones;
+
     }
 
     public Student(int id) {

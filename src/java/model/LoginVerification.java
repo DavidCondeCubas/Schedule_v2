@@ -19,18 +19,63 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.context.ApplicationContext;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 public class LoginVerification {
+    static String url;
+    static String loginName;
+    static String password;
+
     
-    public LoginVerification(){}
+    public LoginVerification(String districtCode,HttpServletRequest hsr){
+        url = "";
+        loginName ="";
+        password="";
+        fillDataConnection(districtCode,hsr);
+    }
+    public LoginVerification(String url, String lName,String pass){
+        url = url;
+        loginName = lName;
+        password = pass;
+    }
+    
+     private Object getBean(String nombrebean, ServletContext servlet) {
+        ApplicationContext contexto = WebApplicationContextUtils.getRequiredWebApplicationContext(servlet);
+        Object beanobject = contexto.getBean(nombrebean);
+        return beanobject;
+    }
+     
+    private void fillDataConnection(String districtCode, HttpServletRequest hsr){
+        String consulta = "select * from schoolsdata where districtcode='" +districtCode+"'";
+        try {
+           
+            DriverManagerDataSource dataSource2 = (DriverManagerDataSource) this.getBean("dataSource", hsr.getServletContext());
+            Connection cn = null;
+            cn = dataSource2.getConnection();
+            Statement s = cn.createStatement();
+            ResultSet rs = s.executeQuery(consulta);
+            while (rs.next()) {
+                url = rs.getString("url");
+                loginName = rs.getString("loginname");
+                password= rs.getString("password");
+            }
+        } catch (Exception e) {
+            System.err.println("");
+        }
+    }
+    
     public static Connection SQLConnection() throws SQLException {
         System.out.println("database.SQLMicrosoft.SQLConnection()");
-        String url = "jdbc:sqlserver://ca-pan.odbc.renweb.com\\ca_pan:1433;databaseName=ca_pan";
+      /*  String url = "jdbc:sqlserver://ca-pan.odbc.renweb.com\\ca_pan:1433;databaseName=ca_pan";
         String loginName = "CA_PAN_CUST";
-        String password = "RansomSigma+339";
+        String password = "RansomSigma+339";*/
+      
         DriverManager.registerDriver(new SQLServerDriver());
         Connection cn = null;
         try {
-
             cn = DriverManager.getConnection(url, loginName, password);
         } catch (SQLException ex) {
             System.out.println("No se puede conectar con el Motor");
@@ -67,7 +112,6 @@ public class LoginVerification {
          else{
              rs.beforeFirst();
             while(rs.next()){
-               
                 u = new User();
                 u.setName(rs.getString("username"));
                 u.setPassword(password);
