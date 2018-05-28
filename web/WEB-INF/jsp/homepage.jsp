@@ -170,36 +170,41 @@
                         //   out.println("<h3>" + t.getIdCourse() + "</h3>");
                             out.println("<table id='table_id' width='100%' border='0' class=''>");
                             out.println("<tr class='students'>");
-                            for (int j = 1; j < t.getSections(); j++) {
+                            for (int j = 0; j < t.getArraySecciones().size(); j++) {
                                 String studentNames = "";
                                 
                                /* out.println("<td>Section " + j + ":<br>"
                                         + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</td>");
                                 */
 //                                out.println("<td></td>");
-                                out.println("<td><strong>Section " + j + ":<br>"
-                                       + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</strong>");
+                                out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"             
+                                + "Teacher: "+t.getArraySecciones().get(j).getTeacher().getName()+"</strong>");
+          
+
+                                      // + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</strong>");
                                        // + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getIdTeacher()+"</strong>");
                                 
-                                for (int k = 0; k < t.getStudentsAsignados().size(); k++) {
-                                   /* if(k == 0)
-                                            {}*/
+                               /* for (int k = 0; k < t.getStudentsAsignados().size(); k++) {
+                               
                                     if(lista2.get(t.getStudentsAsignados().get(k)).getNumSectionByCourse(t.getIdCourse()) == j)
                                     {
                                        // studentNames +=  lista2.get(t.getStudentsAsignados().get(k)).getNumSectionByCourse(t.getIdCourse());
                                         if(!studentNames.contains(lista2.get(t.getStudentsAsignados().get(k)).getName()))
                                             studentNames += "<br>" + lista2.get(t.getStudentsAsignados().get(k)).getName();
-                                        /*if(!studentNames.contains(""+lista2.get(t.getStudentsAsignados().get(k)).getId()))
-                                            studentNames += "<br>" + lista2.get(t.getStudentsAsignados().get(k)).getId();*/
+                                     
                                     }
                                     
-                                }
+                                }*/
                                 
+                               for(int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
+                                            studentNames += "<br>" + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
+                                }
                                out.println(studentNames);
-                                out.println("</td>");
+                               out.println("</td>");
                                 
                             }
                             out.println("</tr>");
+                            /*
                             out.println(headCols);
                             swapcolor = true;
                             for (int i = 0; i < TAMY; i++) {
@@ -217,13 +222,20 @@
                                 }
                                 for (int j = 0; j < TAMX; j++) {
                                     if (!t.getHuecos()[j][i].equals("0")) {
-                                        out.println("<td class='text-center'> section " + t.getHuecos()[j][i] + "</td>");
+                                        String aux = t.getHuecos()[j][i] ;
+                                        if(aux.contains("0 and")){
+                                            aux = aux.replace("0 and", "");
+                                        }
+                                        if(aux.contains("0")){
+                                            aux= aux.replace("0", "");
+                                        }
+                                        out.println("<td class='text-center'> section " +aux+ "</td>");
                                     } else {
                                         out.println("<td> </td>");
                                     }
                                 }
                                 out.println("</tr>");
-                            }
+                            }*/
                             out.println("</table>");
                             out.println("</div>");
                         }

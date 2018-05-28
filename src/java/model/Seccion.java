@@ -13,30 +13,61 @@ import java.util.ArrayList;
  * @author David
  */
 public class Seccion {
+
     Teacher teacher;
     ArrayList<Integer> idStudents;
     int idRoom;
     int numStudents;
     ArrayList<Tupla> patronUsado;
     String gender;
-    
-    public Seccion(Teacher currentT,int numStudents,ArrayList<Tupla> patron){
+    int indicePatronUsado;
+    int numSeccion;
+    int idTeacher;
+    boolean lockSchedule;
+    boolean lockEnrollment;
+
+    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron) {
         this.teacher = currentT;
         this.numStudents = numStudents;
         this.patronUsado = patron;
         this.gender = "mixto";
+        this.lockEnrollment = false;
+        this.lockSchedule = false;
     }
-        
-    public Seccion(Teacher currentT,int numStudents,ArrayList<Tupla> patron,String gender){
+
+    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche) {
         this.teacher = currentT;
         this.numStudents = numStudents;
         this.patronUsado = patron;
         this.gender = gender;
+        this.idStudents = ids;
+        this.indicePatronUsado = idPatron;
+        this.numSeccion = numS;
+        this.lockEnrollment = lockEnr;
+        this.lockSchedule = lockSche;
+
     }
-     public Seccion(){
+
+    public Seccion(Seccion s) {
+        this.teacher = s.teacher;
+        this.numStudents = s.numStudents;
+        this.patronUsado = s.patronUsado;
+        this.gender = s.gender;
+        this.idStudents = s.idStudents;
+        this.indicePatronUsado = s.indicePatronUsado;
+        this.numSeccion = s.numSeccion;
+        this.lockEnrollment = s.lockEnrollment;
+        this.lockSchedule = s.lockSchedule;
+    }
+
+    public Seccion() {
         this.idStudents = new ArrayList<>();
+        this.teacher = new Teacher();
+        this.patronUsado = new ArrayList<>();
+        this.lockEnrollment = false;
+        this.lockSchedule = false;
     }
-    
+
     public Teacher getTeacher() {
         return teacher;
     }
@@ -76,7 +107,8 @@ public class Seccion {
     public void setPatronUsado(ArrayList<Tupla> patronUsado) {
         this.patronUsado = patronUsado;
     }
-    public void IncrNumStudents(){
+
+    public void IncrNumStudents() {
         this.numStudents++;
     }
 
@@ -87,6 +119,75 @@ public class Seccion {
     public void setGender(String gender) {
         this.gender = gender;
     }
-    
-    
+
+    public void addStudent(int id) {
+        this.idStudents.add(id);
+    }
+
+    public int getIndicePatronUsado() {
+        return indicePatronUsado;
+    }
+
+    public void setIndicePatronUsado(int indicePatronUsado) {
+        this.indicePatronUsado = indicePatronUsado;
+    }
+
+    public int getNumSeccion() {
+        return numSeccion;
+    }
+
+    public void setNumSeccion(int numSeccion) {
+        this.numSeccion = numSeccion;
+    }
+
+    public int getIdTeacher() {
+        return idTeacher;
+    }
+
+    public void setIdTeacher(int idTeacher) {
+        this.idTeacher = idTeacher;
+    }
+
+    public void addTuplaPatron(Tupla t) {
+        this.patronUsado.add(t);
+    }
+
+    public boolean isLockSchedule() {
+        return lockSchedule;
+    }
+
+    public void setLockSchedule(boolean lockSchedule) {
+        this.lockSchedule = lockSchedule;
+    }
+
+    public boolean isLockEnrollment() {
+        return lockEnrollment;
+    }
+
+    public void setLockEnrollment(boolean lockEnrollment) {
+        this.lockEnrollment = lockEnrollment;
+    }
+
+    public void setLockSchedule(int lockScheduleInt) {
+        if (lockScheduleInt == 1) {
+            this.lockSchedule = true;
+        } else {
+            this.lockSchedule = false;
+        }
+
+    }
+
+    public void setLockEnrollment(int lockEnrollmentInt) {
+        if (lockEnrollmentInt == 1) {
+            this.lockEnrollment = true;
+        } else {
+            this.lockEnrollment = false;
+        }
+    }
+    public void copiarIdsStudents(ArrayList<Integer> a){
+        this.idStudents = new ArrayList<>();
+        for (int i = 0; i < a.size(); i++) {
+            this.idStudents.add(a.get(i));
+        }
+    }
 }

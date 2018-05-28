@@ -25,6 +25,7 @@ public class Student {
     private int numSection;
     private ArrayList<Integer> cursosNoAsignados;
     private ArrayList<Integer> cursosAsignados;
+    private ArrayList<Integer> seccionesAsignadas;
     private int numPatrones;
 
     public int getNumPatrones() {
@@ -70,6 +71,7 @@ public class Student {
         this.cursosAsignados = new ArrayList<>();
         this.id = id;
         huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
+        this.seccionesAsignadas = new ArrayList<>();
     }
 
     public Student(int id, String name, String genero) {
@@ -79,6 +81,8 @@ public class Student {
         huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
         this.name = name;
         this.genero = genero;
+                this.seccionesAsignadas = new ArrayList<>();
+
     }
 
     public ArrayList<ArrayList<Tupla>> listPatronesCompatibles(ArrayList<ArrayList<Tupla>> ar) {
@@ -208,4 +212,19 @@ public class Student {
         }
         return -1;
     }
+
+    public ArrayList<Integer> getSeccionesAsignadas() {
+        return seccionesAsignadas;
+    }
+
+    public void setSeccionesAsignadas(ArrayList<Integer> seccionesAsignadas) {
+        this.seccionesAsignadas = seccionesAsignadas;
+    }
+    public void addSeccion(int numSeccion){
+        this.seccionesAsignadas.add(numSeccion);
+    }
+    public boolean estaEnSeccion(int numSeccion){ // indicara si esta alumno ya ha sido matriculado en la misma seccion en otras asignatura
+        return this.seccionesAsignadas.contains(numSeccion);
+    }
+            
 }

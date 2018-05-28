@@ -15,6 +15,7 @@ import model.Algoritmo;
 import model.Course;
 import model.DBConnect;
 import model.Room;
+import model.Seccion;
 import model.Student;
 import model.Teacher;
 import model.Template;
@@ -47,6 +48,7 @@ public class Consultas {
         stDefault.setName("default");
         courseName = new HashMap<>();
         totalBlocksStart = this.totalBlocksStart();
+
         totalBlocks = this.totalBlocks();
         cargarNames();
     }
@@ -92,7 +94,7 @@ public class Consultas {
      */
     public static ArrayList<Tupla<Integer, String>> getYears(String schoolCode) { // OBTIENE EL GETYEARS FALTA FILTRAR POR COLEGIO 
         ArrayList<Tupla<Integer, String>> ret = new ArrayList<>();
-        String consulta = "select * from SchoolYear where SchoolCode= '"+schoolCode+"'";
+        String consulta = "select * from SchoolYear where SchoolCode= '" + schoolCode + "'";
         try {
             ResultSet rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -108,7 +110,7 @@ public class Consultas {
 
     public static ArrayList<Tupla<String, String>> getSchools(String districtCode) { // OBTIENE EL GETYEARS FALTA FILTRAR POR COLEGIO 
         ArrayList<Tupla<String, String>> ret = new ArrayList<>();
-        String consulta = "SELECT SchoolName,SchoolCode FROM ConfigSchool where DistrictName='"+districtCode+"';";
+        String consulta = "SELECT SchoolName,SchoolCode FROM ConfigSchool where DistrictName='" + districtCode + "';";
         try {
             ResultSet rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -793,6 +795,48 @@ public class Consultas {
     }
 
     // * @author David
+    protected HashMap<String, String> getLinkedCourses() { //return hash de linkeados
+        //como clave sera la asignatura que se debera inserta primero y como valor
+        // la que tiene que estar como consecutiva
+        HashMap<String, String> resultHash = new HashMap<>();
+        String linkedIds = "";
+        String consulta = "select udd.data\n"
+                + "                from uddata udd\n"
+                + "                inner join udfield udf\n"
+                + "                    on udd.fieldid = udf.fieldid\n"
+                + "                inner join udgroup udg\n"
+                + "                    on udg.groupid = udf.groupid\n"
+                + "                    and udg.grouptype = 'school'\n"
+                + "                    and udg.groupname = 'Schedule'\n"
+                + "                    and udf.fieldName = 'LinkedCourses'";
+
+        ResultSet rs;
+        try {
+            rs = DBConnect.renweb.executeQuery(consulta);
+
+            while (rs.next()) {
+                linkedIds = rs.getString(1);
+            }
+            if (!linkedIds.equals("")) {
+                String[] all_Links = linkedIds.split(";");
+                for (int i = 0; i < all_Links.length; i++) {
+                    String aux = all_Links[i];
+                    aux = aux.replace("[", "");
+                    aux = aux.replace("]", "");
+                    String[] idsCourses = aux.split(",");
+                    if (idsCourses.length == 2) {
+                        resultHash.put(idsCourses[0], idsCourses[1]);
+                    }
+                }
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return resultHash;
+    }
+
+    // * @author David
     private ArrayList<ArrayList<Boolean>> totalBlocksStart() {
 
         String excludes = "";
@@ -1155,7 +1199,7 @@ public class Consultas {
                 + "    and sr.yearid = " + yearid
                 + "    and ps.status = 'enrolled'\n"
                 + "    and ps.nextstatus = 'enrolled'";
-                //+ "    order by gender";
+        //+ "    order by gender";
         ResultSet rs;
         try {
             rs = DBConnect.renweb.executeQuery(consulta);
@@ -1333,6 +1377,90 @@ public class Consultas {
         } catch (Exception e) {
         }
         return ret;
+    }
+    //HashMap<Integer,HashMap<Integer,Seccion>> mapSecciones;//HashMap<idCourse,HashMap<numSeccion,Seccion>>
+
+    public HashMap<Integer, ArrayList<Seccion>> getDataSections(HashMap<Integer, Teacher> teachers, ArrayList<Course> courses, String yearID, String templateID) {
+        //HashMap<Integer,ArrayList<Seccion>> rsSection = new ArrayList();
+        HashMap<Integer, ArrayList<Seccion>> auxSections = new HashMap<>();
+        ArrayList<ArrayList<Integer>> sectionsModificadas = new ArrayList<>();
+        ArrayList<Seccion> auxSectionsIn;
+
+        try {
+            /*        String consulta = "SELECT distinct Section,Classes.YearId,StaffID,Pattern,CourseId FROM Classes inner join roster on\n" +
+"                                           (Classes.ClassID = roster.ClassID)";
+                ResultSet rs = DBConnect.renweb.executeQuery(consulta);
+                while (rs.next()) {
+                    ArrayList<Integer> aux = new ArrayList<>();
+                    aux.add(rs.getInt(1)); // section
+                    aux.add(rs.getInt(2)); // staffId
+                    aux.add(rs.getInt(3)); // pattern
+                    sectionsModificadas.add(aux);
+                }
+             */
+
+            for (Course course : courses) {
+                auxSectionsIn = new ArrayList<>();
+                sectionsModificadas = new ArrayList<>();
+                String consulta = "SELECT distinct Section,StaffID,Pattern,LockEnrollment,LockSchedule FROM Classes left join roster on \n"
+                        + "                        (Classes.ClassID = roster.ClassID)\n"
+                        + "                        where CourseId = " + course.getIdCourse() + " and Classes.YearId = " + yearID;
+                ResultSet rs = DBConnect.renweb.executeQuery(consulta);
+                while (rs.next()) {
+                    ArrayList<Integer> aux = new ArrayList<>();
+
+                    aux.add(rs.getInt(1)); // section
+                    aux.add(rs.getInt(2)); // staffId
+                    aux.add(rs.getInt(3)); // pattern
+
+                    if (rs.getBoolean(4)) {
+                        aux.add(1); // lockEnrollment
+                    } else {
+                        aux.add(0); // lockEnrollment
+                    }
+                    if (rs.getBoolean(5)) {
+                        aux.add(1); // lockSchedulle
+                    } else {
+                        aux.add(0); //  lockSchedulle
+                    }
+
+                    sectionsModificadas.add((ArrayList<Integer>) aux.clone());
+                }
+                if (!sectionsModificadas.isEmpty()) {
+                    for (int i = 0; i < sectionsModificadas.size(); i++) {
+                        Seccion auxSec = new Seccion();
+                        ArrayList<Integer> arrayStud = new ArrayList<>();
+                        consulta = "SELECT StudentID FROM Classes inner join roster on"
+                                + "(Classes.ClassID = roster.ClassID)"
+                                + " where Classes.CourseId = " + course.getIdCourse() + " and Classes.YearId = " + yearID
+                                + " and Classes.Section =" + sectionsModificadas.get(i).get(0);
+                        rs = DBConnect.renweb.executeQuery(consulta);
+
+                        while (rs.next()) {
+                            arrayStud.add(rs.getInt(1));
+                        }
+
+                        auxSec.setIdStudents((ArrayList<Integer>) arrayStud.clone());
+                        auxSec.setIdTeacher(sectionsModificadas.get(i).get(1));
+                        auxSec.setLockEnrollment(sectionsModificadas.get(i).get(3));
+                        auxSec.setLockSchedule(sectionsModificadas.get(i).get(4));
+                        auxSec.setTeacher(teachers.get(sectionsModificadas.get(i).get(1)));
+
+                        consulta = "SELECT * from SchedulePatternsTimeTable "
+                                + " where patternnumber = " + sectionsModificadas.get(i).get(2) + " and templateID =" + templateID;
+                        rs = DBConnect.renweb.executeQuery(consulta);
+                        while (rs.next()) {
+                            auxSec.addTuplaPatron(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
+                        }
+                        auxSectionsIn.add(new Seccion(auxSec));
+                    }
+                    auxSections.put(course.getIdCourse(), (ArrayList<Seccion>) auxSectionsIn.clone());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("");
+        }
+        return auxSections;
     }
 
     public HashMap<Integer, Room> getRoomsOwnDB() {

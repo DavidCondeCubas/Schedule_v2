@@ -5,12 +5,15 @@
  */
 package model;
 
+import dataManage.Consultas;
 import dataManage.Tupla;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,6 +49,38 @@ public class Course {
     private ArrayList<Integer> trestricctions;
     private String preferedBlockString;
     private String mandatoryBlockRange;
+    private HashMap<String, ArrayList<Tupla<Integer, Integer>>> priorityPattern;
+    private String patternGroup;
+    private ArrayList<Seccion> arraySecciones;
+    
+    public Course(Course c) {
+        this.huecos = c.getHuecos(); // cuadricula
+        this.idCourse = c.getIdCourse(); // id del curso
+        this.blocksWeek = c.getBlocksWeek(); // bloques por semana
+        this.maxSections = "" + c.getMaxSections(); // maximo numero de grupos
+        this.minGapBlocks = c.getMinGapBlocks(); // espacio minimo entre bloques
+        this.minSections = c.getMinSections();
+        this.minGapDays = c.getMinGapDays(); //cada cuantos dias entre bloques
+        this.rank = c.getRank(); // prioridad
+        this.GR = c.isGR(); //
+        this.balanceTeachers = c.isBalanceTeachers();
+        this.excludeRows = c.getExcludeRows(); // bloques que no se pueden usar
+        this.excludeCols = c.getExcludeCols();
+        this.preferedBlocks = c.getPreferedBlocks();
+        this.excludeBlocks = c.getExcludeBlocks();
+        this.maxBlocksPerDay = c.getMaxBlocksPerDay();
+        this.sections = c.getSections();
+        this.sectionsNoEnrolled = c.getSectionsNoEnrolled();
+        this.percentEnrolled = c.getPercentEnrolled();
+        this.studentsNoAsignados = c.getStudentsNoAsignados();
+        this.studentsAsignados = c.getStudentsAsignados();
+        this.patronesStudents = c.getPatronesStudents();
+        this.maxChildPerSection = c.getMaxChildPerSection();
+        this.rooms = c.getRooms();
+        this.trestricctions = c.getTrestricctions();
+        this.preferedBlockString = c.getPreferedBlockString();
+        this.mandatoryBlockRange = c.getMandatoryBlockRange();
+    }
 
     public Course(int idCourse) {
         this.idCourse = idCourse;
@@ -56,6 +91,7 @@ public class Course {
                 huecos[i][j] = "0";
             }
         }
+
         maxBlocksPerDay = 1;
         sections = 1;
         studentsNoAsignados = new ArrayList<>();
@@ -67,7 +103,61 @@ public class Course {
         balanceTeachers = false;
         preferedBlockString = "";
         mandatoryBlockRange = "";
+        this.patternGroup = "";
+        this.arraySecciones = new ArrayList<>();
+    }
 
+    public void fillPriorityPattern() {
+        this.priorityPattern = new HashMap<>();
+        /*
+        SELECT * FROM (SchedulePatterns inner join 
+                              SchedulePatternsTimeTable 
+                        on(SchedulePatterns.PatternNumber = SchedulePatternsTimeTable.PatternNumber
+                           and
+                            SchedulePatterns.TemplateID = SchedulePatternsTimeTable.TemplateID)) where PatternGroup = '06_Grade';
+
+--SELECT PatternGroup FROM IS_PAN.dbo.Courses where CourseID=669;
+
+         */
+
+        String consulta = "SELECT PatternGroup FROM Courses where CourseID= '" + this.idCourse + "'";
+        ResultSet rs;
+        try {
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                this.patternGroup = rs.getString(1);
+            }
+
+            if (!this.patternGroup.equals("")) {
+                consulta = "SELECT *  FROM (SchedulePatterns inner join "
+                        + "                              SchedulePatternsTimeTable"
+                        + "                        on(SchedulePatterns.PatternNumber = SchedulePatternsTimeTable.PatternNumber"
+                        + "                           and"
+                        + "                            SchedulePatterns.TemplateID = SchedulePatternsTimeTable.TemplateID)) where PatternGroup = '" + this.patternGroup + "'";
+
+                rs = DBConnect.renweb.executeQuery(consulta);
+                String name = "";
+                int row = -1, col = -1;
+
+                while (rs.next()) {
+                    name = rs.getString("Name");
+                    row = rs.getInt("Row");
+                    col = rs.getInt("Col");
+                    if (!this.priorityPattern.containsKey(name)) {
+                        this.priorityPattern.put(name, new ArrayList<>());
+                        //  this.priorityPattern.get(name).add(new Tupla(col, row));
+                        //  this.priorityPattern.get(name).add(new Tupla(col,row));
+                    }
+                    /* else{
+                     this.priorityPattern.put(name, new ArrayList<>());
+                      this.priorityPattern.get(name).add(new Tupla(col,row));
+                }*/
+                    this.priorityPattern.get(name).add(new Tupla(col, row));
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public String getMandatoryBlockRange() {
@@ -169,6 +259,83 @@ public class Course {
         }
     }
 
+    ArrayList<ArrayList<Tupla>> opcionesLinkeados(ArrayList<ArrayList<Tupla>> retAsociado,ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<String> log) {
+        // ESTO PRACTICAMENTE SE METERAN A PELO PARA EL IS-PAN MD EN ESPECIFICO
+        //AQUI HAY QUE LIMITAR LA CANTIDAD DE OCPIONES SI QUERERMOS QUE TENGAN BLOQUES OBLIGATORIOS ASIGNADOS.
+        ArrayList<ArrayList<Tupla>> ret = new ArrayList<>();
+        
+
+        ArrayList<String> auxPatterns = getNamesPatternsPosibles();
+
+        for (int i = 0; i < auxPatterns.size(); i++) {
+            ArrayList<Tupla> aux = new ArrayList<>();
+            ArrayList<Tupla> aux2 = new ArrayList<>();
+
+            for (int j = 0; j < this.priorityPattern.get(auxPatterns.get(i)).size(); j++) {
+                int col = this.priorityPattern.get(auxPatterns.get(i)).get(j).x;
+                int row = this.priorityPattern.get(auxPatterns.get(i)).get(j).y;
+                aux.add(new Tupla(col - 1, row - 1));
+                
+                col = this.priorityPattern.get(tuplaAsociada(auxPatterns.get(i))).get(j).x;
+                row = this.priorityPattern.get(tuplaAsociada(auxPatterns.get(i))).get(j).y;
+                aux2.add(new Tupla(col - 1, row - 1));
+            }
+            retAsociado.add(aux2);
+            ret.add(aux);
+        }
+
+        return ret;
+    }
+
+    private String tuplaAsociada(String s) {
+        switch (s) {
+            case "6A":
+                return "6B";   
+            case "6B":
+                return "6A";
+            case "6C":
+                return "6D";
+            case "6D":
+                return "6C";
+            case "6F":
+                return "6G";
+            case "6G":
+                return "6F";
+        }
+        return "";
+    }
+
+    public ArrayList<Tupla<Integer, Integer>> getTuplaLinked(int col, int row) {
+        /*for (Map.Entry<String, ArrayList<Tupla<Integer, Integer>>> entry : this.priorityPattern.entrySet()) {
+            String key = entry.getKey();
+            ArrayList<Tupla<Integer, Integer>> value = entry.getValue();
+            int pos = value.indexOf(new Tupla(col, row));
+            if (pos != -1) {
+                if (pos == 0) {
+                    return new Tupla(value.get(1).x, value.get(1).y);
+                } else {
+                    return new Tupla(value.get(0).x, value.get(0).y);
+                }
+            }
+        }*/
+        return null;
+    }
+
+    private ArrayList<String> getNamesPatternsPosibles() {
+        switch (this.patternGroup) {
+            case "06_Grade":
+                ArrayList<String> aux = new ArrayList<>();
+                aux.add("6A");
+                aux.add("6B");
+                aux.add("6C");
+                aux.add("6D");
+                aux.add("6F");
+                aux.add("6G");
+                return aux;
+        }
+        return null;
+    }
+
     ArrayList<ArrayList<Tupla>> opciones(ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<String> log) {
 
         //AQUI HAY QUE LIMITAR LA CANTIDAD DE OCPIONES SI QUERERMOS QUE TENGAN BLOQUES OBLIGATORIOS ASIGNADOS.
@@ -186,10 +353,10 @@ public class Course {
         ArrayList<Tupla> tuplasHabilitadas = new ArrayList<>();
 
         calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
-     
+
         int k, bloqueados;
         int gd = this.minGapDays;
-        
+
         //RECORRE LAS TUPLAS DEFINIDAS COMO MANDATORY
         /*for (int ind = 0; ind < tuplasHabilitadas.size(); ind++) {
             ArrayList<Tupla> t = new ArrayList<>();
@@ -851,6 +1018,7 @@ public class Course {
                         + "','" + this.excludeRows.toString() + "','" + this.trestricctions.toString()
                         + "','" + this.balanceTeachers + "','" + this.preferedBlockString + "')";
                 DBConnect.own.executeUpdate(consulta);
+
             } else {// to do
                 /*   consulta = "UPDATE courses SET blocksperweek= "+this.blocksWeek+" ,maxsections= "+maxsec+" ,mingapblocks= "
                         +mingapblocks+ " ,mingapdays= "+this.minGapDays+ " ,rank= "+this.rank+" ,gender= "+this.GR
@@ -862,7 +1030,8 @@ public class Course {
 
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Course.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Course.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -884,5 +1053,60 @@ public class Course {
             }
         }
         return null;
+    }
+
+    public ArrayList<Integer> getExcludeRows() {
+        return excludeRows;
+    }
+
+    public void setExcludeRows(ArrayList<Integer> excludeRows) {
+        this.excludeRows = excludeRows;
+    }
+
+    public ArrayList<Integer> getExcludeCols() {
+        return excludeCols;
+    }
+
+    public void setExcludeCols(ArrayList<Integer> excludeCols) {
+        this.excludeCols = excludeCols;
+    }
+
+    public ArrayList<Tupla<Integer, Integer>> getExcludeBlocks() {
+        return excludeBlocks;
+    }
+
+    public void setExcludeBlocks(ArrayList<Tupla<Integer, Integer>> excludeBlocks) {
+        this.excludeBlocks = excludeBlocks;
+    }
+
+    public String getPreferedBlockString() {
+        return preferedBlockString;
+    }
+
+    public void setPreferedBlockString(String preferedBlockString) {
+        this.preferedBlockString = preferedBlockString;
+    }
+
+    public ArrayList<Seccion> getArraySecciones() {
+        return arraySecciones;
+    }
+
+    public void setArraySecciones(ArrayList<Seccion> arraySecciones) {
+        this.arraySecciones = arraySecciones;
+    }
+    public void addSeccion(Seccion e){
+        this.arraySecciones.add(e);
+    }
+
+    public ArrayList<Integer> getAllIds(){
+        ArrayList<Integer> auxStudents = new ArrayList<>();
+        
+        for (int i = 0; i < this.arraySecciones.size(); i++) {
+            for (int j = 0; j < this.arraySecciones.get(i).getIdStudents().size(); j++) {
+                auxStudents.add(this.arraySecciones.get(i).getIdStudents().get(j));
+            }
+        }
+        
+        return auxStudents;
     }
 }
