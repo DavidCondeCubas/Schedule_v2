@@ -50,6 +50,7 @@ public class Seccion {
 
     public Seccion(Seccion s) {
         this.teacher = s.teacher;
+        this.idTeacher = s.idTeacher;
         this.numStudents = s.numStudents;
         this.patronUsado = s.patronUsado;
         this.gender = s.gender;

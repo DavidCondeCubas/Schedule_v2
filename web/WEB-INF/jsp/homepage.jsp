@@ -131,6 +131,7 @@
             List<Course> courses = (List) request.getAttribute("Courses");
             List<Teacher> lista = (List) request.getAttribute("profesores");
             HashMap<Integer, Student> lista2 = (HashMap) request.getAttribute("students");
+            HashMap<Integer, String> hashPersons = (HashMap) request.getAttribute("persons");
             ArrayList<String> log = (ArrayList<String>) request.getAttribute("log");
             ArrayList<Integer> groupRooms = (ArrayList<Integer>) request.getAttribute("grouprooms");
             HashMap<Integer, Room> rooms = (HashMap<Integer, Room>) request.getAttribute("rooms");
@@ -178,7 +179,7 @@
                                 */
 //                                out.println("<td></td>");
                                 out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"             
-                                + "Teacher: "+t.getArraySecciones().get(j).getTeacher().getName()+"</strong>");
+                                + "Teacher: "+hashPersons.get(t.getArraySecciones().get(j).getIdTeacher())+" </strong>");
           
 
                                       // + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</strong>");

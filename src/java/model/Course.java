@@ -52,6 +52,7 @@ public class Course {
     private HashMap<String, ArrayList<Tupla<Integer, Integer>>> priorityPattern;
     private String patternGroup;
     private ArrayList<Seccion> arraySecciones;
+    private ArrayList<Integer> sectionsLinkeadas;
     
     public Course(Course c) {
         this.huecos = c.getHuecos(); // cuadricula
@@ -80,6 +81,7 @@ public class Course {
         this.trestricctions = c.getTrestricctions();
         this.preferedBlockString = c.getPreferedBlockString();
         this.mandatoryBlockRange = c.getMandatoryBlockRange();
+        this.sectionsLinkeadas = c.getSectionsLinkeadas();
     }
 
     public Course(int idCourse) {
@@ -105,6 +107,15 @@ public class Course {
         mandatoryBlockRange = "";
         this.patternGroup = "";
         this.arraySecciones = new ArrayList<>();
+        this.sectionsLinkeadas = new ArrayList<>();
+    }
+
+    public ArrayList<Integer> getSectionsLinkeadas() {
+        return sectionsLinkeadas;
+    }
+
+    public void setSectionsLinkeadas(ArrayList<Integer> sectionsLinkeadas) {
+        this.sectionsLinkeadas = sectionsLinkeadas;
     }
 
     public void fillPriorityPattern() {
@@ -1108,5 +1119,10 @@ public class Course {
         }
         
         return auxStudents;
+    }
+    public void setSectionsLinkeadas(String[] secLinks){
+        for (int i = 0; i < secLinks.length; i++) {
+            this.sectionsLinkeadas.add(Integer.parseInt(secLinks[i]));
+        }
     }
 }

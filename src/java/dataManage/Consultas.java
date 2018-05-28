@@ -795,10 +795,10 @@ public class Consultas {
     }
 
     // * @author David
-    protected HashMap<String, String> getLinkedCourses() { //return hash de linkeados
+    protected HashMap<String, Course> getLinkedCourses() { //return hash de linkeados
         //como clave sera la asignatura que se debera inserta primero y como valor
         // la que tiene que estar como consecutiva
-        HashMap<String, String> resultHash = new HashMap<>();
+        HashMap<String, Course> resultHash = new HashMap<>();
         String linkedIds = "";
         String consulta = "select udd.data\n"
                 + "                from uddata udd\n"
@@ -824,8 +824,18 @@ public class Consultas {
                     aux = aux.replace("[", "");
                     aux = aux.replace("]", "");
                     String[] idsCourses = aux.split(",");
-                    if (idsCourses.length == 2) {
-                        resultHash.put(idsCourses[0], idsCourses[1]);
+                    if (idsCourses.length == 2) {               
+                        resultHash.put(idsCourses[0],  new Course(Integer.parseInt(idsCourses[1])));
+                    }
+                    else{ // hay sectiones linkeadas
+                         Course auxC = new Course(Integer.parseInt(idsCourses[2]));
+                         String s = idsCourses[1];
+                         s = s.replace("(", "");
+                         s = s.replace(")", "");
+                         String[] secLinks = s.split("-");
+                         auxC.setSectionsLinkeadas(secLinks);
+                         auxC.setMaxSections(""+secLinks.length);
+                         resultHash.put(idsCourses[0],  new Course(auxC));
                     }
                 }
             }
@@ -1400,6 +1410,7 @@ public class Consultas {
              */
 
             for (Course course : courses) {
+             
                 auxSectionsIn = new ArrayList<>();
                 sectionsModificadas = new ArrayList<>();
                 String consulta = "SELECT distinct Section,StaffID,Pattern,LockEnrollment,LockSchedule FROM Classes left join roster on \n"
@@ -1538,6 +1549,18 @@ public class Consultas {
 
     public void setTotalBlocks(int totalBlocks) {
         this.totalBlocks = totalBlocks;
+    }
+    public static HashMap<Integer, String> getPersons(){
+        HashMap<Integer, String> ret = new HashMap();
+        String consulta = "SELECT PersonID,LastName,FirstName from person";
+        try {
+            ResultSet rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                ret.put(rs.getInt(1), rs.getString(2)+", "+rs.getString(3));
+            }
+        } catch (Exception e) {
+        }
+        return ret;
     }
 
 }

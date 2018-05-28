@@ -46,7 +46,7 @@ public class Restrictions {
     public ArrayList<Integer> groupRooms;
     public String tempid;
     public ArrayList<ArrayList<Boolean>> totalBlocks;
-    public HashMap<String, String> linkedCourses = new HashMap<>();
+    public HashMap<String, Course> linkedCourses = new HashMap<>();
 
     public Restrictions(String yearid, String tempid, String groupofrooms) {
         this.tempid = tempid;
@@ -201,11 +201,11 @@ public class Restrictions {
         }
     }
 
-    public HashMap<String, String> getLinkedCourses() {
+    public HashMap<String, Course> getLinkedCourses() {
         return linkedCourses;
     }
 
-    public void setLinkedCourses(HashMap<String, String> linkedCourses) {
+    public void setLinkedCourses(HashMap<String, Course> linkedCourses) {
         this.linkedCourses = linkedCourses;
     }
 
