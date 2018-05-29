@@ -7,6 +7,7 @@ package model;
 
 import dataManage.Tupla;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
@@ -25,6 +26,7 @@ public class Seccion {
     int idTeacher;
     boolean lockSchedule;
     boolean lockEnrollment;
+    int classId;
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron) {
         this.teacher = currentT;
@@ -35,7 +37,7 @@ public class Seccion {
         this.lockSchedule = false;
     }
 
-    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche) {
+    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche,int cID) {
         this.teacher = currentT;
         this.numStudents = numStudents;
         this.patronUsado = patron;
@@ -45,6 +47,7 @@ public class Seccion {
         this.numSeccion = numS;
         this.lockEnrollment = lockEnr;
         this.lockSchedule = lockSche;
+        this.classId = cID;
 
     }
 
@@ -59,6 +62,7 @@ public class Seccion {
         this.numSeccion = s.numSeccion;
         this.lockEnrollment = s.lockEnrollment;
         this.lockSchedule = s.lockSchedule;
+        this.classId = s.classId;
     }
 
     public Seccion() {
@@ -185,10 +189,20 @@ public class Seccion {
             this.lockEnrollment = false;
         }
     }
-    public void copiarIdsStudents(ArrayList<Integer> a){
+    public void copiarIdsStudents(ArrayList<Integer> a, HashMap<Integer,Student> students,Course c){
         this.idStudents = new ArrayList<>();
         for (int i = 0; i < a.size(); i++) {
             this.idStudents.add(a.get(i));
+            students.get(a.get(i)).ocuparHueco(this.patronUsado, c.getIdCourse() * 100 + this.numSeccion);
         }
     }
+
+    public int getClassId() {
+        return classId;
+    }
+
+    public void setClassId(int classId) {
+        this.classId = classId;
+    }
+    
 }

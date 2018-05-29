@@ -210,17 +210,40 @@ public class Algoritmo {
                            }
                            else{
                                
-                               if(seccionesHabilitadas.isEmpty()){
-                                   courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(i).patronUsado,courseAsociado.getArraySecciones().get(i).getNumSeccion());
-                                    courseAsociado.getArraySecciones().get(i).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents());
-                               }
+                               if(seccionesHabilitadas.isEmpty()){ // todos
+                                   
+                                   int ind = 0;
+                                   boolean exito = false;
+                                   
+                                   while(ind < courseAsociado.getArraySecciones().size() && !exito){
+                                       
+                                       if(courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()){
+                
+                                            courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(ind).patronUsado,courseAsociado.getArraySecciones().get(ind).getNumSeccion());
+                                            courseAsociado.getArraySecciones().get(ind).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students,courseAsociado);
+                                            exito = true;
+                                       }
+                                       else{
+                                            ind++;
+                                       }
+                                   }
+                                   
+                                 }
                                else{
                                    int ind = 0;
                                    boolean exito = false;
                                    while(ind < courseAsociado.getArraySecciones().size() && !exito){
                                        if(courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()){
-                                            courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(ind).patronUsado,courseAsociado.getArraySecciones().get(i).getNumSeccion());
-                                            courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents());
+                                            
+                                            courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).patronUsado,courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getNumSeccion());
+                                            courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students,courseAsociado);
+                                            //courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).setTeacher(r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getIdTeacher()));
+                                            
+                                            Teacher t_Aux = r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getIdTeacher());
+                                            t_Aux.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getPatronUsado(), courseAsociado.getIdCourse() * 100 + courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getNumSeccion());
+                                            t_Aux.incrementarNumSecciones();
+
+                                            courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).setTeacher(t_Aux);
                                             exito = true;
                                        }
                                        else{
@@ -259,6 +282,7 @@ public class Algoritmo {
         mv.addObject("persons", persons);
         mv.addObject("students", r.students);
         mv.addObject("Courses", r.courses);
+        mv.addObject("profesores", r.teachers);
         mv.addObject("cs", r.cs);
         mv.addObject("rooms", r.rooms);
         mv.addObject("hashTeachers",r.hashTeachers);
@@ -271,25 +295,32 @@ public class Algoritmo {
         ArrayList<Seccion> aux = new ArrayList<>();   
         for (int i = 0; i < r.mapSecciones.get(course.getIdCourse()).size(); i++) {
             Seccion sAux = new Seccion(r.mapSecciones.get(course.getIdCourse()).get(i));
-            //sAux.setNumSeccion(i+1);
             aux.add(sAux);
         } 
         return aux;
     }
   
+    private void chargeStatusStudents(Restrictions r,Course c){
+        for (int i = 0; i < c.getArraySecciones().size(); i++) {
+            for (int j = 0; j < c.getArraySecciones().get(i).getIdStudents().size(); j++) {
+                r.students.get(c.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(c.getArraySecciones().get(i).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(i).getNumSeccion());
+            }
+        }
+    }
+    
     private ArrayList<Integer> fillSections(Restrictions r, Course c,ArrayList<Integer> studentsCourse, HashMap<Integer, Student> students) {
         
         int maxStudentSection = c.getMaxChildPerSection();
-        
         if (maxStudentSection == 0) {
             maxStudentSection = CHILDSPERSECTION; // POR DEFECTO
         }
-                
      //   int numMinStudents_Section = (int) Math.round(maxStudentSection * 0.70);    
         ArrayList<Tupla<Integer, ArrayList<Integer>>> stids = new ArrayList<>();   
         ArrayList<Integer> idsAsignados = new ArrayList<>();
         
         idsAsignados = c.getAllIds();
+        chargeStatusStudents(r,c);
+                
         HashMap<Integer, Integer> hashStudents_cantPatrones = new HashMap<>();
         initHashStudents(hashStudents_cantPatrones, studentsCourse);
         
@@ -347,6 +378,12 @@ public class Algoritmo {
                      c.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(),c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
                      c.getArraySecciones().get(stids.get(i).x).setLockSchedule(true);
                      c.getArraySecciones().get(stids.get(i).x).setLockEnrollment(true);
+                    
+                     Teacher t_Aux = r.hashTeachers.get(c.getArraySecciones().get(stids.get(i).x).getIdTeacher());
+                     t_Aux.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
+                     t_Aux.incrementarNumSecciones();
+                           
+                     c.getArraySecciones().get(stids.get(i).x).setTeacher(t_Aux);
                      updateStids(stids,idsAsignados,studentsCourse,c,r);//fase prueba actualizara lista de estudiantes para que la lista stids se mantenga ordenada
                      i = 0 ;
                      //inicializo el conjunto de estudiantes seleccionables
@@ -504,7 +541,7 @@ public class Algoritmo {
             for (Course t : r.courses) {
                 for (int j = 0; j < t.getArraySecciones().size(); j++) {
                     for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) { 
-                            students.appendChild(getStudent(doc,""+t.getArraySecciones().get(j).getIdStudents().get(k),""+t.getIdCourse(),""+(j+1),yearId));   
+                            students.appendChild(getStudent(doc,""+t.getArraySecciones().get(j).getIdStudents().get(k),""+t.getIdCourse(),""+(j+1),yearId,""+t.getArraySecciones().get(j).getClassId()));   
                     }                  
                 }
             }
@@ -513,7 +550,7 @@ public class Algoritmo {
             for (Course t : r.courses) {
                 for (int j = 1; j < t.getArraySecciones().size(); j++) {
                     //if()
-                    cursos.appendChild(getCursos(doc,""+t.getIdCourse(),""+j,""+t.getArraySecciones().get(j).getIdTeacher(),yearId));
+                    cursos.appendChild(getCursos(doc,""+t.getIdCourse(),""+j,""+t.getArraySecciones().get(j).getIdTeacher(),yearId,""+t.getArraySecciones().get(j).getClassId()));
                 }
             }
             
@@ -521,7 +558,7 @@ public class Algoritmo {
    
             Element bloques = doc.createElement("Blocks");
             for (Course t : r.courses) {
-                for (int i = 0; i < TAMY; i++) {
+               /* for (int i = 0; i < TAMY; i++) {
                     for (int j = 0; j < TAMX; j++) {
                         
                         if ( !t.getHuecos()[j][i].contains("0")) {
@@ -535,6 +572,14 @@ public class Algoritmo {
                            else
                            bloques.appendChild(getBloques(doc,""+(j+1),""+(i+1),templateId,""+t.getIdCourse(),""+t.getHuecos()[j][i],yearId));
                         }
+                    }
+                }*/
+                for (int i = 0; i < t.getArraySecciones().size(); i++) {
+                    for (int j = 0; j < t.getArraySecciones().get(i).getPatronUsado().size(); j++) {
+                        int col = (int) t.getArraySecciones().get(i).getPatronUsado().get(j).x +1;
+                        int row = (int) t.getArraySecciones().get(i).getPatronUsado().get(j).y +1;
+         
+                        bloques.appendChild(getBloques(doc,""+(col),""+(row),templateId,""+t.getIdCourse(),""+t.getArraySecciones().get(i).getNumSeccion(),yearId,""+t.getArraySecciones().get(i).getClassId()));
                     }
                 }
             }
@@ -568,25 +613,27 @@ public class Algoritmo {
         }
 
     }
-    private Node getStudent(Document doc, String name, String courseId, String section,String yearId) {
+    private Node getStudent(Document doc, String name, String courseId, String section,String yearId,String classID) {
         Element company = doc.createElement("Student");
         company.appendChild(getCompanyElements(doc, company, "student_ID", name));
         company.appendChild(getCompanyElements(doc, company, "course_ID", courseId));
         company.appendChild(getCompanyElements(doc, company, "section", section));
         company.appendChild(getCompanyElements(doc, company, "YearID", yearId));
+        company.appendChild(getCompanyElements(doc, company, "classID", classID));
         return company;
     }
     
-    private Node getCursos(Document doc, String courseId, String section, String idTeacher,String yearId) {
+    private Node getCursos(Document doc, String courseId, String section, String idTeacher,String yearId,String classID) {
         Element company = doc.createElement("Course");
         company.appendChild(getCompanyElements(doc, company, "course_ID", courseId));
         company.appendChild(getCompanyElements(doc, company, "section", section));
         company.appendChild(getCompanyElements(doc, company, "teacher_ID", idTeacher));
         company.appendChild(getCompanyElements(doc, company, "YearID", yearId));
+        company.appendChild(getCompanyElements(doc, company, "classID", classID));
         return company;
     }
     
-    private Node getBloques(Document doc, String day, String begin, String tempId, String courseId, String section,String yearId) {
+    private Node getBloques(Document doc, String day, String begin, String tempId, String courseId, String section,String yearId,String classID) {
         Element company = doc.createElement("Block");      
         company.appendChild(getCompanyElements(doc, company, "day", day));
         company.appendChild(getCompanyElements(doc, company, "begin", begin));
@@ -594,6 +641,8 @@ public class Algoritmo {
         company.appendChild(getCompanyElements(doc, company, "course_ID", courseId));
         company.appendChild(getCompanyElements(doc, company, "section", section));
         company.appendChild(getCompanyElements(doc, company, "YearID", yearId));
+        company.appendChild(getCompanyElements(doc, company, "classID", classID));
+
         return company;
     }
      
@@ -1115,7 +1164,7 @@ public class Algoritmo {
                             t.ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
                             t.incrementarNumSecciones();
                    
-                            secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true));
+                            secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true,0));
                             c.ocuparHueco(sec.get(stids.get(i).x));
      
                           //  updateStids(stids,idsAsignados,studentsCourse,sec,c,r);//fase prueba actualizara lista de estudiantes para que la lista stids se mantenga ordenada

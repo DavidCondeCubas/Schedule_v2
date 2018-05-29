@@ -1413,7 +1413,7 @@ public class Consultas {
              
                 auxSectionsIn = new ArrayList<>();
                 sectionsModificadas = new ArrayList<>();
-                String consulta = "SELECT distinct Section,StaffID,Pattern,LockEnrollment,LockSchedule FROM Classes left join roster on \n"
+                String consulta = "SELECT distinct Section,StaffID,Pattern,LockEnrollment,LockSchedule,Classes.ClassID FROM Classes left join roster on \n"
                         + "                        (Classes.ClassID = roster.ClassID)\n"
                         + "                        where CourseId = " + course.getIdCourse() + " and Classes.YearId = " + yearID;
                 ResultSet rs = DBConnect.renweb.executeQuery(consulta);
@@ -1434,7 +1434,7 @@ public class Consultas {
                     } else {
                         aux.add(0); //  lockSchedulle
                     }
-
+                    aux.add(rs.getInt(6)); // classID
                     sectionsModificadas.add((ArrayList<Integer>) aux.clone());
                 }
                 if (!sectionsModificadas.isEmpty()) {
@@ -1457,6 +1457,7 @@ public class Consultas {
                         auxSec.setLockEnrollment(sectionsModificadas.get(i).get(3));
                         auxSec.setLockSchedule(sectionsModificadas.get(i).get(4));
                         auxSec.setTeacher(teachers.get(sectionsModificadas.get(i).get(1)));
+                        auxSec.setClassId(sectionsModificadas.get(i).get(5));
 
                         consulta = "SELECT * from SchedulePatternsTimeTable "
                                 + " where patternnumber = " + sectionsModificadas.get(i).get(2) + " and templateID =" + templateID;

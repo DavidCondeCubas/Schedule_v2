@@ -77,8 +77,13 @@ public class Restrictions {
         ArrayList<Student> st = new ArrayList();
         this.studentsCourse = Consultas.getCoursesGroups(st, idCourses, yearid, tempid); //5sg
         this.students = new HashMap<>();
+        
         st = (new Conjuntos<Student>()).union(st,
                 cs.restriccionesStudent(idCourses, studentsCourse, yearid));
+        
+        
+        //chargeHashStudents();
+        
         for (Student s : st) {
             this.students.put(s.getId(), s);
         }
@@ -107,6 +112,16 @@ public class Restrictions {
         System.err.println("");*/
     }
 
+    private void chargeHashStudents(){
+        /*
+           public HashMap<Integer, ArrayList<Integer>> studentsCourse;
+    public HashMap<Integer, Student> students;
+        */
+        for (HashMap.Entry<Integer, ArrayList<Integer>> entry : studentsCourse.entrySet()) {
+            //System.out.println("clave=" + entry.getKey() + ", valor=" + entry.getValue());
+            
+        }
+    }
     private void removeCoursesLinked() {
         ArrayList<Course> auxCourses= new ArrayList<>();
         for (int i = 0; i < this.linkedCourses.size(); i++) {
