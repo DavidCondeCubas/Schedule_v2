@@ -211,6 +211,20 @@ public class Course {
             sections++;
         }
     }
+    public void ocuparHueco(ArrayList<Tupla> list,Integer numSeccion) {
+        if (list != null && !list.isEmpty()) {
+            if (huecos[(Integer) list.get(0).x][(Integer) list.get(0).y].equals("0")) {
+                for (Tupla<Integer, Integer> t : list) {
+                    huecos[t.x][t.y] = "" + numSeccion;
+                }
+            } else {
+                for (Tupla<Integer, Integer> t : list) {
+                    huecos[t.x][t.y] += " and " + numSeccion;
+                }
+            }
+            sections++;
+        }
+    }
 
     /**
      * Devuelve los huecos disponibles en los estudiantes no asignados al curso

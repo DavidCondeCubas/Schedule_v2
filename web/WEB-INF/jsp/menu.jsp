@@ -106,7 +106,7 @@
 
 
                 var start = new Date();
-                var maxTime = 37000;
+                var maxTime = 64000;
                 var timeoutVal = Math.floor(maxTime / 100);
                 animateUpdate();
 

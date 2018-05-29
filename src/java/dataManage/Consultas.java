@@ -1452,6 +1452,7 @@ public class Consultas {
                         }
 
                         auxSec.setIdStudents((ArrayList<Integer>) arrayStud.clone());
+                        auxSec.setNumSeccion(sectionsModificadas.get(i).get(0));
                         auxSec.setIdTeacher(sectionsModificadas.get(i).get(1));
                         auxSec.setLockEnrollment(sectionsModificadas.get(i).get(3));
                         auxSec.setLockSchedule(sectionsModificadas.get(i).get(4));

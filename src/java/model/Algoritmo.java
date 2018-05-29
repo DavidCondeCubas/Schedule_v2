@@ -120,7 +120,7 @@ public class Algoritmo {
                 noAsign = fillSections(r, course,noAsign, r.students);
                
                 //id:695  science
-               /* ArrayList<ArrayList<Tupla>> opcionesAsociadas = new ArrayList<>();
+               /*ArrayList<ArrayList<Tupla>> opcionesAsociadas = new ArrayList<>();
                 ArrayList<ArrayList<Tupla>> opciones = new ArrayList<>();
                   
                 
@@ -209,10 +209,24 @@ public class Algoritmo {
                                 courseAsociado.addSeccion(course.getArraySecciones().get(i));
                            }
                            else{
-                               if(seccionesHabilitadas.isEmpty())
+                               
+                               if(seccionesHabilitadas.isEmpty()){
+                                   courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(i).patronUsado,courseAsociado.getArraySecciones().get(i).getNumSeccion());
                                     courseAsociado.getArraySecciones().get(i).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents());
+                               }
                                else{
-                                    courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(i)-1).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents());
+                                   int ind = 0;
+                                   boolean exito = false;
+                                   while(ind < courseAsociado.getArraySecciones().size() && !exito){
+                                       if(courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()){
+                                            courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(ind).patronUsado,courseAsociado.getArraySecciones().get(i).getNumSeccion());
+                                            courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents());
+                                            exito = true;
+                                       }
+                                       else{
+                                            ind++;
+                                       }
+                                   }
                                }
                            }
   
@@ -257,7 +271,7 @@ public class Algoritmo {
         ArrayList<Seccion> aux = new ArrayList<>();   
         for (int i = 0; i < r.mapSecciones.get(course.getIdCourse()).size(); i++) {
             Seccion sAux = new Seccion(r.mapSecciones.get(course.getIdCourse()).get(i));
-            sAux.setNumSeccion(i+1);
+            //sAux.setNumSeccion(i+1);
             aux.add(sAux);
         } 
         return aux;
@@ -330,7 +344,7 @@ public class Algoritmo {
 
                  if (k  > 0){ // se llena los huecos de ese profesor incluyendole la seccion
                  //    secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true));
-                     c.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado());
+                     c.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(),c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
                      c.getArraySecciones().get(stids.get(i).x).setLockSchedule(true);
                      c.getArraySecciones().get(stids.get(i).x).setLockEnrollment(true);
                      updateStids(stids,idsAsignados,studentsCourse,c,r);//fase prueba actualizara lista de estudiantes para que la lista stids se mantenga ordenada

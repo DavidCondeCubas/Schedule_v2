@@ -205,7 +205,16 @@
                                 
                             }
                             out.println("</tr>");
-                            /*
+                            
+                           /* String[][] matSections = new String[TAMX][TAMY];
+                     
+                            for (int i = 0; i < TAMX; i++) {
+                                for (int j = 0; j < TAMY; j++) {
+                                    matSections[i][j] ="";
+                                }
+                            }
+                            */
+                            
                             out.println(headCols);
                             swapcolor = true;
                             for (int i = 0; i < TAMY; i++) {
@@ -224,19 +233,14 @@
                                 for (int j = 0; j < TAMX; j++) {
                                     if (!t.getHuecos()[j][i].equals("0")) {
                                         String aux = t.getHuecos()[j][i] ;
-                                        if(aux.contains("0 and")){
-                                            aux = aux.replace("0 and", "");
-                                        }
-                                        if(aux.contains("0")){
-                                            aux= aux.replace("0", "");
-                                        }
                                         out.println("<td class='text-center'> section " +aux+ "</td>");
                                     } else {
                                         out.println("<td> </td>");
                                     }
+                                 
                                 }
                                 out.println("</tr>");
-                            }*/
+                            }
                             out.println("</table>");
                             out.println("</div>");
                         }

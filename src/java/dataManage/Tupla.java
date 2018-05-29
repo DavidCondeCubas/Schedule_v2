@@ -32,10 +32,16 @@ public class Tupla <X, Y>{
         return y;
     }
     
-
+    public int get_x_Int(){
+        return Integer.parseInt(x.toString());
+    }
   
+     public int get_y_Int(){
+        return Integer.parseInt(x.toString());
+    }
     @Override
     public boolean equals(Object o){
         return ((Tupla)o).x.equals(this.x) && ((Tupla)o).y.equals(this.y);
     }
+            
 }
