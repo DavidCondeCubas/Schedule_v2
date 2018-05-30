@@ -54,6 +54,7 @@ public class Course {
     private ArrayList<Seccion> arraySecciones;
     private ArrayList<Integer> sectionsLinkeadas;
     
+    
     public Course(Course c) {
         this.huecos = c.getHuecos(); // cuadricula
         this.idCourse = c.getIdCourse(); // id del curso

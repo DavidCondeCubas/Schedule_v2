@@ -931,14 +931,36 @@ public class Consultas {
         return ret;
     }
 
-    public ArrayList<Teacher> teachersList(String tempid) {
-        ArrayList<Teacher> ret = new ArrayList<>();
-        for (Integer s : teachers) {
-            if (!s.equals("")) {
-                ret.add(restriccionesTeacher(tempid, s));
+    public ArrayList<Teacher> teachersList(String tempid,int[] tempinfo) {
+         ArrayList<Teacher> ret = new ArrayList<>();
+        try {
+            /*
+             consulta = "select * from courses"
+                    + " where Elementary=" + tempinfo[0]
+                    + " and HS=" + tempinfo[1]
+                    + " and MidleSchool=" + tempinfo[2]
+                    + " and PreSchool=" + tempinfo[3];
+            rs = DBConnect.renweb.executeQuery(consulta);
+            */
+            String consulta = "SELECT StaffID FROM Person_Staff where Elementary=" + tempinfo[0] 
+                    + " and HS=" + tempinfo[1] +" and MiddleSchool= " + tempinfo[2] +" and PreSchool=" + tempinfo[3];
+            ResultSet rs;
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                int staffId = rs.getInt(1);
+                if(!this.teachers.contains(staffId)){
+                    teachers.add(staffId);
+                }
             }
+            for (Integer s : teachers) {
+                if (!s.equals("")) {
+                    ret.add(restriccionesTeacher(tempid, s));
+                }
+            }      
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return ret;
+          return ret;
     }
 
     public Teacher restriccionesTeacher(String tempid, int id) {

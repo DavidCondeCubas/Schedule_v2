@@ -174,26 +174,8 @@
                             for (int j = 0; j < t.getArraySecciones().size(); j++) {
                                 String studentNames = "";
 
-                                /* out.println("<td>Section " + j + ":<br>"
-                                    + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</td>");
-                                 */
-//                                out.println("<td></td>");
                                 out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"
                                         + "Teacher: " + hashPersons.get(t.getArraySecciones().get(j).getIdTeacher()) + " </strong>");
-
-                                // + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getName()+"</strong>");
-                                // + "Teacher: "+t.getTeacher(lista, t.getIdCourse(), j).getIdTeacher()+"</strong>");
-                                /* for (int k = 0; k < t.getStudentsAsignados().size(); k++) {
-                               
-                                if(lista2.get(t.getStudentsAsignados().get(k)).getNumSectionByCourse(t.getIdCourse()) == j)
-                                {
-                                   // studentNames +=  lista2.get(t.getStudentsAsignados().get(k)).getNumSectionByCourse(t.getIdCourse());
-                                    if(!studentNames.contains(lista2.get(t.getStudentsAsignados().get(k)).getName()))
-                                        studentNames += "<br>" + lista2.get(t.getStudentsAsignados().get(k)).getName();
-                                     
-                                }
-                                    
-                            }*/
                                 for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
                                     studentNames += "<br>" + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
                                 }

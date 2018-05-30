@@ -95,10 +95,11 @@ public class Restrictions {
 
         /*ArrayList<Integer> auxPrueba = new ArrayList<>();
         auxPrueba.add(idCourses.get(0));*/
-        this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses), cs.templateInfo(tempid));//aqui es donde tarda mucho
+        int[] tempInfo =  cs.templateInfo(tempid);
+        this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses), tempInfo);//aqui es donde tarda mucho
         this.courses.sort(new Restrictions.CompCoursesRank());
        
-        this.teachers = cs.teachersList(tempid);
+        this.teachers = cs.teachersList(tempid,tempInfo);
         
         for (Teacher teacher : this.teachers) {
             this.hashTeachers.put(teacher.getIdTeacher(), teacher);
