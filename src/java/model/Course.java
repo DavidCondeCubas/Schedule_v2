@@ -53,6 +53,7 @@ public class Course {
     private String patternGroup;
     private ArrayList<Seccion> arraySecciones;
     private ArrayList<Integer> sectionsLinkeadas;
+    private int minChildPerSection;
     
     
     public Course(Course c) {
@@ -83,6 +84,7 @@ public class Course {
         this.preferedBlockString = c.getPreferedBlockString();
         this.mandatoryBlockRange = c.getMandatoryBlockRange();
         this.sectionsLinkeadas = c.getSectionsLinkeadas();
+        this.minChildPerSection = c.getMinChildPerSection();
     }
 
     public Course(int idCourse) {
@@ -376,6 +378,7 @@ public class Course {
         }
         ArrayList<Integer> colsHabilitadas = new ArrayList<>();
         ArrayList<Integer> rowsHabilitadas = new ArrayList<>();
+
         ArrayList<Tupla> tuplasHabilitadas = new ArrayList<>();
 
         calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
@@ -806,8 +809,8 @@ public class Course {
         this.blocksWeek = blocksWeek;
     }
 
-    public int getMaxSections() {
-        return Integer.parseInt(maxSections);
+    public String getMaxSections() {
+        return  maxSections;
     }
 
     public void setMaxSections(String maxSections) {
@@ -1140,4 +1143,29 @@ public class Course {
             this.sectionsLinkeadas.add(Integer.parseInt(secLinks[i]));
         }
     }
+
+    public HashMap<String, ArrayList<Tupla<Integer, Integer>>> getPriorityPattern() {
+        return priorityPattern;
+    }
+
+    public void setPriorityPattern(HashMap<String, ArrayList<Tupla<Integer, Integer>>> priorityPattern) {
+        this.priorityPattern = priorityPattern;
+    }
+
+    public String getPatternGroup() {
+        return patternGroup;
+    }
+
+    public void setPatternGroup(String patternGroup) {
+        this.patternGroup = patternGroup;
+    }
+
+    public int getMinChildPerSection() {
+        return minChildPerSection;
+    }
+
+    public void setMinChildPerSection(int minChildPerSection) {
+        this.minChildPerSection = minChildPerSection;
+    }
+    
 }

@@ -81,195 +81,216 @@ public class Algoritmo {
     public void algo(ModelAndView mv, Restrictions r, int roommode,String schoolCode,String yearId, String templateId) {
        
         for (Course course : r.courses) {
-                if(!containsValueInLinkedCourse(r,course.getIdCourse())){
-          //  if(!r.linkedCourses.containsValue(""+course.getIdCourse())){
+            if(!containsValueInLinkedCourse(r,course.getIdCourse())){
                 course.setArraySecciones(chargeArraySections(r,course)); 
-               // course.fillPriorityPattern();
-                int minsections = 1; //falla al dividir entre 0
-                try {
+                /*
+                 int maxStudentSection = c.getMaxChildPerSection();
+                if (maxStudentSection == 0) {
+                    maxStudentSection = CHILDSPERSECTION; // POR DEFECTO
+                }
+             //   int numMinStudents_Section = (int) Math.round(maxStudentSection * 0.70);   
+     */
+                int maxSections ;
+                if(course.getMaxSections() == null || course.getMaxSections().equals("")){
+                    maxSections = r.studentsCourse.get(course.getIdCourse()).size() / course.getMaxChildPerSection();
+                    if(r.studentsCourse.get(course.getIdCourse()).size() % course.getMaxChildPerSection() !=0)
+                        maxSections++;
+                }
+                else{
+                    maxSections = Integer.parseInt(course.getMaxSections());
+                }
+                if(course.getArraySecciones().size() < maxSections){
+                    int i = course.getArraySecciones().size();
+                    while(i < maxSections){
+                        Seccion auxSeccion = new Seccion();
+                        auxSeccion.setNumSeccion(i+1);
+                        course.addSeccion(new Seccion(auxSeccion));
+                        i++;
+                    }
+                }
+       
+                ArrayList<Integer> noAsign = (ArrayList<Integer>) r.studentsCourse.get(course.getIdCourse()).clone();     
+                // FALTA ACABAR LOS LOGS DE LAS FUNCIONES MODIFICADAS
+                for (int i = 0; i < course.getArraySecciones().size(); i++) {
+                    if(!course.getArraySecciones().get(i).lockSchedule && course.getArraySecciones().get(i).lockEnrollment){
+                        noAsign = generatePattern_Section(r,r.teachers,course,course.opciones(r.totalBlocks,Log),
+                              course.getArraySecciones().get(i).getIdStudents(),r.students,course.getArraySecciones().get(i));
+                                     
+                    }
+                    else if(course.getArraySecciones().get(i).lockSchedule && !course.getArraySecciones().get(i).lockEnrollment){
+                        noAsign = fillSection(course.getArraySecciones().get(i),r, course,noAsign, r.students);
+                    }
+                    else if(!course.getArraySecciones().get(i).lockSchedule && !course.getArraySecciones().get(i).lockEnrollment){
+                       noAsign = generatePattern_Section(r,r.teachers,course,course.opciones(r.totalBlocks,Log),
+                               noAsign,r.students,course.getArraySecciones().get(i));
+                                     }
+                    else{ // lockSchedule && lockEnrollment                 
+                        for (int j = 0; j < course.getArraySecciones().get(i).getIdStudents().size(); j++) {
+                            r.students.get(course.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
+                        }
+                        course.ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(),course.getArraySecciones().get(i).getNumSeccion());
+                        course.getArraySecciones().get(i).setLockSchedule(true);
+                        course.getArraySecciones().get(i).setLockEnrollment(true);
+                        
+                        Teacher t_Aux = r.hashTeachers.get(course.getArraySecciones().get(i).getIdTeacher());
+                        if(t_Aux != null){
+                            t_Aux.ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
+                            t_Aux.incrementarNumSecciones();
+                            course.getArraySecciones().get(i).setTeacher(t_Aux);
+                        }
+                        noAsign = conjuntos.diferencia(noAsign, course.getArraySecciones().get(i).getIdStudents());
+                    }
+                }
+                //aqui tengo que meter el algoritmo que intentara acabar de llenar todas las secciones con los alumnos que no 
+                //lograqron ser matriculados en estas secciones.
+                /**
+                 */
+                ArrayList<Boolean> marcasAlumnos = new ArrayList<>();
+
+                for (int j = 0; j < noAsign.size(); j++) {
+                    marcasAlumnos.add(false);
+                }
+
+                Collections.sort(course.getArraySecciones(), new CompSeccionesStudents());
+
+                //     students_Section.add(-1);
+                /* for (int j = 0; j < students_Section.get(i).y; j++) {
+                    alumnosNoAsignados.ge
+                }*/
+
+             //   c.setStudentsAsignados(idsAsignados); // se actualiza la lista aunque no se usaron a todos los estudiantes
+
+                
+                for (int j = 0; j < course.getArraySecciones().size(); j++) {
+                    if(!course.getArraySecciones().get(j).lockEnrollment){
+                    for (int k = 0; k < noAsign.size(); k++) {
+                        if (!marcasAlumnos.get(k) && course.getArraySecciones().get(j).getIdStudents().size() < course.getMaxChildPerSection()) {       
+                            if (r.students.get(noAsign.get(k)).patronCompatible(course.getArraySecciones().get(j).getPatronUsado())) {
+                                if(!course.isGR()){ 
+                                    r.students.get(noAsign.get(k)).ocuparHueco(course.getArraySecciones().get(j).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(j).getNumSeccion());
+                                    //course.getArraySecciones().get(j).IncrNumStudents();
+                                    course.getArraySecciones().get(j).addStudent(noAsign.get(k));
+                                    marcasAlumnos.set(k,true);
+                                }
+                                else{
+                                    if(course.getArraySecciones().get(j).getGender().equals(r.students.get(noAsign.get(k)).getGenero())){     
+                                        r.students.get(noAsign.get(k)).ocuparHueco(course.getArraySecciones().get(j).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(j).getNumSeccion());
+                                        course.getArraySecciones().get(j).IncrNumStudents();
+                                        course.getArraySecciones().get(j).addStudent(noAsign.get(k));
+
+                                        marcasAlumnos.set(k,true);
+                                    }
+                                }
+                            }       
+                        }
+                    }
+                    }
+                }
+                ArrayList<Integer> auxNoAsign = new ArrayList<>();
+                for(int i = 0;i< noAsign.size();i++){
+                    if(!marcasAlumnos.get(i)){
+                        auxNoAsign.add(noAsign.get(i));
+                    }    
+                }
+                noAsign = auxNoAsign;
+                //actualizamos el noASign
+                
+                 /*
+                 **///
+                if (!noAsign.isEmpty()) {
                     int numAlumnos = course.getMaxChildPerSection();
                     if (numAlumnos == 0) {
                         numAlumnos = CHILDSPERSECTION; // POR DEFECTO
                     }
-                    //MINIMO DE SECCIONES NECESARIAS PARA TODOS LOS ESTUDIANTES (TENIENDO EN CUENTA EL NUMERO MAX  DE ALUMNOS POR AULA)
-                    //solo prueba
-                    if (r.studentsCourse.get(course.getIdCourse()).size() % numAlumnos == 0) {
-                        minsections = (r.studentsCourse.get(course.getIdCourse()).size() / numAlumnos);
-                    } else {
-                        minsections = 1 + (r.studentsCourse.get(course.getIdCourse()).size() / numAlumnos);
+                    int sectionsNoEnroled = noAsign.size() / numAlumnos;
+                    if (sectionsNoEnroled == 0) {
+                        sectionsNoEnroled = 1;
                     }
-                    //pruebas 
-                    //if(minsections == 0) minsections = 4;
-                } catch (ArithmeticException e) {
-                    //e.printStackTrace();
-                    System.out.println("id:" + course.getIdCourse() + " name: " + r.cs.nameCourse(course.getIdCourse()));
+                    course.setStudentsNoAsignados(noAsign);
+                    course.setSectionsNoEnrolled(sectionsNoEnroled);
+                    double noasignsize = noAsign.size();
+                    double studentscoursesize = r.studentsCourse.get(course.getIdCourse()).size();
+                    double percent = 100 - (noasignsize / studentscoursesize) * 100;
+                    course.setPercentEnrolled(percent);
+                } else {
+                    course.setSectionsNoEnrolled(0);
+                    course.setPercentEnrolled(100);
                 }
-                
-                course.setMinSections(minsections);
-                ArrayList<Integer> noAsign = (ArrayList<Integer>) r.studentsCourse.get(course.getIdCourse()).clone();
-                // esto rellena las secciones de manera equitativa tutilizando el random              
-                           
-                noAsign = fillSections(r, course,noAsign, r.students);
-               
-                //id:695  science
-               /*ArrayList<ArrayList<Tupla>> opcionesAsociadas = new ArrayList<>();
-                ArrayList<ArrayList<Tupla>> opciones = new ArrayList<>();
-                  
-                
-                if(r.getLinkedCourses().containsKey(""+course.getIdCourse())){ // si hay alguna asignatura linkeado a este
-                    opciones = course.opcionesLinkeados(opcionesAsociadas,r.totalBlocks, Log);
+            }
+            if (r.getLinkedCourses().containsKey("" + course.getIdCourse())) {
+                int k = 0;
+                boolean encontrado = false;
+                while (k < r.courses.size() && !encontrado) {
+                    if (r.courses.get(k).getIdCourse() == r.getLinkedCourses().get("" + course.getIdCourse()).getIdCourse()) {
+                        encontrado = true;
+                    } 
+                    else {
+                        k++;
+                    }
+
                 }
-                else{ //s no hay ninguna asignatura linkeada
-                   opciones = course.opciones(r.totalBlocks, Log);
-                }
-                if (opciones.size() > 0) {
-                    //Segun el modo de gestion de clases cambia como rellenas la parte de studentsSections
-                    switch (roommode) {
-                        case 0:
-                            noAsign = studentSections(r, r.teachers, course, minsections,
-                                    opciones, noAsign, noAsignSection, r.students, null);
-                            break;
-                        case 1:
-                            noAsign = studentSections(r, r.teachers, course, minsections,
-                                    opciones, noAsign, noAsignSection, r.students, course.getRooms());
-                            break;
-                        case 2:
-                            noAsign = studentSections(r, r.teachers, course, minsections,
-                                    opciones, noAsign, noAsignSection, r.students, r.groupRooms);
-                            break;
-                        case 3:
-                            if (course.getRooms().isEmpty()) {
-                                noAsign = studentSections(r, r.teachers, course, minsections,
-                                        opciones, noAsign, noAsignSection, r.students, r.groupRooms);
-                            } else {
-                                noAsign = studentSections(r, r.teachers, course, minsections,
-                                        opciones, noAsign, noAsignSection, r.students, course.getRooms());
+                if (encontrado) {
+                    Course courseAsociado = r.courses.get(k);
+                    ArrayList<Integer> seccionesHabilitadas = new ArrayList<>();
+                    seccionesHabilitadas = r.getLinkedCourses().get("" + course.getIdCourse()).getSectionsLinkeadas();
+
+                    if (courseAsociado.getArraySecciones() == null || courseAsociado.getArraySecciones().isEmpty()) {
+                        courseAsociado.setArraySecciones(chargeArraySections(r, courseAsociado));
+                    }
+                    // courseAsociado.setArraySecciones(course.getArraySecciones()); 
+                    for (int i = 0; i < course.getArraySecciones().size(); i++) {
+                        if (courseAsociado.getArraySecciones().size() <= i) {
+                            courseAsociado.addSeccion(course.getArraySecciones().get(i));
+                        } 
+                        else if (seccionesHabilitadas.isEmpty()) { // todos
+
+                            int ind = 0;
+                            boolean exito = false;
+
+                            while (ind < courseAsociado.getArraySecciones().size() && !exito) {
+
+                                if (courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()) {
+
+                                    courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(ind).patronUsado, courseAsociado.getArraySecciones().get(ind).getNumSeccion());
+                                    courseAsociado.getArraySecciones().get(ind).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students, courseAsociado);
+                                    exito = true;
+                                } else {
+                                    ind++;
+                                }
                             }
-                            break;
-                        default:
-                            break;
-                    }
-*/
-                    //si no asign es distinto de null quiere decir que no se han podido 
-                    //asignar todos los estudiantes al curso
-                    if (noAsign != null) {
-                        int numAlumnos = course.getMaxChildPerSection();
-                        if (numAlumnos == 0) {
-                            numAlumnos = CHILDSPERSECTION; // POR DEFECTO
-                        }
-                        int sectionsNoEnroled = noAsign.size() / numAlumnos;
-                        if (sectionsNoEnroled == 0) {
-                            sectionsNoEnroled = 1;
-                        }
-                        course.setStudentsNoAsignados(noAsign);
-                        course.setSectionsNoEnrolled(sectionsNoEnroled);
-                        double noasignsize = noAsign.size();
-                        double studentscoursesize = r.studentsCourse.get(course.getIdCourse()).size();
-                        double percent = 100 - (noasignsize / studentscoursesize) * 100;
-                        course.setPercentEnrolled(percent);
-                    } else {
-                        course.setSectionsNoEnrolled(0);
-                        course.setPercentEnrolled(100);
-                    }
-            }
-                /*} else {
-                    System.out.println("FAILURE: " + course.getIdCourse());
-                }        */                   
-                              //se insertara la asignatura que tenfa una dependencia
-               if(r.getLinkedCourses().containsKey(""+course.getIdCourse())){  
-                    int k = 0;
-                    boolean encontrado = false;
-                    while (k < r.courses.size() && !encontrado){
-                        if(r.courses.get(k).getIdCourse() == r.getLinkedCourses().get(""+course.getIdCourse()).getIdCourse()){
-                            encontrado = true;
-                        }
-                        else{
-                           k++; 
-                        }
-                        
-                    }                       
-                    if(encontrado){
-                        Course courseAsociado = r.courses.get(k); 
-                        ArrayList<Integer> seccionesHabilitadas = new ArrayList<>();
-                        seccionesHabilitadas = r.getLinkedCourses().get(""+course.getIdCourse()).getSectionsLinkeadas();
-                                       
-                        if(courseAsociado.getArraySecciones() == null || courseAsociado.getArraySecciones().isEmpty())
-                            courseAsociado.setArraySecciones(chargeArraySections(r,courseAsociado)); 
-                       // courseAsociado.setArraySecciones(course.getArraySecciones()); 
-                        for (int i = 0; i < course.getArraySecciones().size(); i++) {
-                           if(courseAsociado.getArraySecciones().size() <= i){
-                                courseAsociado.addSeccion(course.getArraySecciones().get(i));
-                           }
-                           else{
-                               
-                               if(seccionesHabilitadas.isEmpty()){ // todos
-                                   
-                                   int ind = 0;
-                                   boolean exito = false;
-                                   
-                                   while(ind < courseAsociado.getArraySecciones().size() && !exito){
-                                       
-                                       if(courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()){
-                
-                                            courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(ind).patronUsado,courseAsociado.getArraySecciones().get(ind).getNumSeccion());
-                                            courseAsociado.getArraySecciones().get(ind).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students,courseAsociado);
-                                            exito = true;
-                                       }
-                                       else{
-                                            ind++;
-                                       }
-                                   }
-                                   
-                                 }
-                               else{
-                                   int ind = 0;
-                                   boolean exito = false;
-                                   while(ind < courseAsociado.getArraySecciones().size() && !exito){
-                                       if(courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()){
-                                            
-                                            courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).patronUsado,courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getNumSeccion());
-                                            courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students,courseAsociado);
-                                            //courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).setTeacher(r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getIdTeacher()));
-                                            
-                                            Teacher t_Aux = r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getIdTeacher());
-                                            t_Aux.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getPatronUsado(), courseAsociado.getIdCourse() * 100 + courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getNumSeccion());
-                                            t_Aux.incrementarNumSecciones();
 
-                                            courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).setTeacher(t_Aux);
-                                            exito = true;
-                                       }
-                                       else{
-                                            ind++;
-                                       }
-                                   }
-                               }
-                           }
-  
+                        } 
+                        else {
+                            int ind = 0;
+                            boolean exito = false;
+                            while (ind < courseAsociado.getArraySecciones().size() && !exito) {
+                                if (courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()) {
+
+                                    courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).patronUsado, courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getNumSeccion());
+                                    courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students, courseAsociado);
+                                    //courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).setTeacher(r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getIdTeacher()));
+
+                                    Teacher t_Aux = r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getIdTeacher());
+                                    t_Aux.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getPatronUsado(), courseAsociado.getIdCourse() * 100 + courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getNumSeccion());
+                                    t_Aux.incrementarNumSecciones();
+
+                                    courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).setTeacher(t_Aux);
+                                    exito = true;
+                                } 
+                                else {
+                                    ind++;
+                                }
+                            }
                         }
+
                     }
                 }
-                               /*            students.get(j).ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
-     t.ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
-                                t.incrementarNumSecciones();
-                                //updateStids(stids,idsAsignados,studentsCourse,sec,c,r);//fase prueba actualizara lista de estudiantes para que la lista stids se mantenga ordenada
-                            //    i = 0 ;
-                                secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x));
-                                c.ocuparHueco(sec.get(stids.get(i).x));
-                                /*/
-                        
-
-                           //SOLO PARA PRUEBAS
-               
-        //    }
-            }
-   //     }
-//        XMLWriterDOM.xmlCreate(trst, retst);
-        
-
+            }                 
+        }
         saveXML_FTP(yearId,templateId,schoolCode,r);
-        
         HashMap<Integer,String> persons = Consultas.getPersons();
         sortSectionsAndStudents(r.courses,persons);
+        
         mv.addObject("TAMX", TAMX);
         mv.addObject("TAMY", TAMY);
         mv.addObject("persons", persons);
@@ -281,6 +302,140 @@ public class Algoritmo {
         mv.addObject("hashTeachers",r.hashTeachers);
         mv.addObject("grouprooms", r.groupRooms);
         mv.addObject("log", Log);
+    }
+    
+    private ArrayList<Integer> generatePattern_Section(Restrictions r, ArrayList<Teacher> teachers, Course c, ArrayList<ArrayList<Tupla>> sec,
+            ArrayList<Integer> studentsCourse, HashMap<Integer, Student> students,Seccion currentSec) {
+
+        int minStudentSection = c.getMinChildPerSection();
+        ArrayList<Integer> ret = new ArrayList<>();
+        ArrayList<Tupla<Integer, ArrayList<Integer>>> stids = new ArrayList<>();
+        ArrayList<Integer> idsAsignados = new ArrayList<>();
+        HashMap<Integer, Integer> hashStudents_cantPatrones = new HashMap<>();
+        initHashStudents(hashStudents_cantPatrones, studentsCourse);
+        for (int i = 0; i < sec.size(); i++) {
+            stids.add(new Tupla(i, new ArrayList<>()));
+            for (Integer j : studentsCourse) {
+                if (students.get(j).patronCompatible(sec.get(i))) {
+                    stids.get(i).y.add(j);
+                    hashStudents_cantPatrones.put(j, hashStudents_cantPatrones.get(j) + 1);
+                    
+                }
+            }
+        }
+        int idCourse = c.getIdCourse();
+        equilibrarGender(stids,students);
+        
+        //Ordena la lista de conjuntos por numero de estudiantes de mayor a menor.
+        try {
+            stids.sort(new CompConjuntos());
+          
+        } catch (Exception e) { // esto da errores aveces solucionar comparador
+            //return null;
+        }
+
+        sortStidsByPriority(stids, sec, c, r);
+        sortStudentsByPatron(stids, hashStudents_cantPatrones);
+        
+     
+        int lastTeacher = -1;
+        int lastStudent = -1;
+        int i = 0;
+
+        //recorro la lista de conjuntos y la de profesores
+ 
+        ArrayList<Teacher> teachersForCourse = new ArrayList<>();
+        
+        for(int y =0;y< teachers.size();y++){
+            if(c.getTrestricctions().contains(teachers.get(y).getIdTeacher()))
+                teachersForCourse.add(teachers.get(y));
+        }
+        boolean exito = false;
+        // HAY QUE REHACER ESTAQ PARTE YA QUE BASTARIA CON CREA R LA PRIMERA SECCION
+        // Y COPIAR LA LISTA DE ESTUDIANTES SI NO LOS TIENE BLOQUEADO 
+        // SI LO TUVIERA BLOQUEADO CAMBIAR LOS NSTUDENTS COURSE QUE ENTRAN
+        // POR PARAMETRO, ESTOS DEBERIAN CAMBIAR.
+       //while (i < stids.size() && secciones.size() < c.getMinSections())   {
+        while (i < stids.size() && !exito) { // recorrido a los bloques disponibles    
+                for (Teacher t : teachersForCourse) { // recorrido a los teachers  totales
+                    if ( c.getTrestricctions().contains(t.getIdTeacher()) && t.asignaturaCursable(c.getIdCourse()) // comprueba que el profesor puede iniciar una nueva seccion
+                            && t.patronCompatible(sec.get(stids.get(i).x))) {
+                        
+                            int k = 0;
+                            lastTeacher = i;
+
+                            for (Integer j : stids.get(i).y) { // studiantes
+                                if ((k < minStudentSection) && !idsAsignados.contains(j)
+                                        && students.get(j).patronCompatible(sec.get(stids.get(i).x))) {
+
+                                    idsAsignados.add(j);
+                                    students.get(j).ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
+                                    k++;
+                                    lastStudent = i;
+                                }
+                            }
+                            //una vez que ya hay estudiantes asignados ha esta seccion ocupamos el hueco en el teacher
+                            //y añadimos la seccion a la tabla del curso.
+                            if (k > 0) { // se llena los huecos de ese profesor incluyendole la seccion
+                                
+                                currentSec.setPatronUsado(sec.get(stids.get(i).x));
+                                
+                                Teacher t_Aux = r.hashTeachers.get(t.getIdTeacher());
+                                t_Aux.ocuparHueco( currentSec.getPatronUsado(), c.getIdCourse() * 100 +  currentSec.getNumSeccion());
+                                t_Aux.incrementarNumSecciones();
+                                
+                                currentSec.setTeacher(t_Aux);
+                                currentSec.copiarIdsStudents(idsAsignados, students, c);
+         
+                                c.ocuparHueco(currentSec.getPatronUsado(),currentSec.getNumSeccion());
+                                currentSec.setLockSchedule(true);
+                                currentSec.setLockEnrollment(true);
+
+                                exito =true;
+                            }
+                    }
+                }
+            i++;
+        }
+        //Si los estudiantes asignados son menos que el numero de students request
+        //creamos una entrada en el log y ponemos el porcentaje de acierto en el curso.
+        if (idsAsignados.size() != studentsCourse.size()) {
+            System.out.println("FAILURE");
+            ret = conjuntos.diferencia(studentsCourse, idsAsignados);
+            String tname = "";
+            for (Integer teacher : c.getTrestricctions()) {
+                tname += r.cs.fetchName(teacher) + " ,";
+            }
+            if (tname.length() > 2) {
+                tname = tname.substring(0, tname.length() - 1);
+            }
+            if (c.getTrestricctions().isEmpty()) {
+                Log.add("-No hay profesores asignados al curso:" + r.cs.nameCourse(c.getIdCourse()));
+            } else if (lastTeacher <= lastStudent) {
+                Log.add("-Los profesores " + tname + " asignados al curso:" + r.cs.nameCourse(c.getIdCourse()) + " no tienen disponible ningun hueco compatible");
+            } else {
+                Log.add("-Los siguientes estudiantes no tienen secciones disponibles para el curso " + r.cs.nameCourse(c.getIdCourse()) + ":");
+                String anadir = "";
+                ArrayList<ArrayList<Tupla>> aux = null;
+                for (Integer i2 : ret) {
+                    anadir += students.get(i2).getName() + ",";
+                    if (aux == null) {
+                        aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log));
+                    } else {
+                        aux = students.get(i2).listPatronesCompatibles(aux);
+                    }
+                }
+                c.setPatronesStudents(aux);
+
+                //anadir = anadir.substring(0, anadir.length() - 2) + ".";
+                Log.add(anadir);
+            }
+            for (Integer st : ret) {
+                students.get(st).addNoAsignado(c.getIdCourse());
+            }
+            
+        }
+        return ret;
     }
     
     private ArrayList<Integer> getSortIdsStudent(ArrayList<Integer> idsStudents,  HashMap<Integer,String> hashPersons){
@@ -348,7 +503,7 @@ public class Algoritmo {
             }
         }
     }
-    
+    /*
     private ArrayList<Integer> fillSections(Restrictions r, Course c,ArrayList<Integer> studentsCourse, HashMap<Integer, Student> students) {
         
         int maxStudentSection = c.getMaxChildPerSection();
@@ -474,57 +629,10 @@ public class Algoritmo {
                         }
                 }
             }
-            /* if (i + 1 < stids.size()) {
-            diferencia = conjuntos.diferencia(stids.get(i + 1).y, c.getArraySecciones().get(stids.get(i).x).getIdStudents());
-            }*/
+           
             i++;
         }
-              //  c.setStudentsAsignados(idsAsignados); // se actualiza la lista aunque no se usaron a todos los estudiantes
-
-        /*AQUI INTENTARE METER LOS ALUMNOS NO FUERON METIDOS EN NINGUNA SECCION 
-              SE METEN AQUI PARA INTENTAR EQUILIBRAR LAS SECCIONES*/
-
-        /*ArrayList<Integer> alumnosNoAsignados = conjuntos.diferencia(studentsCourse, idsAsignados);
-        ArrayList<Boolean> marcasAlumnos = new ArrayList<>();
-
-        for (int j = 0; j < alumnosNoAsignados.size(); j++) {
-            marcasAlumnos.add(false);
-        }
-
-        Collections.sort(secciones, new CompSeccionesStudents());
-
-        for (int j = 0; j < secciones.size(); j++) {
-            for (int k = 0; k < alumnosNoAsignados.size(); k++) {
-                if (!marcasAlumnos.get(k) && secciones.get(j).getNumStudents() < maxStudentSection) {       
-                    if (students.get(alumnosNoAsignados.get(k)).patronCompatible(secciones.get(j).getPatronUsado())) {
-                        if(!c.isGR()){ 
-                            idsAsignados.add(alumnosNoAsignados.get(k));
-                            students.get(alumnosNoAsignados.get(k)).ocuparHueco(secciones.get(j).getPatronUsado(), c.getIdCourse() * 100 + (j+1));
-                            secciones.get(j).IncrNumStudents();
-                            secciones.get(j).addStudent(alumnosNoAsignados.get(k));
-                            marcasAlumnos.set(k,true);
-                        }
-                        else{
-                            if(secciones.get(j).getGender().equals(students.get(alumnosNoAsignados.get(k)).getGenero())){
-                                idsAsignados.add(alumnosNoAsignados.get(k));
-                                students.get(alumnosNoAsignados.get(k)).ocuparHueco(secciones.get(j).getPatronUsado(), c.getIdCourse() * 100 + (j+1));
-                                secciones.get(j).IncrNumStudents();
-                                secciones.get(j).addStudent(alumnosNoAsignados.get(k));
-
-                                marcasAlumnos.set(k,true);
-                            }
-                        }
-                    }       
-                }
-            }
-        }
-        c.setArraySecciones(secciones);
-        c.setStudentsAsignados(idsAsignados); // se actualiza la lista aunque no se usaron a todos los estudiantes
-
-        for (Integer st : idsAsignados) {
-            students.get(st).addAsignado(c.getIdCourse());
-        }
-*/
+        
         //Si los estudiantes asignados son menos que el numero de students request
         //creamos una entrada en el log y ponemos el porcentaje de acierto en el curso.
         if (idsAsignados.size() != studentsCourse.size()) {
@@ -566,8 +674,121 @@ public class Algoritmo {
         }
         return null;
     }
+*/
+     private ArrayList<Integer> fillSection(Seccion currentSec,Restrictions r, Course c,ArrayList<Integer> studentsCourse, HashMap<Integer, Student> students) {
+        
+        //int maxStudentSection = c.getMinChildPerSection();
+        /*if (maxStudentSection == 0) {
+            maxStudentSection = (int) Math.round(c.getMaxChildPerSection() * 0.7); // POR DEFECTO
+        }*/
+        int minStudentSection = c.getMaxChildPerSection();
+        minStudentSection = (int) Math.round(minStudentSection*0.7);
+        
+        ArrayList<Tupla<Integer, ArrayList<Integer>>> stids = new ArrayList<>();   
+        ArrayList<Integer> idsAsignados = new ArrayList<>();
+          ArrayList<Integer> ret = new ArrayList<>();
+        idsAsignados = c.getAllIds();
+        chargeStatusStudents(r,c);
+        int idCourse = c.getIdCourse();
+                
+        
+        HashMap<Integer, Integer> hashStudents_cantPatrones = new HashMap<>();
+        initHashStudents(hashStudents_cantPatrones, studentsCourse);
+        
+        for (int i = 0; i < c.getArraySecciones().size(); i++) {
+            ArrayList<Integer> auxStids = c.getArraySecciones().get(i).getIdStudents();
+            stids.add(new Tupla(i, auxStids.clone()));
+                for (Integer j : studentsCourse) {
+                    if (!idsAsignados.contains(j) && students.get(j).patronCompatible(c.getArraySecciones().get(i).getPatronUsado())) {
+                        stids.get(i).y.add(j);
+                        hashStudents_cantPatrones.put(j, hashStudents_cantPatrones.get(j) + 1);   
+                    }
+                }           
+        }
+           
+        equilibrarGender(stids,students);
+        
+        //Ordena la lista de conjuntos por numero de estudiantes de mayor a menor.
+        try {
+            stids.sort(new CompConjuntos());
+            sortStudentsByPatron(stids, hashStudents_cantPatrones);
+        } catch (Exception e) { // esto da errores aveces solucionar comparador
+            //return null;
+        }
+        
 
-    
+        int i =0;
+        int lastTeacher = -1;
+        int lastStudent = -1;
+        boolean exito = false;
+        while (i < stids.size() && !exito)   {
+            if(c.getArraySecciones().get(stids.get(i).x).getNumSeccion() == currentSec.getNumSeccion()){
+            // while (i < stids.size()) { // recorrido a los secciones disponibles    
+                 int k = c.getArraySecciones().get(stids.get(i).x).getIdStudents().size();          
+                 
+                 for (Integer j : stids.get(i).y){ // studiantes
+                     if ((k < minStudentSection) && !idsAsignados.contains(j) 
+                             && students.get(j).patronCompatible(c.getArraySecciones().get(stids.get(i).x).getPatronUsado())) {
+                         idsAsignados.add(j);
+                         students.get(j).ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
+                         c.getArraySecciones().get(stids.get(i).x).addStudent(j);
+                         k++;
+                         lastStudent = i;
+                     }
+                 }
+
+                 if (k  > 0){ // se llena los huecos de ese profesor incluyendole la seccion
+                 //    secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true));
+                     c.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(),c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
+                     c.getArraySecciones().get(stids.get(i).x).setLockSchedule(true);
+                     c.getArraySecciones().get(stids.get(i).x).setLockEnrollment(true);
+
+                     Teacher t_Aux = r.hashTeachers.get(c.getArraySecciones().get(stids.get(i).x).getIdTeacher());
+                     t_Aux.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
+                     t_Aux.incrementarNumSecciones();
+                           
+                     c.getArraySecciones().get(stids.get(i).x).setTeacher(t_Aux);
+                     exito = true;
+                 }      
+            }                    
+            i++;
+        }
+        if (idsAsignados.size() != studentsCourse.size()) {
+            System.out.println("FAILURE");
+            ret = conjuntos.diferencia(studentsCourse, idsAsignados);
+            String tname = "";
+            for (Integer teacher : c.getTrestricctions()) {
+                tname += r.cs.fetchName(teacher) + " ,";
+            }
+            if (tname.length() > 2) {
+                tname = tname.substring(0, tname.length() - 1);
+            }
+            if (c.getTrestricctions().isEmpty()) {
+                Log.add("-No hay profesores asignados al curso:" + r.cs.nameCourse(c.getIdCourse()));
+            } else if (lastTeacher <= lastStudent) {
+                Log.add("-Los profesores " + tname + " asignados al curso:" + r.cs.nameCourse(c.getIdCourse()) + " no tienen disponible ningun hueco compatible");
+            } else {
+                Log.add("-Los siguientes estudiantes no tienen secciones disponibles para el curso " + r.cs.nameCourse(c.getIdCourse()) + ":");
+                String anadir = "";
+                ArrayList<ArrayList<Tupla>> aux = null;
+                for (Integer i2 : ret) {
+                    anadir += students.get(i2).getName() + ",";
+                    if (aux == null) {
+                        aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log));
+                    } else {
+                        aux = students.get(i2).listPatronesCompatibles(aux);
+                    }
+                }
+                c.setPatronesStudents(aux);
+                Log.add(anadir);
+            }
+            for (Integer st : ret) {
+                students.get(st).addNoAsignado(c.getIdCourse());
+            }
+        }
+        return ret;
+    }
+
    private void saveXML_FTP(String yearId, String templateId, String schoolCode,Restrictions r) {
         //get the file chosen by the user
         String server = "192.168.1.36";

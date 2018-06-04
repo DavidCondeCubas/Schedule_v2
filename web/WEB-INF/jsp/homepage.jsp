@@ -177,7 +177,7 @@
                                 out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"
                                         + "Teacher: " + hashPersons.get(t.getArraySecciones().get(j).getIdTeacher()) + " </strong>");
                                 for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
-                                    studentNames += "<br>" + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
+                                    studentNames += "<br>" + (k+1) + "- "+lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
                                 }
                                 out.println(studentNames);
                                 out.println("</td>");

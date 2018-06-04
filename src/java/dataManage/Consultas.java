@@ -270,19 +270,27 @@ public class Consultas {
         try {
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
-                //   ret.get(i).setBlocksWeek(rs.getInt(1));
-                switch (type) {
-                    case "Integer":
-                        hashObject.put(rs.getInt("id"), rs.getInt("data"));
-                        break;
-                    case "Boolean":
-                        hashObject.put(rs.getInt("id"), rs.getBoolean("data"));
-                        break;
-                    case "String":
-                        hashObject.put(rs.getInt("id"), rs.getString("data"));
-                        break;
-                    default:
-                        break;
+                String aux = rs.getString("data");
+                if(rs.getString("data") != null && !rs.getString("data").equals("")){
+                    //   ret.get(i).setBlocksWeek(rs.getInt(1));
+                    switch (type) {
+                        case "Integer":
+                            hashObject.put(rs.getInt("id"),Integer.parseInt(aux));         
+                            break;
+                        case "Boolean":
+                            if(aux.equals("true")){
+                                hashObject.put(rs.getInt("id"),true);
+                            }
+                            else{
+                                hashObject.put(rs.getInt("id"),false);
+                            }
+                            break;
+                        case "String":
+                            hashObject.put(rs.getInt("id"),aux);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -374,7 +382,8 @@ public class Consultas {
             HashMap<Integer, Object> hashbalanceTeachers = new HashMap<>();
             HashMap<Integer, Object> hashMandatoryBlocksRange = new HashMap<>();
             HashMap<Integer, Object> hashmaxBxD = new HashMap<>();
-
+            HashMap<Integer, Object> hashminSizePerSection = new HashMap<>();
+            
             //cargarHashMap(hashBlocksPerWeek,'course','BlocksPerWeek','int');
             cargarHashMap(hashBlocksPerWeek, "course", "BlocksPerWeek", "Integer");
             cargarHashMap(hashGR, "course", "GR", "Boolean");
@@ -390,7 +399,8 @@ public class Consultas {
             cargarHashMap(hashbalanceTeachers, "course", "balanceTeachers", "Boolean");
             cargarHashMap(hashMandatoryBlocksRange, "course", "MandatoryBlocksRange", "String");
             cargarHashMap(hashmaxBxD, "course", "maxBxD", "Integer");
-
+            cargarHashMap(hashminSizePerSection, "course", "minSizePerSection", "Integer");
+            
             for (int i = 0; i < ret.size(); i++) {
 
                 /*int prueba1 = (int) hashBlocksPerWeek.get(ret.get(i).getIdCourse());
@@ -733,6 +743,16 @@ public class Consultas {
                 while (rs.next()) {
                     ret.get(i).setMaxChildPerSection(rs.getInt(1));
                 }
+                
+                
+                if (hashminSizePerSection.containsKey(ret.get(i).getIdCourse())) {
+                  //  ret.get(i).setMinSections((int) hashminSizePerSection.get(ret.get(i)));
+                }
+                else{
+                    ret.get(i).setMinChildPerSection(ret.get(i).getMaxChildPerSection());
+                }
+
+                
                 //prueba
                 ret.get(i).insertarOActualizarCurso();
             }
@@ -1432,7 +1452,7 @@ public class Consultas {
              */
 
             for (Course course : courses) {
-             
+                int idCourse = course.getIdCourse();
                 auxSectionsIn = new ArrayList<>();
                 sectionsModificadas = new ArrayList<>();
                 String consulta = "SELECT distinct Section,StaffID,Pattern,LockEnrollment,LockSchedule,Classes.ClassID FROM Classes left join roster on \n"
@@ -1465,7 +1485,7 @@ public class Consultas {
                         ArrayList<Integer> arrayStud = new ArrayList<>();
                         consulta = "SELECT StudentID FROM Classes inner join roster on"
                                 + "(Classes.ClassID = roster.ClassID)"
-                                + " where Classes.CourseId = " + course.getIdCourse() + " and Classes.YearId = " + yearID
+                                + " where roster.enrolled = 1 and Classes.CourseId = " + course.getIdCourse() + " and Classes.YearId = " + yearID
                                 + " and Classes.Section =" + sectionsModificadas.get(i).get(0);
                         rs = DBConnect.renweb.executeQuery(consulta);
 
