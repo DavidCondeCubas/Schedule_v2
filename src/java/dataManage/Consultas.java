@@ -29,7 +29,7 @@ public class Consultas {
     private ArrayList<Integer> teachers;
     private Teacher tdefault;
     private Student stDefault;
-    private HashMap<Integer, String> courseName;
+    public static HashMap<Integer, String> courseName;
     //*****////
     private HashMap<Integer, String> namePersons;
     private HashMap<Integer, String> nameCourses;
@@ -1432,7 +1432,7 @@ public class Consultas {
     }
     //HashMap<Integer,HashMap<Integer,Seccion>> mapSecciones;//HashMap<idCourse,HashMap<numSeccion,Seccion>>
 
-    public HashMap<Integer, ArrayList<Seccion>> getDataSections(HashMap<Integer, Teacher> teachers, ArrayList<Course> courses, String yearID, String templateID) {
+    public HashMap<Integer, ArrayList<Seccion>> getDataSections(HashMap<Integer, Student> students, HashMap<Integer, Teacher> teachers, ArrayList<Course> courses, String yearID, String templateID,HashMap<String, Course> linkedCourses) {
         //HashMap<Integer,ArrayList<Seccion>> rsSection = new ArrayList();
         HashMap<Integer, ArrayList<Seccion>> auxSections = new HashMap<>();
         ArrayList<ArrayList<Integer>> sectionsModificadas = new ArrayList<>();
@@ -1500,14 +1500,18 @@ public class Consultas {
                         auxSec.setLockSchedule(sectionsModificadas.get(i).get(4));
                         auxSec.setTeacher(teachers.get(sectionsModificadas.get(i).get(1)));
                         auxSec.setClassId(sectionsModificadas.get(i).get(5));
-
+                        
+                        
+                        
                         consulta = "SELECT * from SchedulePatternsTimeTable "
                                 + " where patternnumber = " + sectionsModificadas.get(i).get(2) + " and templateID =" + templateID;
                         rs = DBConnect.renweb.executeQuery(consulta);
                         while (rs.next()) {
                             auxSec.addTuplaPatron(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
                         }
+                        auxSec.setCourseID(idCourse);
                         auxSectionsIn.add(new Seccion(auxSec));
+                        updateStudent_fromRenWeb_Sections(students,arrayStud,auxSec,linkedCourses);
                     }
                     auxSections.put(course.getIdCourse(), (ArrayList<Seccion>) auxSectionsIn.clone());
                 }
@@ -1518,6 +1522,21 @@ public class Consultas {
         return auxSections;
     }
 
+    private void updateStudent_fromRenWeb_Sections(HashMap<Integer,Student> students,ArrayList<Integer> arrayStud,Seccion auxSec,HashMap<String,Course> linkedCourses){ 
+        //linkedCourses.containsValue(auxSec)
+        for (Integer arrayStud1 : arrayStud) {
+            students.get(arrayStud1).addSeccionFromrenweb(new Seccion(auxSec));
+        }    
+    }
+    
+    private boolean containsCourse(HashMap<String,Course> linkedCourses,int courseID){
+        for (HashMap.Entry<String, Course> entry : linkedCourses.entrySet())
+        {
+            if(entry.getValue().getIdCourse() == courseID)
+                return true;
+        }
+        return false;
+    }
     public HashMap<Integer, Room> getRoomsOwnDB() {
         HashMap<Integer, Room> ret = new HashMap();
         String consulta = "select * from rooms";

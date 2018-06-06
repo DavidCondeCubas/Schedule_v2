@@ -498,7 +498,13 @@
                                             }
                                             for (int j = 0; j < TAMX; j++) {
                                                 if (lista2.get(t.getArraySecciones().get(idSection).getIdStudents().get(idStudentBySect)).getHuecos()[j][i] != 0) {
-                                                    out.println("<td>" + cs.nameCourseAndSection(lista2.get(t.getArraySecciones().get(idSection).getIdStudents().get(idStudentBySect)).getHuecos()[j][i]) + "</td>");
+                                                    String tdStyle="<td>";
+                                                    String solapado=lista2.get(t.getArraySecciones().get(idSection).getIdStudents().get(idStudentBySect)).checkSolapamiento(lista2.get(t.getArraySecciones().get(idSection).getIdStudents().get(idStudentBySect)).getHuecos()[j][i]);
+                                                    if(!solapado.equals("")){
+                                                        tdStyle="<td style='color: red;border: solid;'>";
+                                                    }
+                                                    out.println(tdStyle+ cs.nameCourseAndSection(lista2.get(t.getArraySecciones().get(idSection).getIdStudents().get(idStudentBySect)).getHuecos()[j][i]) + 
+                                                            "<br>"+solapado+"</td>");
                                                 } else {
                                                     out.println("<td></td>");
                                                 }
@@ -506,6 +512,12 @@
                                             out.println("</tr>");
                                         }
                                         out.println("</table>");
+                                        
+
+                                        String s = lista2.get(t.getArraySecciones().get(idSection).getIdStudents().get(idStudentBySect)).getSolapamientoSeccionesFromRenWeb();
+                                        if(s.length() > 0){
+                                            out.println("<h5 style='color:red'>"+s+"</h5>");
+                                        }
                                         shownStudents.add(t.getArraySecciones().get(idSection).getIdStudents().get(idStudentBySect));
                                     }
                                 }

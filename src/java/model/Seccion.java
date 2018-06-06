@@ -27,6 +27,7 @@ public class Seccion {
     boolean lockSchedule;
     boolean lockEnrollment;
     int classId;
+    int courseID;
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron) {
         this.teacher = currentT;
@@ -37,7 +38,7 @@ public class Seccion {
         this.lockSchedule = false;
     }
 
-    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche,int cID) {
+    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche,int cID,int courseID) {
         this.teacher = currentT;
         this.numStudents = numStudents;
         this.patronUsado = patron;
@@ -48,7 +49,7 @@ public class Seccion {
         this.lockEnrollment = lockEnr;
         this.lockSchedule = lockSche;
         this.classId = cID;
-
+        this.courseID = courseID;
     }
 
     public Seccion(Seccion s) {
@@ -63,6 +64,7 @@ public class Seccion {
         this.lockEnrollment = s.lockEnrollment;
         this.lockSchedule = s.lockSchedule;
         this.classId = s.classId;
+        this.courseID = s.courseID;
     }
 
     public Seccion() {
@@ -182,6 +184,15 @@ public class Seccion {
 
     }
 
+    public int getCourseID() {
+        return courseID;
+    }
+
+    public void setCourseID(int courseID) {
+        this.courseID = courseID;
+    }
+    
+
     public void setLockEnrollment(int lockEnrollmentInt) {
         if (lockEnrollmentInt == 1) {
             this.lockEnrollment = true;
@@ -205,4 +216,15 @@ public class Seccion {
         this.classId = classId;
     }
     
+     public boolean patronCompatible(ArrayList<Tupla> ar) {
+        for (Tupla t : ar) {
+            for (int i = 0; i < this.patronUsado.size(); i++) {
+                if (this.patronUsado.get(i).x == t.x && this.patronUsado.get(i).y == t.y){
+                    return false;
+                }
+            }
+            
+        }
+        return true;
+    }
 }

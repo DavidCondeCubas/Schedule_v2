@@ -83,13 +83,7 @@ public class Algoritmo {
         for (Course course : r.courses) {
             if(!containsValueInLinkedCourse(r,course.getIdCourse())){
                 course.setArraySecciones(chargeArraySections(r,course)); 
-                /*
-                 int maxStudentSection = c.getMaxChildPerSection();
-                if (maxStudentSection == 0) {
-                    maxStudentSection = CHILDSPERSECTION; // POR DEFECTO
-                }
-             //   int numMinStudents_Section = (int) Math.round(maxStudentSection * 0.70);   
-     */
+
                 int maxSections ;
                 if(course.getMaxSections() == null || course.getMaxSections().equals("")){
                     maxSections = r.studentsCourse.get(course.getIdCourse()).size() / course.getMaxChildPerSection();
@@ -114,8 +108,7 @@ public class Algoritmo {
                 for (int i = 0; i < course.getArraySecciones().size(); i++) {
                     if(!course.getArraySecciones().get(i).lockSchedule && course.getArraySecciones().get(i).lockEnrollment){
                         noAsign = generatePattern_Section(r,r.teachers,course,course.opciones(r.totalBlocks,Log),
-                              course.getArraySecciones().get(i).getIdStudents(),r.students,course.getArraySecciones().get(i));
-                                     
+                              course.getArraySecciones().get(i).getIdStudents(),r.students,course.getArraySecciones().get(i));                  
                     }
                     else if(course.getArraySecciones().get(i).lockSchedule && !course.getArraySecciones().get(i).lockEnrollment){
                         noAsign = fillSection(course.getArraySecciones().get(i),r, course,noAsign, r.students);
@@ -123,7 +116,7 @@ public class Algoritmo {
                     else if(!course.getArraySecciones().get(i).lockSchedule && !course.getArraySecciones().get(i).lockEnrollment){
                        noAsign = generatePattern_Section(r,r.teachers,course,course.opciones(r.totalBlocks,Log),
                                noAsign,r.students,course.getArraySecciones().get(i));
-                                     }
+                    }
                     else{ // lockSchedule && lockEnrollment                 
                         for (int j = 0; j < course.getArraySecciones().get(i).getIdStudents().size(); j++) {
                             r.students.get(course.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
@@ -1453,7 +1446,7 @@ public class Algoritmo {
                             t.ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
                             t.incrementarNumSecciones();
                    
-                            secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true,0));
+                            secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true,0,c.getIdCourse()));
                             c.ocuparHueco(sec.get(stids.get(i).x));
      
                           //  updateStids(stids,idsAsignados,studentsCourse,sec,c,r);//fase prueba actualizara lista de estudiantes para que la lista stids se mantenga ordenada

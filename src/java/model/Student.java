@@ -5,10 +5,13 @@
  */
 package model;
 
+import dataManage.Consultas;
 import dataManage.Tupla;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +30,7 @@ public class Student {
     private ArrayList<Integer> cursosAsignados;
     private ArrayList<Integer> seccionesAsignadas;
     private int numPatrones;
+    private ArrayList<Seccion> seccionesFromRenWeb;
 
     public int getNumPatrones() {
         return numPatrones;
@@ -72,6 +76,7 @@ public class Student {
         this.id = id;
         huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
         this.seccionesAsignadas = new ArrayList<>();
+        this.seccionesFromRenWeb = new ArrayList<>();
     }
 
     public Student(int id, String name, String genero) {
@@ -81,7 +86,8 @@ public class Student {
         huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
         this.name = name;
         this.genero = genero;
-                this.seccionesAsignadas = new ArrayList<>();
+        this.seccionesAsignadas = new ArrayList<>();
+        this.seccionesFromRenWeb = new ArrayList<>();
 
     }
 
@@ -109,6 +115,18 @@ public class Student {
             }
         }
         return ret;
+    }
+
+    public ArrayList<Seccion> getSeccionesFromRenWeb() {
+        return seccionesFromRenWeb;
+    }
+
+    public void setSeccionesFromRenWeb(ArrayList<Seccion> seccionesFromRenWeb) {
+        this.seccionesFromRenWeb = seccionesFromRenWeb;
+    }
+
+    public void addSeccionFromrenweb(Seccion s) {
+        this.seccionesFromRenWeb.add(s);
     }
 
     public void addNoAsignado(Integer i) {
@@ -220,11 +238,50 @@ public class Student {
     public void setSeccionesAsignadas(ArrayList<Integer> seccionesAsignadas) {
         this.seccionesAsignadas = seccionesAsignadas;
     }
-    public void addSeccion(int numSeccion){
+
+    public void addSeccion(int numSeccion) {
         this.seccionesAsignadas.add(numSeccion);
     }
-    public boolean estaEnSeccion(int numSeccion){ // indicara si esta alumno ya ha sido matriculado en la misma seccion en otras asignatura
+
+    public boolean estaEnSeccion(int numSeccion) { // indicara si esta alumno ya ha sido matriculado en la misma seccion en otras asignatura
         return this.seccionesAsignadas.contains(numSeccion);
     }
-            
+
+    public String getSolapamientoSeccionesFromRenWeb() {
+        // this.seccionesFromRenWeb.size()
+
+        String s = "";
+        for (int i = 0; i < this.seccionesFromRenWeb.size(); i++) {
+            for (int j = i + 1; j < this.seccionesFromRenWeb.size(); j++) {
+                // hay problemas de solapamiento
+                if (!this.seccionesFromRenWeb.get(i).patronCompatible(this.seccionesFromRenWeb.get(j).getPatronUsado())) {
+                    s += "<strong>" + Consultas.courseName.get(this.seccionesFromRenWeb.get(i).getCourseID()) + "</strong>" + " se solapa con <strong>" + Consultas.courseName.get(this.seccionesFromRenWeb.get(j).getCourseID())
+                            + "</strong> revisar configuracion en RenWeb <br>";
+                }
+            }
+        }
+        return s;
+    }
+
+    public String checkSolapamiento(int id) {
+        int idc = 0;
+        if (id != 0) {
+            idc = id / 100;
+        } 
+        String solapada ="";
+        for (int i = 0; i < this.seccionesFromRenWeb.size(); i++) {
+            for (int j = i + 1; j < this.seccionesFromRenWeb.size(); j++) {
+                // hay problemas de solapamiento
+                if(this.seccionesFromRenWeb.get(i).courseID == idc && !this.seccionesFromRenWeb.get(i).patronCompatible(this.seccionesFromRenWeb.get(j).getPatronUsado())) {
+                    solapada = Consultas.courseName.get(this.seccionesFromRenWeb.get(j).getCourseID()) +" Section: "+this.seccionesFromRenWeb.get(j).getNumSeccion();
+                    return solapada;
+                }
+                else if(this.seccionesFromRenWeb.get(j).courseID == idc && !this.seccionesFromRenWeb.get(i).patronCompatible(this.seccionesFromRenWeb.get(j).getPatronUsado())) {
+                    solapada = Consultas.courseName.get(this.seccionesFromRenWeb.get(i).getCourseID()) +" Section: "+this.seccionesFromRenWeb.get(i).getNumSeccion();
+                    return solapada;
+                }
+            }
+        }
+        return solapada;
+    }
 }

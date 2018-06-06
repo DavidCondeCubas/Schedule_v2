@@ -106,11 +106,10 @@ public class Restrictions {
         }
         
         cs.fillHashCourses(this.courses);
-        this.mapSecciones = cs.getDataSections(this.hashTeachers,this.courses,yearid,tempid);
-        /*if (this.linkedCourses.size() > 0) {
-        //    removeCoursesLinked();
-        }
-        System.err.println("");*/
+        this.mapSecciones = cs.getDataSections(this.students,this.hashTeachers,this.courses,yearid,tempid,linkedCourses);
+        
+        Student stPrueba = this.students.get(1203906);
+        System.out.println("");
     }
 
     private void chargeHashStudents(){

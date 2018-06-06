@@ -25,6 +25,7 @@ public class Course {
 
     private String[][] huecos; // cuadricula
     private int idCourse; // id del curso
+    private String nameCourse;
     private int blocksWeek; // bloques por semana
     private String maxSections; // maximo numero de grupos
     private String minGapBlocks; // espacio minimo entre bloques
@@ -111,8 +112,19 @@ public class Course {
         this.patternGroup = "";
         this.arraySecciones = new ArrayList<>();
         this.sectionsLinkeadas = new ArrayList<>();
+      
     }
 
+    public String getNameCourse() {
+        return nameCourse;
+    }
+
+    public void setNameCourse(String nameCourse) {
+        this.nameCourse = nameCourse;
+    }
+
+    
+    
     public ArrayList<Integer> getSectionsLinkeadas() {
         return sectionsLinkeadas;
     }
@@ -383,7 +395,7 @@ public class Course {
 
         calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
 
-        int k, bloqueados;
+        int k;
         int gd = this.minGapDays;
 
         //RECORRE LAS TUPLAS DEFINIDAS COMO MANDATORY
@@ -428,11 +440,6 @@ public class Course {
         // RECORRE LAS COLUMNAS Y FILAS HABILITADAS 
         for (int j = 0; j < Algoritmo.TAMY; j++) { // j son las filas  11 en MS
             if (rowsHabilitadas.contains(j) && (excludeRows == null && excludeCols == null && excludeBlocks == null) || !excludeRows.contains(j + 1)) {
-
-                /*if (gd == 0) {
-                    gd++;
-                }
-                int sumC = gd; //falta insertar lo del gd*/
                 for (int i = 0; i < Algoritmo.TAMX; i++) { //i son las cols 3 en MS 
                     ArrayList<Tupla> t = new ArrayList<>();
                     k = this.blocksWeek;
@@ -448,9 +455,6 @@ public class Course {
                             ret.add((ArrayList<Tupla>) t.clone());
                             t.remove(t.size() - 1);
                         } else {
-                            /*int antK =k;
-                            ArrayList<Tupla> antT = (ArrayList<Tupla>) t.clone();
-                             */
                             //FORMA CORRECTA SERIA VUELTA ATRAS PERO SE CONSIGUE ENCONTRAR LA MAYORIA DE RESULTADOS RECORRIENDO BIDIRECCIONAL
                             for (int l = 0; l < Algoritmo.TAMX; l++) { //cambiar algoritmo para q funcione teniendo en cuenta el maxbxd
                                 if (Math.abs(i - l) >= gd) {
@@ -470,25 +474,6 @@ public class Course {
                                     }
                                 }
                             }
-                            /*k = antK;
-                            t = antT;
-                            for (int l = Algoritmo.TAMX-1; l >=  0; l--) { //cambiar algoritmo para q funcione teniendo en cuenta el maxbxd
-                                for (int m = Algoritmo.TAMY-1; m >=0 ; m--) {
-                                    Tupla taux2 = new Tupla(l, m);
-                                    if ((j != m && i != l) && comprobarBxD(t, taux2) && !t.contains(taux2) && !this.excludeBlocks.contains(taux2)
-                                            && !this.excludeCols.contains(l)
-                                            && totalBlocks.get(m).get(l)) {
-                                        t.add(taux2);
-                                        k--;
-                                        if (k <= 0 && !ret.contains(t)) {
-                                            ret.add((ArrayList<Tupla>) t.clone());
-                                            t.remove(t.size() - 1);
-                                            k++;
-                                        }
-                                    }
-
-                                }
-                            }*/
 
                         }
                     }
