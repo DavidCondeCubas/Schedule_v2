@@ -8,7 +8,9 @@ package dataManage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Algoritmo;
@@ -40,14 +42,14 @@ public class Consultas {
     private ArrayList<ArrayList<Boolean>> totalBlocksStart;
     private int totalBlocks;
 
-    public Consultas() {
+    public Consultas(String tempid) {
         teachers = new ArrayList<>();
         tdefault = teacherDefault();
         stDefault = new Student(0);
         stDefault.setGenero("Male");
         stDefault.setName("default");
         courseName = new HashMap<>();
-        totalBlocksStart = this.totalBlocksStart();
+        totalBlocksStart = this.totalBlocksStart(tempid);
 
         totalBlocks = this.totalBlocks();
         cargarNames();
@@ -880,11 +882,11 @@ public class Consultas {
     }
 
     // * @author David
-    private ArrayList<ArrayList<Boolean>> totalBlocksStart() {
+    private ArrayList<ArrayList<Boolean>> totalBlocksStart(String tempid) {
 
         String excludes = "";
-        int ret = Algoritmo.TAMX * Algoritmo.TAMY;
         Course caux = new Course(1);
+         ArrayList<ArrayList<Boolean>> auxTotalStart = new ArrayList<>();
         String consulta = "select udd.data\n"
                 + "                from uddata udd\n"
                 + "                inner join udfield udf\n"
@@ -893,10 +895,11 @@ public class Consultas {
                 + "                    on udg.groupid = udf.groupid\n"
                 + "                    and udg.grouptype = 'school'\n"
                 + "                    and udg.groupname = 'Schedule'\n"
-                + "                    and udf.fieldName = 'ExcludeBlocks03'";
+                + "                    and udf.fieldName = 'ExcludeBlocks'";
 
         ResultSet rs;
         try {
+
             rs = DBConnect.renweb.executeQuery(consulta);
 
             while (rs.next()) {
@@ -906,10 +909,39 @@ public class Consultas {
             }
             caux.setExcludeBlocks(excludes); //quita los bloques excluidos 
 
+            consulta = "select udd.data\n"
+                    + "                from uddata udd\n"
+                    + "                inner join udfield udf\n"
+                    + "                    on udd.fieldid = udf.fieldid\n"
+                    + "                inner join udgroup udg\n"
+                    + "                    on udg.groupid = udf.groupid\n"
+                    + "                    and udg.grouptype = 'school'\n"
+                    + "                    and udg.groupname = 'Schedule'\n"
+                    + "                    and udf.fieldName = 'ExcludeWords'";
+
+            rs = DBConnect.renweb.executeQuery(consulta);
+            List<String> arrExcludeWords = new ArrayList<>();
+            while (rs.next()) {
+                String[] auxS = rs.getString("data").split(",");
+                arrExcludeWords = Arrays.asList(auxS);
+            }
+            
+            auxTotalStart = caux.opcionesStart();
+            consulta = "SELECT * FROM ScheduleTemplateTimeTable where templateid ="+tempid;
+            
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                int row = rs.getInt("row") -1;
+                int col = rs.getInt("col") -1;
+                
+                if(arrExcludeWords.contains(rs.getString("TemplateText")) && row >=0 && col>=0){
+                    auxTotalStart.get(row).set(col, false);
+                }
+            }
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return caux.opcionesStart();
+        return auxTotalStart;
     }
 
     private Teacher teacherDefault() {

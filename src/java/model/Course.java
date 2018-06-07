@@ -1152,5 +1152,5 @@ public class Course {
     public void setMinChildPerSection(int minChildPerSection) {
         this.minChildPerSection = minChildPerSection;
     }
-    
+ 
 }

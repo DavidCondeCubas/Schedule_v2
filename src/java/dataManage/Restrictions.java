@@ -50,7 +50,7 @@ public class Restrictions {
 
     public Restrictions(String yearid, String tempid, String groupofrooms) {
         this.tempid = tempid;
-        this.cs = new Consultas();
+        this.cs = new Consultas(tempid);
         this.totalBlocks = this.cs.getTotalBlocksStart();
         this.idCourses = new ArrayList();
         this.students = new HashMap<>();
@@ -70,7 +70,7 @@ public class Restrictions {
     public Restrictions(String yearid, String tempid, String groupofrooms, int mode) {
       //  this.hashCourses = new HashMap<>();
         this.tempid = tempid;
-        this.cs = new Consultas();
+        this.cs = new Consultas(tempid);
         this.hashTeachers = new HashMap<>();
         this.idCourses = new ArrayList();
         this.groupRooms = cs.roomsGroup(groupofrooms);
@@ -90,6 +90,8 @@ public class Restrictions {
         }
 
         this.totalBlocks = this.cs.getTotalBlocksStart();
+
+        
         this.linkedCourses = this.cs.getLinkedCourses();
 
         this.rooms = cs.getRooms();
