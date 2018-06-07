@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -287,16 +288,56 @@ public class Algoritmo {
         mv.addObject("TAMX", TAMX);
         mv.addObject("TAMY", TAMY);
         mv.addObject("persons", persons);
-        mv.addObject("students", r.students);
+        
+        
+        ArrayList<Student> studentsOrdered = new ArrayList<Student>(r.students.values());
+        
+        sortStudentsPerGradeLevel(studentsOrdered,r.cs);
+        
+        mv.addObject("students",r.students);
+        mv.addObject("orderedStudents",studentsOrdered);
+               
+        sortCoursesPerAbbrev(r.courses,r.cs);
         mv.addObject("Courses", r.courses);
+        
+        sortTeachersPerNames(r.teachers,r.cs);
         mv.addObject("profesores", r.teachers);
+        
         mv.addObject("cs", r.cs);
         mv.addObject("rooms", r.rooms);
         mv.addObject("hashTeachers",r.hashTeachers);
         mv.addObject("grouprooms", r.groupRooms);
         mv.addObject("log", Log);
     }
+     private void sortStudentsPerGradeLevel(ArrayList<Student> t,Consultas cs){
+        // Sorting
+        Collections.sort(t, new Comparator<Student>() {
+            @Override
+            public int compare(Student o1, Student o2) {
+                return  o1.getGradeLevel().compareTo(o2.getGradeLevel());            
+            }
+        });
+    }
+     
+    private void sortTeachersPerNames(ArrayList<Teacher> t,Consultas cs){
+        // Sorting
+        Collections.sort(t, new Comparator<Teacher>() {
+            @Override
+            public int compare(Teacher o1, Teacher o2) {
+                return  cs.getNamePersons().get(o1.getIdTeacher()).compareTo(cs.getNamePersons().get(o2.getIdTeacher()));            
+            }
+        });
+    }
     
+    private void sortCoursesPerAbbrev(ArrayList<Course> c,Consultas cs){
+        // Sorting
+        Collections.sort(c, new Comparator<Course>() {
+            @Override
+            public int compare(Course o1, Course o2) {
+                return  cs.getAbbrevCourses().get(o1.getIdCourse()).compareTo(cs.getAbbrevCourses().get(o2.getIdCourse()));            
+            }
+        });
+    }
     private ArrayList<Integer> generatePattern_Section(Restrictions r, ArrayList<Teacher> teachers, Course c, ArrayList<ArrayList<Tupla>> sec,
             ArrayList<Integer> studentsCourse, HashMap<Integer, Student> students,Seccion currentSec) {
 

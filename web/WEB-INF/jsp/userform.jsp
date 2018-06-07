@@ -30,7 +30,42 @@
                  $("form input").first().prop("disabled", "");
                  $(".btn").prop("disabled", "true");*/
 
+
             });
+            function enviando()
+            {
+                $('#crearhorario').submit();
+
+                $('#pleaseWaitDialog').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                $('#pleaseWaitDialog').modal('show');
+
+
+                var start = new Date();
+                var maxTime = 80000;
+                var timeoutVal = Math.floor(maxTime / 100);
+                animateUpdate();
+
+                function updateProgress(percentage) {
+                    $('#pbar_innerdiv').css("width", percentage + "%");
+                    $('#pbar_innertext').text(percentage + "%");
+                }
+
+                function animateUpdate() {
+                    var now = new Date();
+                    var timeDiff = now.getTime() - start.getTime();
+                    var perc = Math.round((timeDiff / maxTime) * 100);
+                    console.log(perc);
+                    if (perc <= 100) {
+                        updateProgress(perc);
+
+                        setTimeout(animateUpdate, timeoutVal);
+                    }
+                }
+
+            }
         </script>
         <div class="col-sm-12" style="margin-top: 10px;">
             <div class="panel panel-success">
@@ -56,6 +91,7 @@
                                         <select class="form-control" name="selectDistrictCode" id="selectSchoolCode">
                                             <option value="IS-PAN">IS-PAN</option>
                                             <option value="MD-PAN">MD-PAN</option>
+                                            <option value="RWI-SPAIN">RWI-SPAIN</option>
                                         </select>                                     
                                     </div>
                                     <div class="form-group">

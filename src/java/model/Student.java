@@ -31,7 +31,17 @@ public class Student {
     private ArrayList<Integer> seccionesAsignadas;
     private int numPatrones;
     private ArrayList<Seccion> seccionesFromRenWeb;
+    private String gradeLevel;
 
+    public String getGradeLevel() {
+        return gradeLevel;
+    }
+
+    public void setGradeLevel(String gradeLevel) {
+        this.gradeLevel = gradeLevel;
+    }
+
+    
     public int getNumPatrones() {
         return numPatrones;
     }
@@ -283,5 +293,23 @@ public class Student {
             }
         }
         return solapada;
+    }
+    
+    public String getCoursesUnenrolled() {
+        String auxCoursesUnenrolled="";
+        ArrayList<Integer> coursesEnrolled = new ArrayList<>();
+        for (int i = 0; i < Algoritmo.TAMX; i++) {
+            for (int j = 0; j < Algoritmo.TAMY; j++) {
+                if(this.huecos[i][j] != 0)
+                    coursesEnrolled.add(this.huecos[i][j]/100);
+            }
+        }
+        
+        for (Seccion seccionesFromRenWeb1 : this.seccionesFromRenWeb) {
+            if(!coursesEnrolled.contains(seccionesFromRenWeb1.courseID)){
+                auxCoursesUnenrolled += "<strong>" + Consultas.courseName.get(seccionesFromRenWeb1.courseID) + "</strong>. No se pudo matricular. <br>";    
+            }
+        }     
+        return auxCoursesUnenrolled;
     }
 }

@@ -108,7 +108,45 @@
                 $("#showStudentsEnrolled").click(function () {
                     $("#StudentsEnrolled").toggleClass('in');
                 });
+
+
             });
+
+            function enviando()
+            {
+
+                location.reload();
+
+                $('#pleaseWaitDialog').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                $('#pleaseWaitDialog').modal('show');
+
+
+                var start = new Date();
+                var maxTime = 80000;
+                var timeoutVal = Math.floor(maxTime / 100);
+                animateUpdate();
+
+                function updateProgress(percentage) {
+                    $('#pbar_innerdiv').css("width", percentage + "%");
+                    $('#pbar_innertext').text(percentage + "%");
+                }
+
+                function animateUpdate() {
+                    var now = new Date();
+                    var timeDiff = now.getTime() - start.getTime();
+                    var perc = Math.round((timeDiff / maxTime) * 100);
+                    console.log(perc);
+                    if (perc <= 100) {
+                        updateProgress(perc);
+
+                        setTimeout(animateUpdate, timeoutVal);
+                    }
+                }
+
+            }
         </script>
         <!--
         TO DO:
@@ -131,6 +169,7 @@
             List<Course> courses = (List) request.getAttribute("Courses");
             List<Teacher> lista = (List) request.getAttribute("profesores");
             HashMap<Integer, Student> lista2 = (HashMap) request.getAttribute("students");
+            List<Student> studentsOrdered = (List) request.getAttribute("orderedStudents");
             HashMap<Integer, String> hashPersons = (HashMap) request.getAttribute("persons");
             ArrayList<String> log = (ArrayList<String>) request.getAttribute("log");
             ArrayList<Integer> groupRooms = (ArrayList<Integer>) request.getAttribute("grouprooms");
@@ -146,12 +185,17 @@
             headCols += "</tr>";
         %>
         <div class="col-xs-12 text-center noPrint" id="myTab">
-            <ul class="nav nav-tabs">
-                <li class="active"><a id="Courses" data-toggle="tab" href="#courses" role="tab" >Courses</a></li>
-                <li><a id="Teachers" data-toggle="tab" href="#teachers" role="tab">Teachers</a></li>
-                <li><a id="Students" data-toggle="tab" href="#students" role="tab">Students</a></li>
-                <li><a id="Rooms" data-toggle="tab" href="#rooms" role="tab">Rooms</a></li>               
-            </ul>
+            <div class="col-xs-9">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a id="Courses" data-toggle="tab" href="#courses" role="tab" >Courses</a></li>
+                    <li><a id="Teachers" data-toggle="tab" href="#teachers" role="tab">Teachers</a></li>
+                    <li><a id="Students" data-toggle="tab" href="#students" role="tab">Students</a></li>
+                    <li><a id="Rooms" data-toggle="tab" href="#rooms" role="tab">Rooms</a></li>               
+                </ul>
+            </div>
+            <div class="col-xs-3">
+                <button id="btnRefresh" type="button" class="btn btn-info" onclick="enviando()">Reload</button>
+            </div>
         </div>
 
         <div class="tab-content">
@@ -167,7 +211,7 @@
                     <%
                         for (Course t : courses) {
                             out.println("<div class='col-xs-12 course'>");
-                            out.println("<h3>" + cs.nameCourse(t.getIdCourse()) + "</h3>");
+                            out.println("<h3>" + cs.getAbbrevCourses().get(t.getIdCourse()) + " - " + cs.nameCourse(t.getIdCourse()) + "</h3>");
                             //   out.println("<h3>" + t.getIdCourse() + "</h3>");
                             out.println("<table id='table_id' width='100%' border='0' class=''>");
                             out.println("<tr class='students'>");
@@ -177,7 +221,7 @@
                                 out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"
                                         + "Teacher: " + hashPersons.get(t.getArraySecciones().get(j).getIdTeacher()) + " </strong>");
                                 for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
-                                    studentNames += "<br>" + (k+1) + "- "+lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
+                                    studentNames += "<br>" + (k + 1) + "- " + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
                                 }
                                 out.println(studentNames);
                                 out.println("</td>");
@@ -442,9 +486,59 @@
                     <span class="col-xs-12 text-right glyphicon glyphicon-triangle-bottom">
                     </span>
                 </legend>
-                <div class="form-group collapse" id="Studentstable">
-                    <%                    out.println("<h2>Students</h2>");
-                        /* for (Map.Entry<Integer, Student> entry : lista2.entrySet()) {
+                <div class="form-group collapse" id="Studentstable">            
+                    <%                        //  for (Map.Entry<Integer, Student> entry : lista2.entrySet()) {
+                        String gradeLevel = "";
+                        for (Student st : studentsOrdered) {
+                            if (!gradeLevel.equals(st.getGradeLevel())) {
+                                gradeLevel = st.getGradeLevel();
+                                out.println("<h2><u> GRADE LEVEL CURRENT: " + gradeLevel + "</u></h2>");
+                            }
+                            out.println("<h3 style='border-top: solid 2px black;padding-top: 10px;'>" + st.getName() + "</h3>");
+
+                            out.println("<h5>" + st.getCoursesUnenrolled() + "</h5>");
+                            out.println("<table id='table_id' class='table'>");
+                            out.println(headCols);
+                            swapcolor = true;
+                            for (int i = 0; i < TAMY; i++) {
+                                if (swapcolor) {
+                                    out.println("<tr class='tcolores'>");
+                                    swapcolor = false;
+                                } else {
+                                    out.println("<tr>");
+                                    swapcolor = true;
+                                }
+                                if (i < headRow.size()) {
+                                    out.println("<td>" + headRow.get(i).text() + "</td>");
+                                } else {
+                                    out.println("<td></td>");
+                                }
+                                for (int j = 0; j < TAMX; j++) {
+                                    if (st.getHuecos()[j][i] != 0) {
+                                        String tdStyle = "<td>";
+                                        String solapado = st.checkSolapamiento(lista2.get(st.getId()).getHuecos()[j][i]);
+                                        if (!solapado.equals("")) {
+                                            tdStyle = "<td style='color: red;border: solid;'>";
+                                        }
+                                        out.println(tdStyle + cs.nameCourseAndSection(st.getHuecos()[j][i])
+                                                + "<br>" + solapado + "</td>");
+
+                                        // out.println("<td>" + cs.nameCourseAndSection(entry.getValue().getHuecos()[j][i]) + "</td>");
+                                    } else {
+                                        out.println("<td></td>");
+                                    }
+                                }
+                                out.println("</tr>");
+                            }
+
+                            out.println("</table>");
+
+                            String s = st.getSolapamientoSeccionesFromRenWeb();
+                            if (s.length() > 0) {
+                                out.println("<h5 style='color:red'>" + s + "</h5>");
+                            }
+                        }
+                        /*for (Map.Entry<Integer, Student> entry : lista2.entrySet()) {
                         
                             out.println("<h3>" + entry.getValue().getName() + "</h3>");
                             out.println("<table id='table_id' class='table'>");
@@ -473,8 +567,8 @@
                                 out.println("</tr>");
                             }
                             out.println("</table>");
-                        }*/
-                        ArrayList<Integer> shownStudents = new ArrayList<>();
+                        }
+                      /*  ArrayList<Integer> shownStudents = new ArrayList<>();
                         for (Course t : courses) {
                             for (int idSection = 0; idSection < t.getArraySecciones().size(); idSection++) {
                                 for (int idStudentBySect = 0; idStudentBySect < t.getArraySecciones().get(idSection).getIdStudents().size(); idStudentBySect++) {
@@ -523,7 +617,7 @@
                                 }
                             }
                         }
-
+                         */
                     %>
                 </div>
 
@@ -740,6 +834,23 @@
                 %>
             </div>
             <!--</div>-->
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="pleaseWaitDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1>Procesando por favor espere ...</h1>
+                    </div>
+                    <div class="modal-body">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-success progress-bar-striped progress-bar-animated" style="background-color: #2d2f42 !important;" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" id="pbar_innerdiv">
+                                <div id="pbar_innertext" >0%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </body>
 </html>
