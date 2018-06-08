@@ -67,7 +67,7 @@ public class Restrictions {
          */
     }
 
-    public Restrictions(String yearid, String tempid, String groupofrooms, int mode) {
+    public Restrictions(String yearid, String tempid, String groupofrooms, int mode,String schoolCode) {
       //  this.hashCourses = new HashMap<>();
         this.tempid = tempid;
         this.cs = new Consultas(tempid);
@@ -80,7 +80,7 @@ public class Restrictions {
         this.students = new HashMap<>();
         
         st = (new Conjuntos<Student>()).union(st,
-                cs.restriccionesStudent(idCourses, studentsCourse, yearid,tempInfo));
+                cs.restriccionesStudent(idCourses, studentsCourse, yearid,tempInfo,schoolCode));
         
         
         //chargeHashStudents();
@@ -89,11 +89,8 @@ public class Restrictions {
             this.students.put(s.getId(), s);
         }
 
-        this.totalBlocks = this.cs.getTotalBlocksStart();
-
-        
+         this.totalBlocks = this.cs.getTotalBlocksStart();
         this.linkedCourses = this.cs.getLinkedCourses();
-
         this.rooms = cs.getRooms();
 
         /*ArrayList<Integer> auxPrueba = new ArrayList<>();

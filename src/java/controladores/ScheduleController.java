@@ -54,7 +54,7 @@ public class ScheduleController {
         String schoolCode = hsr.getParameter("schoolcode");
 
         String roomgroup = hsr.getParameter("grouproom");
-        String posSelectTemplate = hsr.getParameter("posSelectTemplate");
+       // String posSelectTemplate = hsr.getParameter("posSelectTemplate");
         int roommode = Integer.parseInt(hsr.getParameter("roommode"));
         int id = Integer.parseInt(hsr.getParameter("id"));
         String yearid = hsr.getParameter("yearid");
@@ -66,7 +66,7 @@ public class ScheduleController {
         
         //saveXML_FTP(yearid, tempid, schoolCode);
         Algoritmo algo = new Algoritmo(x, y);
-        Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1);
+        Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1,schoolCode);
         //r.syncOwnDB();
         algo.algo(mv, r, roommode,schoolCode,yearid,tempid);
         String json = r.teachersJSON();

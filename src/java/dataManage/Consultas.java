@@ -885,6 +885,7 @@ public class Consultas {
     private ArrayList<ArrayList<Boolean>> totalBlocksStart(String tempid) {
 
         String excludes = "";
+
         Course caux = new Course(1);
          ArrayList<ArrayList<Boolean>> auxTotalStart = new ArrayList<>();
         String consulta = "select udd.data\n"
@@ -933,8 +934,9 @@ public class Consultas {
             while (rs.next()) {
                 int row = rs.getInt("row") -1;
                 int col = rs.getInt("col") -1;
-                
-                if(arrExcludeWords.contains(rs.getString("TemplateText")) && row >=0 && col>=0){
+                String tmpText = rs.getString("TemplateText");
+                if(!tmpText.equals("") && arrExcludeWords.contains(tmpText)
+                        && row >=0 && col>=0){
                     auxTotalStart.get(row).set(col, false);
                 }
             }
@@ -1287,7 +1289,7 @@ public class Consultas {
      * @param yearid
      * @return
      */
-    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int[] tempinfo) {
+    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int[] tempinfo,String schoolCode) {
         String consulta = "";
         ResultSet rs;
         ArrayList<Integer> CoursesScheduleActive = new ArrayList<>();
@@ -1310,8 +1312,8 @@ public class Consultas {
             System.out.println("dataManage.Consultas.restriccionesStudent()");
         }
 
-        ArrayList<Student> ret = new ArrayList<>();
-        consulta = "    select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n"
+      ArrayList<Student> ret = new ArrayList<>();
+     /*     consulta = "    select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n"
                 + "    from studentrequests sr, person p, person_student ps,courses c \n"
                 + "    where sr.studentid = p.personid\n"
                 + "    and ps.studentid = p.personid\n"
@@ -1324,6 +1326,28 @@ public class Consultas {
                 + "    and c.MidleSchool=" + tempinfo[2]
                 + "    and c.PreSchool=" + tempinfo[3];
         //+ "    order by gender";
+        */
+        consulta =  " select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n" +
+                    "    from studentrequests sr\n" +
+                    "    inner join person p\n" +
+                    "        on p.PersonID = sr.StudentID\n" +
+                    "    inner join courses c\n"+
+                    "        on c.CourseID = sr.courseid\n"+
+                    "    inner join students s\n" +
+                    "        on s.studentid = sr.StudentID\n" +
+                    "        and p.personid = s.studentid\n" +
+                    "    inner join person_student ps\n" +
+                    "        on ps.StudentID = s.StudentID\n" +
+                    "        and ps.StudentID = p.PersonID\n" +
+                    "        and ps.StudentID = sr.StudentID" + 
+                    "        where sr.yearid ="  + yearid +
+                    "        and ps.SchoolCode = s.SchoolCode\n" +
+                    "    and s.SchoolCode = '"+schoolCode+"' "+
+                    "    and c.Elementary=" + tempinfo[0]
+                    + "    and c.HS=" + tempinfo[1]
+                    + "    and c.MidleSchool=" + tempinfo[2]
+                    + "    and c.PreSchool=" + tempinfo[3];
+     
         try {
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
