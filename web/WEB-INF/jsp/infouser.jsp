@@ -148,12 +148,21 @@
 
 <div class="infousuario noPrint bg-primary" id="infousuario" style="background-color: #2d2f42;">
 
-    <div class="col-xs-10 text-center">
-        <h1 class="text-center">Hi, <c:out value="${sessionScope.user.name}"/></h1>
+    <div class="col-xs-9 text-center">
+        <div class="col-xs-12">
+            <h1 id="nameSchoolTitle" class="text-center"></h1>
+        </div>
+        <div class="col-xs-12">
+            <h3 class="text-center">Hi, <c:out value="${sessionScope.user.name}"/></h3>
+        </div>
     </div>
-    <div class="col-xs-2 text-right">
+    <div class="col-xs-3 text-right">
         <!--<a href="<c:url value="/cerrarLogin.htm"/>" role="button" aria-haspopup="true" aria-expanded="false"><img class="imgUser" src="<c:url value="/recursos/img/iconos/user-01.svg"/>"></a>-->
-        <a onclick="$('#logoutmodal').modal('show');" role="button" aria-haspopup="true" aria-expanded="false"><img class="imgUser" src="<c:url value="/recursos/img/iconos/user-01.svg"/>"  style="width: 100% !important;max-height: 75px !important;"></a>
+        <div class="col-xs-12">
+        </div>
+        <div class="col-xs-10">
+            <a onclick="$('#logoutmodal').modal('show');" role="button" class="btn btn-default" aria-haspopup="true" aria-expanded="false">Log out<!--<img class="imgUser" src="<c:url value="/recursos/img/iconos/user-01.svg"/>"  style="width: 100% !important;max-height: 75px !important;">--></a>
+        </div>   
     </div>
 </div>    
 

@@ -125,7 +125,7 @@
 
 
                 var start = new Date();
-                var maxTime = 80000;
+                var maxTime = 120000;
                 var timeoutVal = Math.floor(maxTime / 100);
                 animateUpdate();
 
@@ -494,7 +494,7 @@
                                 gradeLevel = st.getGradeLevel();
                                 out.println("<h2><u> GRADE LEVEL CURRENT: " + gradeLevel + "</u></h2>");
                             }
-                            out.println("<h3 style='border-top: solid 2px black;padding-top: 10px;'>" + st.getName() + "</h3>");
+                            out.println("<h3 style='border-top: solid 2px black;padding-top: 10px;'>" + st.getName() + " ("+gradeLevel+")"+"</h3>");
 
                             out.println("<h5>" + st.getCoursesUnenrolled() + "</h5>");
                             out.println("<table id='table_id' class='table'>");

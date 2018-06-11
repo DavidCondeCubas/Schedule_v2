@@ -66,7 +66,7 @@ public class ScheduleController {
         
         //saveXML_FTP(yearid, tempid, schoolCode);
         Algoritmo algo = new Algoritmo(x, y);
-        Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1);
+        Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1,schoolCode);
         //r.syncOwnDB();
         algo.algo(mv, r, roommode,schoolCode,yearid,tempid);
         String json = r.teachersJSON();

@@ -113,6 +113,7 @@ public class Algoritmo {
                     }
                     else if(course.getArraySecciones().get(i).lockSchedule && !course.getArraySecciones().get(i).lockEnrollment){
                         noAsign = fillSection(course.getArraySecciones().get(i),r, course,noAsign, r.students);
+                        course.getArraySecciones().get(i).setPatternRenweb(1);
                     }
                     else if(!course.getArraySecciones().get(i).lockSchedule && !course.getArraySecciones().get(i).lockEnrollment){
                        noAsign = generatePattern_Section(r,r.teachers,course,course.opciones(r.totalBlocks,Log),
@@ -120,12 +121,17 @@ public class Algoritmo {
                     }
                     else{ // lockSchedule && lockEnrollment                 
                         for (int j = 0; j < course.getArraySecciones().get(i).getIdStudents().size(); j++) {
-                            r.students.get(course.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
+                            if(r.students.containsKey(course.getArraySecciones().get(i).getIdStudents().get(j)))
+                                r.students.get(course.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
+                            else{
+                                System.out.println("model.Algoritmo.algo()");
+                            }
                         }
                         course.ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(),course.getArraySecciones().get(i).getNumSeccion());
                         course.getArraySecciones().get(i).setLockSchedule(true);
                         course.getArraySecciones().get(i).setLockEnrollment(true);
-                        
+                        course.getArraySecciones().get(i).setPatternRenweb(1);
+
                         Teacher t_Aux = r.hashTeachers.get(course.getArraySecciones().get(i).getIdTeacher());
                         if(t_Aux != null){
                             t_Aux.ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
@@ -225,6 +231,7 @@ public class Algoritmo {
                 }
                 if (encontrado) {
                     Course courseAsociado = r.courses.get(k);
+                    
                     ArrayList<Integer> seccionesHabilitadas = new ArrayList<>();
                     seccionesHabilitadas = r.getLinkedCourses().get("" + course.getIdCourse()).getSectionsLinkeadas();
 
@@ -247,6 +254,7 @@ public class Algoritmo {
 
                                     courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(ind).patronUsado, courseAsociado.getArraySecciones().get(ind).getNumSeccion());
                                     courseAsociado.getArraySecciones().get(ind).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students, courseAsociado);
+                                    courseAsociado.getArraySecciones().get(ind).setPatternRenweb(course.getArraySecciones().get(i).getPatternRenweb());
                                     exito = true;
                                 } else {
                                     ind++;
@@ -268,6 +276,7 @@ public class Algoritmo {
                                     t_Aux.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getPatronUsado(), courseAsociado.getIdCourse() * 100 + courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getNumSeccion());
                                     t_Aux.incrementarNumSecciones();
 
+                                    courseAsociado.getArraySecciones().get(ind).setPatternRenweb(course.getArraySecciones().get(i).getPatternRenweb());
                                     courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).setTeacher(t_Aux);
                                     exito = true;
                                 } 
@@ -292,9 +301,9 @@ public class Algoritmo {
         
         ArrayList<Student> studentsOrdered = new ArrayList<Student>(r.students.values());
         
-        sortStudentsPerGradeLevel(studentsOrdered,r.cs);
-        
+        sortStudentsPerGradeLevel(studentsOrdered);
         mv.addObject("students",r.students);
+        
         mv.addObject("orderedStudents",studentsOrdered);
                
         sortCoursesPerAbbrev(r.courses,r.cs);
@@ -309,11 +318,17 @@ public class Algoritmo {
         mv.addObject("grouprooms", r.groupRooms);
         mv.addObject("log", Log);
     }
-     private void sortStudentsPerGradeLevel(ArrayList<Student> t,Consultas cs){
+     private void sortStudentsPerGradeLevel(ArrayList<Student> t){
         // Sorting
         Collections.sort(t, new Comparator<Student>() {
             @Override
             public int compare(Student o1, Student o2) {
+                if(o1.getGradeLevel() == null || o2.getGradeLevel() == null ||
+                   o1.getName() == null || o2.getName() == null){
+                    return -1;
+                }
+                if(o1.getGradeLevel().equals(o2.getGradeLevel()))
+                    return o1.getName().compareTo(o2.getName());
                 return  o1.getGradeLevel().compareTo(o2.getGradeLevel());            
             }
         });
@@ -324,6 +339,8 @@ public class Algoritmo {
         Collections.sort(t, new Comparator<Teacher>() {
             @Override
             public int compare(Teacher o1, Teacher o2) {
+                if(o1 == null || o2 == null || !cs.getNamePersons().containsKey(o1.getIdTeacher()) || !cs.getNamePersons().containsKey(o2.getIdTeacher()))
+                    return -1;
                 return  cs.getNamePersons().get(o1.getIdTeacher()).compareTo(cs.getNamePersons().get(o2.getIdTeacher()));            
             }
         });
@@ -334,6 +351,8 @@ public class Algoritmo {
         Collections.sort(c, new Comparator<Course>() {
             @Override
             public int compare(Course o1, Course o2) {
+                if(o1 == null || o2 ==null || !cs.getAbbrevCourses().containsKey(o1.getIdCourse()) || !cs.getAbbrevCourses().containsKey(o2.getIdCourse()))
+                    return -1;
                 return  cs.getAbbrevCourses().get(o1.getIdCourse()).compareTo(cs.getAbbrevCourses().get(o2.getIdCourse()));            
             }
         });
@@ -533,7 +552,11 @@ public class Algoritmo {
     private void chargeStatusStudents(Restrictions r,Course c){
         for (int i = 0; i < c.getArraySecciones().size(); i++) {
             for (int j = 0; j < c.getArraySecciones().get(i).getIdStudents().size(); j++) {
-                r.students.get(c.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(c.getArraySecciones().get(i).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(i).getNumSeccion());
+                if(r.students.containsKey(c.getArraySecciones().get(i).getIdStudents().get(j)))
+                    r.students.get(c.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(c.getArraySecciones().get(i).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(i).getNumSeccion());
+                else{
+                    System.out.println("model.Algoritmo.chargeStatusStudents()");
+                }
             }
         }
     }
@@ -774,8 +797,10 @@ public class Algoritmo {
                  if (k  > 0){ // se llena los huecos de ese profesor incluyendole la seccion
                  //    secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true));
                      c.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(),c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
+                     
                      c.getArraySecciones().get(stids.get(i).x).setLockSchedule(true);
-                     c.getArraySecciones().get(stids.get(i).x).setLockEnrollment(true);
+                     if(k == c.getMaxChildPerSection())
+                            c.getArraySecciones().get(stids.get(i).x).setLockEnrollment(true);
 
                      Teacher t_Aux = r.hashTeachers.get(c.getArraySecciones().get(stids.get(i).x).getIdTeacher());
                      t_Aux.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
@@ -902,7 +927,7 @@ public class Algoritmo {
                         int col = (int) t.getArraySecciones().get(i).getPatronUsado().get(j).x +1;
                         int row = (int) t.getArraySecciones().get(i).getPatronUsado().get(j).y +1;
          
-                        bloques.appendChild(getBloques(doc,""+(col),""+(row),templateId,""+t.getIdCourse(),""+t.getArraySecciones().get(i).getNumSeccion(),yearId,""+t.getArraySecciones().get(i).getClassId()));
+                        bloques.appendChild(getBloques(doc,""+(col),""+(row),templateId,""+t.getIdCourse(),""+t.getArraySecciones().get(i).getNumSeccion(),yearId,""+t.getArraySecciones().get(i).getClassId(),""+t.getArraySecciones().get(i).getPatternRenweb()));
                     }
                 }
             }
@@ -956,7 +981,7 @@ public class Algoritmo {
         return company;
     }
     
-    private Node getBloques(Document doc, String day, String begin, String tempId, String courseId, String section,String yearId,String classID) {
+    private Node getBloques(Document doc, String day, String begin, String tempId, String courseId, String section,String yearId,String classID,String patternRenWeb) {
         Element company = doc.createElement("Block");      
         company.appendChild(getCompanyElements(doc, company, "day", day));
         company.appendChild(getCompanyElements(doc, company, "begin", begin));
@@ -965,6 +990,8 @@ public class Algoritmo {
         company.appendChild(getCompanyElements(doc, company, "section", section));
         company.appendChild(getCompanyElements(doc, company, "YearID", yearId));
         company.appendChild(getCompanyElements(doc, company, "classID", classID));
+        company.appendChild(getCompanyElements(doc, company, "pattern", patternRenWeb));
+
 
         return company;
     }

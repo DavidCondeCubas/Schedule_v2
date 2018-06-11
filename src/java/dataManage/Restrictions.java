@@ -67,7 +67,7 @@ public class Restrictions {
          */
     }
 
-    public Restrictions(String yearid, String tempid, String groupofrooms, int mode) {
+    public Restrictions(String yearid, String tempid, String groupofrooms, int mode,String schoolCode) {
       //  this.hashCourses = new HashMap<>();
         this.tempid = tempid;
         this.cs = new Consultas();

@@ -28,6 +28,7 @@ public class Seccion {
     boolean lockEnrollment;
     int classId;
     int courseID;
+    int patternRenweb;
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron) {
         this.teacher = currentT;
@@ -36,6 +37,8 @@ public class Seccion {
         this.gender = "mixto";
         this.lockEnrollment = false;
         this.lockSchedule = false;
+        this.patternRenweb = 0;
+        this.idStudents = new ArrayList<>();
     }
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche,int cID,int courseID) {
@@ -50,6 +53,7 @@ public class Seccion {
         this.lockSchedule = lockSche;
         this.classId = cID;
         this.courseID = courseID;
+        this.patternRenweb = 0;
     }
 
     public Seccion(Seccion s) {
@@ -65,6 +69,7 @@ public class Seccion {
         this.lockSchedule = s.lockSchedule;
         this.classId = s.classId;
         this.courseID = s.courseID;
+        this.patternRenweb = s.patternRenweb;
     }
 
     public Seccion() {
@@ -73,6 +78,7 @@ public class Seccion {
         this.patronUsado = new ArrayList<>();
         this.lockEnrollment = false;
         this.lockSchedule = false;
+        this.patternRenweb =0;
     }
 
     public Teacher getTeacher() {
@@ -201,7 +207,7 @@ public class Seccion {
         }
     }
     public void copiarIdsStudents(ArrayList<Integer> a, HashMap<Integer,Student> students,Course c){
-        this.idStudents = new ArrayList<>();
+      
         for (int i = 0; i < a.size(); i++) {
             this.idStudents.add(a.get(i));
             students.get(a.get(i)).ocuparHueco(this.patronUsado, c.getIdCourse() * 100 + this.numSeccion);
@@ -227,4 +233,13 @@ public class Seccion {
         }
         return true;
     }
+
+    public int getPatternRenweb() {
+        return patternRenweb;
+    }
+
+    public void setPatternRenweb(int patternRenweb) {
+        this.patternRenweb = patternRenweb;
+    }
+     
 }

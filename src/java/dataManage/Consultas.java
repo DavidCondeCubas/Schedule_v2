@@ -975,8 +975,9 @@ public class Consultas {
                     + " and PreSchool=" + tempinfo[3];
             rs = DBConnect.renweb.executeQuery(consulta);
              */
-            String consulta = "SELECT StaffID FROM Person_Staff where Elementary=" + tempinfo[0]
-                    + " and HS=" + tempinfo[1] + " and MiddleSchool= " + tempinfo[2] + " and PreSchool=" + tempinfo[3];
+             String consulta = "SELECT StaffID FROM Person_Staff where Elementary=" + tempinfo[0]
++ " and HS=" + tempinfo[1] + " and MiddleSchool= " + tempinfo[2] + " and PreSchool=" + tempinfo[3];
+             
             ResultSet rs;
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -1565,7 +1566,8 @@ public class Consultas {
     private void updateStudent_fromRenWeb_Sections(HashMap<Integer, Student> students, ArrayList<Integer> arrayStud, Seccion auxSec, HashMap<String, Course> linkedCourses) {
         //linkedCourses.containsValue(auxSec)
         for (Integer arrayStud1 : arrayStud) {
-            students.get(arrayStud1).addSeccionFromrenweb(new Seccion(auxSec));
+            if(students.containsKey(arrayStud1))
+                students.get(arrayStud1).addSeccionFromrenweb(new Seccion(auxSec));
         }
     }
 

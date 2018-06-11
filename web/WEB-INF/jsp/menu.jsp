@@ -29,6 +29,9 @@
 
             function getYears() {
                 var id = $("#divSelectDepartament option:selected").val();
+                var nameSchool = $("#divSelectDepartament option:selected").text();
+                
+                $("#nameSchoolTitle").text(nameSchool);
                 $("#schoolcode").val(id);
 
                 if (id !== "") {
