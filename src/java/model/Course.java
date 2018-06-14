@@ -7,13 +7,19 @@ package model;
 
 import dataManage.Consultas;
 import dataManage.Tupla;
+import static java.lang.Integer.max;
+import static java.lang.Math.random;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,6 +29,8 @@ import java.util.logging.Logger;
  */
 public class Course {
 
+    public static int MUESTRA = 1000000;
+    public static int MAX_INTENTOS = 5000000;
     private String[][] huecos; // cuadricula
     private int idCourse; // id del curso
     private String nameCourse;
@@ -55,8 +63,7 @@ public class Course {
     private ArrayList<Seccion> arraySecciones;
     private ArrayList<Integer> sectionsLinkeadas;
     private int minChildPerSection;
-    
-    
+
     public Course(Course c) {
         this.huecos = c.getHuecos(); // cuadricula
         this.idCourse = c.getIdCourse(); // id del curso
@@ -104,7 +111,7 @@ public class Course {
         patronesStudents = new ArrayList<>();
         trestricctions = new ArrayList();
         rooms = new ArrayList();
-
+        preferedBlocks = new ArrayList<>();
         maxSections = "";
         balanceTeachers = false;
         preferedBlockString = "";
@@ -112,7 +119,7 @@ public class Course {
         this.patternGroup = "";
         this.arraySecciones = new ArrayList<>();
         this.sectionsLinkeadas = new ArrayList<>();
-      
+
     }
 
     public String getNameCourse() {
@@ -123,8 +130,6 @@ public class Course {
         this.nameCourse = nameCourse;
     }
 
-    
-    
     public ArrayList<Integer> getSectionsLinkeadas() {
         return sectionsLinkeadas;
     }
@@ -226,14 +231,23 @@ public class Course {
             sections++;
         }
     }
-    public void ocuparHueco(ArrayList<Tupla> list,Integer numSeccion) {
+
+    public void ocuparHueco(ArrayList<Tupla> list, Integer numSeccion) {
         if (list != null && !list.isEmpty()) {
+            /*           
             if (huecos[(Integer) list.get(0).x][(Integer) list.get(0).y].equals("0")) {
                 for (Tupla<Integer, Integer> t : list) {
                     huecos[t.x][t.y] = "" + numSeccion;
                 }
             } else {
                 for (Tupla<Integer, Integer> t : list) {
+                    huecos[t.x][t.y] += " and " + numSeccion;
+                }
+            }*/
+            for (Tupla<Integer, Integer> t : list) {
+                if (huecos[t.x][t.y].equals("0")) {
+                    huecos[t.x][t.y] = "" + numSeccion;
+                } else {
                     huecos[t.x][t.y] += " and " + numSeccion;
                 }
             }
@@ -299,11 +313,10 @@ public class Course {
         }
     }
 
-    ArrayList<ArrayList<Tupla>> opcionesLinkeados(ArrayList<ArrayList<Tupla>> retAsociado,ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<String> log) {
+    ArrayList<ArrayList<Tupla>> opcionesLinkeados(ArrayList<ArrayList<Tupla>> retAsociado, ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<String> log) {
         // ESTO PRACTICAMENTE SE METERAN A PELO PARA EL IS-PAN MD EN ESPECIFICO
         //AQUI HAY QUE LIMITAR LA CANTIDAD DE OCPIONES SI QUERERMOS QUE TENGAN BLOQUES OBLIGATORIOS ASIGNADOS.
         ArrayList<ArrayList<Tupla>> ret = new ArrayList<>();
-        
 
         ArrayList<String> auxPatterns = getNamesPatternsPosibles();
 
@@ -315,7 +328,7 @@ public class Course {
                 int col = this.priorityPattern.get(auxPatterns.get(i)).get(j).x;
                 int row = this.priorityPattern.get(auxPatterns.get(i)).get(j).y;
                 aux.add(new Tupla(col - 1, row - 1));
-                
+
                 col = this.priorityPattern.get(tuplaAsociada(auxPatterns.get(i))).get(j).x;
                 row = this.priorityPattern.get(tuplaAsociada(auxPatterns.get(i))).get(j).y;
                 aux2.add(new Tupla(col - 1, row - 1));
@@ -330,7 +343,7 @@ public class Course {
     private String tuplaAsociada(String s) {
         switch (s) {
             case "6A":
-                return "6B";   
+                return "6B";
             case "6B":
                 return "6A";
             case "6C":
@@ -395,8 +408,23 @@ public class Course {
 
         calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
 
-        int k;
+        int blockPerWeek;
         int gd = this.minGapDays;
+
+        //**   NUEVO   **///
+        blockPerWeek = this.blocksWeek;
+
+        Tupla[] sol = new Tupla[blockPerWeek];
+        boolean[][] marcas = new boolean[Algoritmo.TAMY][Algoritmo.TAMX];
+
+        for (int i = 0; i < Algoritmo.TAMY; i++) {
+            for (int j = 0; j < Algoritmo.TAMX; j++) {
+                marcas[i][j] = false;
+            }
+        }
+        int maxVueltas = 0;
+        
+        recurOpciones( maxVueltas,ret, Algoritmo.TAMX, Algoritmo.TAMY, sol, 0, marcas, blockPerWeek, gd, totalBlocks);
 
         //RECORRE LAS TUPLAS DEFINIDAS COMO MANDATORY
         /*for (int ind = 0; ind < tuplasHabilitadas.size(); ind++) {
@@ -438,7 +466,7 @@ public class Course {
 
         }*/
         // RECORRE LAS COLUMNAS Y FILAS HABILITADAS 
-        for (int j = 0; j < Algoritmo.TAMY; j++) { // j son las filas  11 en MS
+        /*   for (int j = 0; j < Algoritmo.TAMY; j++) { // j son las filas  11 en MS
             if (rowsHabilitadas.contains(j) && (excludeRows == null && excludeCols == null && excludeBlocks == null) || !excludeRows.contains(j + 1)) {
                 for (int i = 0; i < Algoritmo.TAMX; i++) { //i son las cols 3 en MS 
                     ArrayList<Tupla> t = new ArrayList<>();
@@ -480,9 +508,85 @@ public class Course {
                 }
 
             }
-        }
+        }*/
+      //  return takeNelements(MUESTRA, ret);
+      return ret;
+    }
 
-        return ret;
+    private ArrayList<ArrayList<Tupla>> takeNelements(int n, ArrayList<ArrayList<Tupla>> ret) {
+        Collections.shuffle(ret);
+        int maxLongitud = Math.min(n, ret.size());
+        ArrayList<ArrayList<Tupla>> aux = new ArrayList<>();
+        for (int i = 0; i < maxLongitud; i++) {
+            aux.add(ret.get(i));
+        }
+        return aux;
+    }
+
+    private void recurOpciones(int vueltas,ArrayList<ArrayList<Tupla>> solucionFinal, int tamX, int tamY,
+            Tupla[] sol, int k,
+            boolean[][] marcas, int blockPerWeek, int minGapDays, ArrayList<ArrayList<Boolean>> totalBlocks) {
+
+     
+         vueltas ++;
+        if(vueltas >= MAX_INTENTOS) return;
+        
+        for (int j = 0; j < tamY; j++) {            
+            for (int i = 0; i < tamX; i++) {
+                
+                i = (int)(Math.random() * tamX); 
+                j = (int)(Math.random() * tamY); 
+                
+                sol[k] = new Tupla(i, j);
+                if ( solucionFinal.size() < MUESTRA && esValida(sol, k, marcas[j][i], j, i, minGapDays, totalBlocks)) {
+                    marcas[j][i] = true;
+                    sol[k] = new Tupla(i, j);
+                    if (k == blockPerWeek - 1) {
+                        //solucionFinal.add(sol);
+
+                        ArrayList<Tupla> aList = new ArrayList<>(Arrays.asList(sol));
+                        solucionFinal.add(aList);
+                    } else {
+                        k = k + 1;
+                        recurOpciones(vueltas,solucionFinal, tamX, tamY, sol, k, marcas,
+                                blockPerWeek, minGapDays, totalBlocks);
+                        k = k - 1;
+                    }
+                    marcas[j][i] = false;
+                }
+                // k = antK;            
+            }
+        }
+    }
+
+    private boolean esValida(Tupla[] sol, int k, boolean marca, int y, int x, int minGapDays,  ArrayList<ArrayList<Boolean>> totalBlocks) {
+
+        if (x == 3 && y == 3) { //solo pruebas
+            System.out.println("model.Course.esValida()");
+        }
+                            boolean boolExcludes = this.excludeCols.contains(x + 1) || this.excludeRows.contains(y + 1) || this.excludeBlocks.contains(new Tupla(y + 1, x + 1));
+
+        int i = 0;
+        while (i < k) {
+            if (Math.abs((Integer) sol[i].x - x) < minGapDays /*|| Math.abs((Integer) sol[i].y - y) < minGapBlocks*/) {
+                return false;
+            }
+            i++;
+        }
+        
+        return !boolExcludes && !marca  && totalBlocks.get(y).get(x);
+        /*if (rowsHabilitadas.contains(j) && (excludeRows == null && excludeCols == null && excludeBlocks == null) || !excludeRows.contains(j + 1)) {
+                for (int i = 0; i < Algoritmo.TAMX; i++) { //i son las cols 3 en MS 
+                    ArrayList<Tupla> t = new ArrayList<>();
+                    k = this.blocksWeek;
+                    Tupla taux = new Tupla(i, j);
+
+                    if (colsHabilitadas.contains(i) && !t.contains(taux) && !this.excludeBlocks.contains(taux)
+                            && !this.excludeCols.contains(i)
+                            && totalBlocks.get(j).get(i)) {
+                        
+                    }*/
+
     }
 
     private boolean comprobarBxD(ArrayList<Tupla> t, Tupla taux2) {
@@ -795,7 +899,7 @@ public class Course {
     }
 
     public String getMaxSections() {
-        return  maxSections;
+        return maxSections;
     }
 
     public void setMaxSections(String maxSections) {
@@ -1108,22 +1212,24 @@ public class Course {
     public void setArraySecciones(ArrayList<Seccion> arraySecciones) {
         this.arraySecciones = arraySecciones;
     }
-    public void addSeccion(Seccion e){
+
+    public void addSeccion(Seccion e) {
         this.arraySecciones.add(e);
     }
 
-    public ArrayList<Integer> getAllIds(){
+    public ArrayList<Integer> getAllIds() {
         ArrayList<Integer> auxStudents = new ArrayList<>();
-        
+
         for (int i = 0; i < this.arraySecciones.size(); i++) {
             for (int j = 0; j < this.arraySecciones.get(i).getIdStudents().size(); j++) {
                 auxStudents.add(this.arraySecciones.get(i).getIdStudents().get(j));
             }
         }
-        
+
         return auxStudents;
     }
-    public void setSectionsLinkeadas(String[] secLinks){
+
+    public void setSectionsLinkeadas(String[] secLinks) {
         for (int i = 0; i < secLinks.length; i++) {
             this.sectionsLinkeadas.add(Integer.parseInt(secLinks[i]));
         }
@@ -1152,5 +1258,5 @@ public class Course {
     public void setMinChildPerSection(int minChildPerSection) {
         this.minChildPerSection = minChildPerSection;
     }
- 
+
 }

@@ -28,6 +28,7 @@ public class Seccion {
     boolean lockEnrollment;
     int classId;
     int courseID;
+    int patternRenWeb;
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron) {
         this.teacher = currentT;
@@ -36,9 +37,10 @@ public class Seccion {
         this.gender = "mixto";
         this.lockEnrollment = false;
         this.lockSchedule = false;
+        this.patternRenWeb = 0;
     }
 
-    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche,int cID,int courseID) {
+    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche, int cID, int courseID) {
         this.teacher = currentT;
         this.numStudents = numStudents;
         this.patronUsado = patron;
@@ -50,6 +52,7 @@ public class Seccion {
         this.lockSchedule = lockSche;
         this.classId = cID;
         this.courseID = courseID;
+        this.patternRenWeb = 0;
     }
 
     public Seccion(Seccion s) {
@@ -65,6 +68,7 @@ public class Seccion {
         this.lockSchedule = s.lockSchedule;
         this.classId = s.classId;
         this.courseID = s.courseID;
+        this.patternRenWeb = s.patternRenWeb;
     }
 
     public Seccion() {
@@ -73,6 +77,7 @@ public class Seccion {
         this.patronUsado = new ArrayList<>();
         this.lockEnrollment = false;
         this.lockSchedule = false;
+        this.patternRenWeb = 0;
     }
 
     public Teacher getTeacher() {
@@ -191,7 +196,6 @@ public class Seccion {
     public void setCourseID(int courseID) {
         this.courseID = courseID;
     }
-    
 
     public void setLockEnrollment(int lockEnrollmentInt) {
         if (lockEnrollmentInt == 1) {
@@ -200,8 +204,9 @@ public class Seccion {
             this.lockEnrollment = false;
         }
     }
-    public void copiarIdsStudents(ArrayList<Integer> a, HashMap<Integer,Student> students,Course c){
-        this.idStudents = new ArrayList<>();
+
+    public void copiarIdsStudents(ArrayList<Integer> a, HashMap<Integer, Student> students, Course c) {
+        // this.idStudents = new ArrayList<>();
         for (int i = 0; i < a.size(); i++) {
             this.idStudents.add(a.get(i));
             students.get(a.get(i)).ocuparHueco(this.patronUsado, c.getIdCourse() * 100 + this.numSeccion);
@@ -215,16 +220,25 @@ public class Seccion {
     public void setClassId(int classId) {
         this.classId = classId;
     }
-    
-     public boolean patronCompatible(ArrayList<Tupla> ar) {
+
+    public boolean patronCompatible(ArrayList<Tupla> ar) {
         for (Tupla t : ar) {
             for (int i = 0; i < this.patronUsado.size(); i++) {
-                if (this.patronUsado.get(i).x == t.x && this.patronUsado.get(i).y == t.y){
+                if (this.patronUsado.get(i).x == t.x && this.patronUsado.get(i).y == t.y) {
                     return false;
                 }
             }
-            
+
         }
         return true;
     }
+
+    public int getPatternRenWeb() {
+        return patternRenWeb;
+    }
+
+    public void setPatternRenWeb(int patternRenWeb) {
+        this.patternRenWeb = patternRenWeb;
+    }
+    
 }

@@ -20,17 +20,16 @@
                     backdrop: 'static',
                     keyboard: false
                 });
-
                 $('#selectIS').modal("show");
                 $("#selectIS .close").hide();
                 // var schoolsList = JSON.parse(${schools});
-
             });
-
             function getYears() {
                 var id = $("#divSelectDepartament option:selected").val();
+                var nameSchool = $("#divSelectDepartament option:selected").text();
+                
+                $("#nameSchoolTitle").text(nameSchool);
                 $("#schoolcode").val(id);
-
                 if (id !== "") {
                     $.ajax({
                         type: "POST",
@@ -53,8 +52,6 @@
                     });
                 }
             }
-
-
             function templates() {
                 var id = $("#selectyear option:selected").val();
                 if (id !== "") {
@@ -84,7 +81,6 @@
                     $("#selecttemplate").empty();
                 }
             }
-
             function hideroomsgroup() {
                 var selectval = $('#roomsmode').val();
                 if (selectval === 0 || selectval === 1) {
@@ -95,26 +91,20 @@
             }
             function enviando()
             {
-
                 $('#crearhorario').submit();
-
                 $('#pleaseWaitDialog').modal({
                     backdrop: 'static',
                     keyboard: false
                 });
                 $('#pleaseWaitDialog').modal('show');
-
-
                 var start = new Date();
                 var maxTime = 80000;
                 var timeoutVal = Math.floor(maxTime / 100);
                 animateUpdate();
-
                 function updateProgress(percentage) {
                     $('#pbar_innerdiv').css("width", percentage + "%");
                     $('#pbar_innertext').text(percentage + "%");
                 }
-
                 function animateUpdate() {
                     var now = new Date();
                     var timeDiff = now.getTime() - start.getTime();
@@ -122,11 +112,9 @@
                     console.log(perc);
                     if (perc <= 100) {
                         updateProgress(perc);
-
                         setTimeout(animateUpdate, timeoutVal);
                     }
                 }
-
             }
             /*private int id;
              private int cols;

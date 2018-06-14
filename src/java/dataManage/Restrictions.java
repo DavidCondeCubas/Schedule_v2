@@ -76,7 +76,8 @@ public class Restrictions {
         this.groupRooms = cs.roomsGroup(groupofrooms);
         ArrayList<Student> st = new ArrayList();
         int[] tempInfo =  cs.templateInfo(tempid);
-        this.studentsCourse = Consultas.getCoursesGroups(st, idCourses, yearid, tempid); //5sg
+      //  this.studentsCourse = Consultas.getCoursesGroups(st, idCourses, yearid, tempid); //5sg
+        this.studentsCourse = new HashMap<>();
         this.students = new HashMap<>();
         
         st = (new Conjuntos<Student>()).union(st,
@@ -89,7 +90,7 @@ public class Restrictions {
             this.students.put(s.getId(), s);
         }
 
-         this.totalBlocks = this.cs.getTotalBlocksStart();
+        this.totalBlocks = this.cs.getTotalBlocksStart();
         this.linkedCourses = this.cs.getLinkedCourses();
         this.rooms = cs.getRooms();
 

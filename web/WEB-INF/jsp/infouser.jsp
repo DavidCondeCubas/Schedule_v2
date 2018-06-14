@@ -89,10 +89,8 @@
             alert("Your session is going to be end by 5 min, Please click OK and continue")
         }, 3000000);
     });
-
     var ajax;
     function terms() {
-
         if (window.XMLHttpRequest) //mozilla
         {
             ajax = new XMLHttpRequest(); //No Internet explorer
@@ -100,14 +98,12 @@
         {
             ajax = new ActiveXObject("Microsoft.XMLHTTP");
         }
-
         ajax.onreadystatechange = CallBackYear;
         var seleccion = $('#yearSelect option:selected').val();
         var url = "<c:url value="/getyear.htm"/>?id=" + seleccion;
         ajax.open("POST", url, true);
         ajax.send("");
     }
-
     function CallBackYear()
     {
         if (ajax.readyState === 4 && ajax.status === 200) {
@@ -119,7 +115,6 @@
             }
         }
     }
-
     function changeTermYear() {
         if (window.XMLHttpRequest) //mozilla
         {
@@ -128,7 +123,6 @@
         {
             ajax = new ActiveXObject("Microsoft.XMLHTTP");
         }
-
         ajax.onreadystatechange = function () {
             if (ajax.readyState === 4 && ajax.status === 200) {
                 window.location.reload();
@@ -140,7 +134,6 @@
         ajax.open("POST", url, true);
         ajax.send("");
     }
-
     function logout() {
         document.location.href = "<c:url value="/cerrarLogin.htm"/>";
     }
@@ -148,12 +141,21 @@
 
 <div class="infousuario noPrint bg-primary" id="infousuario" style="background-color: #2d2f42;">
 
-    <div class="col-xs-10 text-center">
-        <h1 class="text-center">Hi, <c:out value="${sessionScope.user.name}"/></h1>
+    <div class="col-xs-9 text-center">
+        <div class="col-xs-12">
+            <h1 id="nameSchoolTitle" class="text-center"></h1>
+        </div>
+        <div class="col-xs-12">
+            <h3 class="text-center">Hi, <c:out value="${sessionScope.user.name}"/></h3>
+        </div>
     </div>
-    <div class="col-xs-2 text-right">
+    <div class="col-xs-3 text-right">
         <!--<a href="<c:url value="/cerrarLogin.htm"/>" role="button" aria-haspopup="true" aria-expanded="false"><img class="imgUser" src="<c:url value="/recursos/img/iconos/user-01.svg"/>"></a>-->
-        <a onclick="$('#logoutmodal').modal('show');" role="button" aria-haspopup="true" aria-expanded="false"><img class="imgUser" src="<c:url value="/recursos/img/iconos/user-01.svg"/>"  style="width: 100% !important;max-height: 75px !important;"></a>
+        <div class="col-xs-12">
+        </div>
+        <div class="col-xs-10">
+            <a onclick="$('#logoutmodal').modal('show');" role="button" class="btn btn-default" aria-haspopup="true" aria-expanded="false">Log out<!--<img class="imgUser" src="<c:url value="/recursos/img/iconos/user-01.svg"/>"  style="width: 100% !important;max-height: 75px !important;">--></a>
+        </div>   
     </div>
 </div>    
 
@@ -172,11 +174,9 @@
                     var yearId = ${yearId};
                     var termId = ${termId};
                     var listYear = ${yearsids};
-
                     for (var i = 0; i < listYear.length; ++i) {
                         $("#yearSelect").append("<option value='" + listYear[i].x + "'>" + listYear[i].y + "</option>");
                     }
-
                     var my_options = $("#yearSelect option");
                     my_options.sort(function (a, b) {
                         if (a.text > b.text)
@@ -185,12 +185,10 @@
                             return -1;
                         return 0
                     })
-
                     $("#yearSelect").empty().append(my_options);
                     $("#yearSelect").val(yearId);
                     terms();
                     $("#termSelect").val(termId);
-
                 </script>
                 <div class="col-xs-12 col-md-5">
                     <div class="form-group">
@@ -228,4 +226,3 @@
 
     </div>
 </div>
-

@@ -194,7 +194,7 @@ public class Student {
     }
 
     public boolean patronCompatible(ArrayList<Tupla> ar) {
-        if (ar == null) {
+        if (ar == null || ar.isEmpty()) {
             return false;
         }
         for (Tupla t : ar) {

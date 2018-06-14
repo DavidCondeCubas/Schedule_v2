@@ -346,7 +346,9 @@ public class Consultas {
                     + "                    on udg.groupid = udf.groupid\n"
                     + "                    and udg.grouptype = 'course'\n"
                     + "                    and udg.groupname = 'Schedule'\n"
-                    + "                    and udf.fieldName = 'Schedule'\n";
+                    + "                    and udf.fieldName = 'Schedule'\n"
+                    + "                    and udd.data =1";
+            
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 hashDos.put(rs.getInt("id"), rs.getString("data"));
@@ -1009,8 +1011,10 @@ public class Consultas {
                     + " and PreSchool=" + tempinfo[3];
             rs = DBConnect.renweb.executeQuery(consulta);
              */
-            String consulta = "SELECT StaffID FROM Person_Staff where Elementary=" + tempinfo[0]
-                    + " and HS=" + tempinfo[1] + " and MiddleSchool= " + tempinfo[2] + " and PreSchool=" + tempinfo[3];
+         //   String consulta = "SELECT * FROM Person_Staff where active=1 and faculty=1";
+         String consulta = "SELECT staffID FROM Person_Staff ps inner join Person p on (ps.StaffID = p.PersonID)\n" +
+"                        where ps.active=1 and ps.faculty=1";   
+            
             ResultSet rs;
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -1342,11 +1346,7 @@ public class Consultas {
                     "        and ps.StudentID = sr.StudentID" + 
                     "        where sr.yearid ="  + yearid +
                     "        and ps.SchoolCode = s.SchoolCode\n" +
-                    "    and s.SchoolCode = '"+schoolCode+"' "+
-                    "    and c.Elementary=" + tempinfo[0]
-                    + "    and c.HS=" + tempinfo[1]
-                    + "    and c.MidleSchool=" + tempinfo[2]
-                    + "    and c.PreSchool=" + tempinfo[3];
+                    "    and s.SchoolCode = '"+schoolCode+"' ";
      
         try {
             rs = DBConnect.renweb.executeQuery(consulta);
