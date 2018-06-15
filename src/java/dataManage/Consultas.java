@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Algoritmo;
@@ -319,7 +320,7 @@ public class Consultas {
     }
 
     //AQUI ES DONDE TARDA *****
-    public ArrayList<Course> getRestriccionesCourses(int[] ids, int[] tempinfo) {
+    public ArrayList<Course> getRestriccionesCourses(int[] ids, int[] tempinfo, String templateID) {
         ArrayList<Course> ret = new ArrayList<>();
         String consulta = "";
         HashMap<Integer, String> hashUno = new HashMap<>();
@@ -348,7 +349,7 @@ public class Consultas {
                     + "                    and udg.groupname = 'Schedule'\n"
                     + "                    and udf.fieldName = 'Schedule'\n"
                     + "                    and udd.data =1";
-            
+
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 hashDos.put(rs.getInt("id"), rs.getString("data"));
@@ -409,7 +410,7 @@ public class Consultas {
             cargarHashMap(hashBlocksPerWeek, "course", "BlocksPerWeek", "Integer");
             cargarHashMap(hashGR, "course", "GR", "Boolean");
             cargarHashMap(hashMaxSections, "course", "MaxSections", "String");
-            cargarHashMap(hashMinGapBlocks, "course", "MinGapBlocks", "String");
+            cargarHashMap(hashMinGapBlocks, "course", "MinGapBlocks", "Integer");
             cargarHashMap(hashMinGapDays, "course", "MinGapDays", "Integer");
             cargarHashMap(hashRank, "course", "Rank", "Integer");
             cargarHashMap(hashTeachers, "course", "Teachers", "String");
@@ -504,7 +505,7 @@ public class Consultas {
                 }
 /*/
                 if (hashMinGapBlocks.containsKey(ret.get(i).getIdCourse())) {
-                    ret.get(i).setMinGapBlocks((String) hashMinGapBlocks.get(ret.get(i).getIdCourse()));
+                    ret.get(i).setMinGapBlocks((Integer) hashMinGapBlocks.get(ret.get(i).getIdCourse()));
                 }
                 /*
                 consulta = "select udd.data\n"
@@ -771,13 +772,47 @@ public class Consultas {
                     ret.get(i).setMinChildPerSection(ret.get(i).getMaxChildPerSection());
                 }
 
+                updatePatternGroups(ret.get(i), templateID);
+
                 //prueba
-                ret.get(i).insertarOActualizarCurso();
+                //    ret.get(i).insertarOActualizarCurso();
             }
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
+    }
+
+    private void updatePatternGroups(Course c, String templateId) {
+        try {
+            ResultSet rs;
+            String consulta = "select patternGroup from courses where CourseID = " + c.getIdCourse();
+            rs = DBConnect.renweb.executeQuery(consulta);
+            if(rs.next() && !rs.getString(1).equals("")){
+                consulta = "SELECT PatternNumber FROM SchedulePatterns where "
+                        + "PatternGroup = '"+rs.getString(1)+"' and templateID ="+templateId;
+                rs = DBConnect.renweb.executeQuery(consulta);
+                Stack<Integer> auxPatternNumbers = new Stack<>();
+                while(rs.next()){
+                    auxPatternNumbers.push(rs.getInt(1));
+                } 
+                while(!auxPatternNumbers.isEmpty()){
+                    consulta = "SELECT * from SchedulePatternsTimeTable " +
+                               " where patternnumber ="+auxPatternNumbers.peek()+" and templateID ="+templateId;
+                    rs = DBConnect.renweb.executeQuery(consulta);
+                    ArrayList<Tupla> auxTuplas =new ArrayList<>();
+                    while(rs.next()){ 
+                        auxTuplas.add(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
+                    }
+                    auxPatternNumbers.pop();
+                    c.addOption(auxTuplas);
+                }
+            }
+            rs.close();
+        } catch (Exception e) {
+            System.out.println("dataManage.Consultas.updatePatternGroups()");
+        }
+        System.out.println("dataManage.Consultas.updatePatternGroups()");
     }
 
     public HashMap<Integer, Room> getRooms() {
@@ -889,7 +924,7 @@ public class Consultas {
         String excludes = "";
 
         Course caux = new Course(1);
-         ArrayList<ArrayList<Boolean>> auxTotalStart = new ArrayList<>();
+        ArrayList<ArrayList<Boolean>> auxTotalStart = new ArrayList<>();
         String consulta = "select udd.data\n"
                 + "                from uddata udd\n"
                 + "                inner join udfield udf\n"
@@ -928,17 +963,17 @@ public class Consultas {
                 String[] auxS = rs.getString("data").split(",");
                 arrExcludeWords = Arrays.asList(auxS);
             }
-            
+
             auxTotalStart = caux.opcionesStart();
-            consulta = "SELECT * FROM ScheduleTemplateTimeTable where templateid ="+tempid;
-            
+            consulta = "SELECT * FROM ScheduleTemplateTimeTable where templateid =" + tempid;
+
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
-                int row = rs.getInt("row") -1;
-                int col = rs.getInt("col") -1;
+                int row = rs.getInt("row") - 1;
+                int col = rs.getInt("col") - 1;
                 String tmpText = rs.getString("TemplateText");
-                if(!tmpText.equals("") && arrExcludeWords.contains(tmpText)
-                        && row >=0 && col>=0){
+                if (!tmpText.equals("") && arrExcludeWords.contains(tmpText)
+                        && row >= 0 && col >= 0) {
                     auxTotalStart.get(row).set(col, false);
                 }
             }
@@ -1011,10 +1046,10 @@ public class Consultas {
                     + " and PreSchool=" + tempinfo[3];
             rs = DBConnect.renweb.executeQuery(consulta);
              */
-         //   String consulta = "SELECT * FROM Person_Staff where active=1 and faculty=1";
-         String consulta = "SELECT staffID FROM Person_Staff ps inner join Person p on (ps.StaffID = p.PersonID)\n" +
-"                        where ps.active=1 and ps.faculty=1";   
-            
+            //   String consulta = "SELECT * FROM Person_Staff where active=1 and faculty=1";
+            String consulta = "SELECT staffID FROM Person_Staff ps inner join Person p on (ps.StaffID = p.PersonID)\n"
+                    + "                        where ps.active=1 and ps.faculty=1";
+
             ResultSet rs;
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -1293,7 +1328,7 @@ public class Consultas {
      * @param yearid
      * @return
      */
-    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int[] tempinfo,String schoolCode) {
+    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int[] tempinfo, String schoolCode) {
         String consulta = "";
         ResultSet rs;
         ArrayList<Integer> CoursesScheduleActive = new ArrayList<>();
@@ -1316,8 +1351,8 @@ public class Consultas {
             System.out.println("dataManage.Consultas.restriccionesStudent()");
         }
 
-      ArrayList<Student> ret = new ArrayList<>();
-     /*     consulta = "    select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n"
+        ArrayList<Student> ret = new ArrayList<>();
+        /*     consulta = "    select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n"
                 + "    from studentrequests sr, person p, person_student ps,courses c \n"
                 + "    where sr.studentid = p.personid\n"
                 + "    and ps.studentid = p.personid\n"
@@ -1330,24 +1365,24 @@ public class Consultas {
                 + "    and c.MidleSchool=" + tempinfo[2]
                 + "    and c.PreSchool=" + tempinfo[3];
         //+ "    order by gender";
-        */
-        consulta =  " select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n" +
-                    "    from studentrequests sr\n" +
-                    "    inner join person p\n" +
-                    "        on p.PersonID = sr.StudentID\n" +
-                    "    inner join courses c\n"+
-                    "        on c.CourseID = sr.courseid\n"+
-                    "    inner join students s\n" +
-                    "        on s.studentid = sr.StudentID\n" +
-                    "        and p.personid = s.studentid\n" +
-                    "    inner join person_student ps\n" +
-                    "        on ps.StudentID = s.StudentID\n" +
-                    "        and ps.StudentID = p.PersonID\n" +
-                    "        and ps.StudentID = sr.StudentID" + 
-                    "        where sr.yearid ="  + yearid +
-                    "        and ps.SchoolCode = s.SchoolCode\n" +
-                    "    and s.SchoolCode = '"+schoolCode+"' ";
-     
+         */
+        consulta = " select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n"
+                + "    from studentrequests sr\n"
+                + "    inner join person p\n"
+                + "        on p.PersonID = sr.StudentID\n"
+                + "    inner join courses c\n"
+                + "        on c.CourseID = sr.courseid\n"
+                + "    inner join students s\n"
+                + "        on s.studentid = sr.StudentID\n"
+                + "        and p.personid = s.studentid\n"
+                + "    inner join person_student ps\n"
+                + "        on ps.StudentID = s.StudentID\n"
+                + "        and ps.StudentID = p.PersonID\n"
+                + "        and ps.StudentID = sr.StudentID"
+                + "        where sr.yearid =" + yearid
+                + "        and ps.SchoolCode = s.SchoolCode\n"
+                + "    and s.SchoolCode = '" + schoolCode + "' ";
+
         try {
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -1473,7 +1508,7 @@ public class Consultas {
                 Course c = new Course(rs.getInt("id"));
                 c.setBlocksWeek(rs.getInt("blocksperweek"));
                 c.setMaxSections("" + rs.getInt("maxsections"));
-                c.setMinGapBlocks("" + rs.getInt("mingapblocks"));
+                c.setMinGapBlocks(rs.getInt("mingapblocks"));
                 c.setMinGapDays(rs.getInt("mingapdays"));
                 c.setRank(rs.getInt("rank"));
                 c.setGR(rs.getBoolean("gender"));

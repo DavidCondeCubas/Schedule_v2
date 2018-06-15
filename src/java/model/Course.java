@@ -36,7 +36,7 @@ public class Course {
     private String nameCourse;
     private int blocksWeek; // bloques por semana
     private String maxSections; // maximo numero de grupos
-    private String minGapBlocks; // espacio minimo entre bloques
+    private int minGapBlocks; // espacio minimo entre bloques
     private int minSections;
     private int minGapDays; //cada cuantos dias entre bloques
     private int rank; // prioridad
@@ -62,6 +62,7 @@ public class Course {
     private String patternGroup;
     private ArrayList<Seccion> arraySecciones;
     private ArrayList<Integer> sectionsLinkeadas;
+    private ArrayList<ArrayList<Tupla>> opcionesPatternGroup;
     private int minChildPerSection;
 
     public Course(Course c) {
@@ -93,6 +94,7 @@ public class Course {
         this.mandatoryBlockRange = c.getMandatoryBlockRange();
         this.sectionsLinkeadas = c.getSectionsLinkeadas();
         this.minChildPerSection = c.getMinChildPerSection();
+        this.opcionesPatternGroup = c.getOpcionesPatternGroup();
     }
 
     public Course(int idCourse) {
@@ -106,6 +108,8 @@ public class Course {
         }
 
         maxBlocksPerDay = 1;
+        minGapBlocks = 0; // espacio minimo entre bloques
+        minGapDays =1; //cada cuantos dias entre bloques  
         sections = 1;
         studentsNoAsignados = new ArrayList<>();
         patronesStudents = new ArrayList<>();
@@ -119,7 +123,7 @@ public class Course {
         this.patternGroup = "";
         this.arraySecciones = new ArrayList<>();
         this.sectionsLinkeadas = new ArrayList<>();
-
+        this.opcionesPatternGroup =new ArrayList<>();
     }
 
     public String getNameCourse() {
@@ -408,13 +412,8 @@ public class Course {
 
         calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
 
-        int blockPerWeek;
-        int gd = this.minGapDays;
 
-        //**   NUEVO   **///
-        blockPerWeek = this.blocksWeek;
-
-        Tupla[] sol = new Tupla[blockPerWeek];
+        Tupla[] sol = new Tupla[this.blocksWeek];
         boolean[][] marcas = new boolean[Algoritmo.TAMY][Algoritmo.TAMX];
 
         for (int i = 0; i < Algoritmo.TAMY; i++) {
@@ -424,7 +423,7 @@ public class Course {
         }
         int maxVueltas = 0;
         
-        recurOpciones( maxVueltas,ret, Algoritmo.TAMX, Algoritmo.TAMY, sol, 0, marcas, blockPerWeek, gd, totalBlocks);
+        recurOpciones( maxVueltas,ret, Algoritmo.TAMX, Algoritmo.TAMY, sol, 0, marcas,  totalBlocks);
 
         //RECORRE LAS TUPLAS DEFINIDAS COMO MANDATORY
         /*for (int ind = 0; ind < tuplasHabilitadas.size(); ind++) {
@@ -525,7 +524,7 @@ public class Course {
 
     private void recurOpciones(int vueltas,ArrayList<ArrayList<Tupla>> solucionFinal, int tamX, int tamY,
             Tupla[] sol, int k,
-            boolean[][] marcas, int blockPerWeek, int minGapDays, ArrayList<ArrayList<Boolean>> totalBlocks) {
+            boolean[][] marcas,  ArrayList<ArrayList<Boolean>> totalBlocks) {
 
      
          vueltas ++;
@@ -538,18 +537,17 @@ public class Course {
                 j = (int)(Math.random() * tamY); 
                 
                 sol[k] = new Tupla(i, j);
-                if ( solucionFinal.size() < MUESTRA && esValida(sol, k, marcas[j][i], j, i, minGapDays, totalBlocks)) {
+                if ( solucionFinal.size() < MUESTRA && esValida(sol, k, marcas[j][i], j, i, totalBlocks)) {
                     marcas[j][i] = true;
                     sol[k] = new Tupla(i, j);
-                    if (k == blockPerWeek - 1) {
+                    if (k == this.blocksWeek - 1) {
                         //solucionFinal.add(sol);
 
                         ArrayList<Tupla> aList = new ArrayList<>(Arrays.asList(sol));
                         solucionFinal.add(aList);
                     } else {
                         k = k + 1;
-                        recurOpciones(vueltas,solucionFinal, tamX, tamY, sol, k, marcas,
-                                blockPerWeek, minGapDays, totalBlocks);
+                        recurOpciones(vueltas,solucionFinal, tamX, tamY, sol, k, marcas, totalBlocks);
                         k = k - 1;
                     }
                     marcas[j][i] = false;
@@ -559,7 +557,7 @@ public class Course {
         }
     }
 
-    private boolean esValida(Tupla[] sol, int k, boolean marca, int y, int x, int minGapDays,  ArrayList<ArrayList<Boolean>> totalBlocks) {
+    private boolean esValida(Tupla[] sol, int k, boolean marca, int y, int x,    ArrayList<ArrayList<Boolean>> totalBlocks) {
 
         if (x == 3 && y == 3) { //solo pruebas
             System.out.println("model.Course.esValida()");
@@ -568,7 +566,7 @@ public class Course {
 
         int i = 0;
         while (i < k) {
-            if (Math.abs((Integer) sol[i].x - x) < minGapDays /*|| Math.abs((Integer) sol[i].y - y) < minGapBlocks*/) {
+            if (Math.abs((Integer) sol[i].x - x) < this.minGapDays && Math.abs((Integer) sol[i].y - y) < this.minGapBlocks) {
                 return false;
             }
             i++;
@@ -908,11 +906,11 @@ public class Course {
         }
     }
 
-    public String getMinGapBlocks() {
+    public int getMinGapBlocks() {
         return minGapBlocks;
     }
 
-    public void setMinGapBlocks(String minGapBlocks) {
+    public void setMinGapBlocks(int minGapBlocks) {
         this.minGapBlocks = minGapBlocks;
     }
 
@@ -1124,7 +1122,8 @@ public class Course {
                 }
 
                 try {
-                    mingapblocks = Integer.parseInt(this.minGapBlocks);
+                   // mingapblocks = Integer.parseInt(this.minGapBlocks);
+                   mingapblocks =  this.minGapBlocks;
                 } catch (Exception e) {
                 }
 
@@ -1216,7 +1215,11 @@ public class Course {
     public void addSeccion(Seccion e) {
         this.arraySecciones.add(e);
     }
-
+    
+    public void addOption(ArrayList<Tupla> e) {
+        this.opcionesPatternGroup.add(e);
+    }
+    
     public ArrayList<Integer> getAllIds() {
         ArrayList<Integer> auxStudents = new ArrayList<>();
 
@@ -1259,4 +1262,13 @@ public class Course {
         this.minChildPerSection = minChildPerSection;
     }
 
+    public ArrayList<ArrayList<Tupla>> getOpcionesPatternGroup() {
+        return opcionesPatternGroup;
+    }
+
+    public void setOpcionesPatternGroup(ArrayList<ArrayList<Tupla>> opcionesPatternGroup) {
+        this.opcionesPatternGroup = opcionesPatternGroup;
+    }
+
+    
 }

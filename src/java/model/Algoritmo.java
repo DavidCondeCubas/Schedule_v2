@@ -48,12 +48,12 @@ import org.w3c.dom.Node;
 public class Algoritmo {
 
     public static int TAMX = 3;
-    public static int TAMY = 11;
+    public static int TAMY = 11;    
+    public static int NUMERO_MAX_GENERO = 2;
     public final static int CHILDSPERSECTION = 20;
     private ArrayList<String> Log;
     private Conjuntos<Integer> conjuntos;
  
-
     public Algoritmo() {
         Log = new ArrayList<>();
         conjuntos = new Conjuntos<>();
@@ -105,9 +105,13 @@ public class Algoritmo {
                 }
                 
                 ArrayList<ArrayList<Tupla>> opciones = new ArrayList<>();
-                if(needGenerateOptions(course))
-                     opciones = course.opciones(r.totalBlocks,Log);
-                        
+                
+                if(course.getOpcionesPatternGroup().isEmpty() && needGenerateOptions(course))
+                    opciones = course.opciones(r.totalBlocks,Log);
+                else if(!course.getOpcionesPatternGroup().isEmpty() ){
+                    opciones = course.getOpcionesPatternGroup();
+                }
+                
                 ArrayList<Integer> noAsign = (ArrayList<Integer>) r.studentsCourse.get(course.getIdCourse()).clone();     
                 // FALTA ACABAR LOS LOGS DE LAS FUNCIONES MODIFICADAS
                 for (int i = 0; i < course.getArraySecciones().size(); i++) {
@@ -397,7 +401,6 @@ public class Algoritmo {
         sortStidsByPriority(stids, sec, c, r);
         sortStudentsByPatron(stids, hashStudents_cantPatrones);
         
-      
      
         int lastTeacher = -1;
         int lastStudent = -1;
@@ -759,24 +762,45 @@ public class Algoritmo {
         idsAsignados = c.getAllIds();
         chargeStatusStudents(r,c);
         int idCourse = c.getIdCourse();
-                
+        ArrayList<Seccion> auxGenderSecciones = new ArrayList<Seccion>();
         
         HashMap<Integer, Integer> hashStudents_cantPatrones = new HashMap<>();
         initHashStudents(hashStudents_cantPatrones, studentsCourse);
-        
-        for (int i = 0; i < c.getArraySecciones().size(); i++) {
-            ArrayList<Integer> auxStids = c.getArraySecciones().get(i).getIdStudents();
-            stids.add(new Tupla(i, auxStids.clone()));
+        if(!c.isGR()){
+            for (int i = 0; i < c.getArraySecciones().size(); i++) {
+                ArrayList<Integer> auxStids = c.getArraySecciones().get(i).getIdStudents();
+                stids.add(new Tupla(i, auxStids.clone()));
+                    for (Integer j : studentsCourse) {
+                        if (!idsAsignados.contains(j) && students.get(j).patronCompatible(c.getArraySecciones().get(i).getPatronUsado())) {
+                            stids.get(i).y.add(j);
+                            hashStudents_cantPatrones.put(j, hashStudents_cantPatrones.get(j) + 1);   
+                        }
+                    }           
+            }
+            
+            
+            /*
+                SE PODRIA MODIFICAR EL ARRAY STIDS Y AGREGAR UN CAMPO MAS QUE INDICARA EL GENDER DE LA SECCION CUANDO SE INDIQUE QUE SE QUIERE SECICON SEPARADAS POR GENDER 
+                SE DUPLICARIAN ESTAS Y SE DARIA A CADA UNA DE LAS MITADAS EL GENDER
+                - SE TIENEN QUE DUPLICAR PARA PODER HACER LA ORDENACION POR NUMERO DE PATRONES DE STUDENTS.
+            */
+            equilibrarGender(stids,students);
+        }
+        else{
+   
+            for (int i = 0; i < c.getArraySecciones().size(); i++) {
+                ArrayList<Integer> auxStids = c.getArraySecciones().get(i).getIdStudents();
+                stids.add(new Tupla(i, auxStids.clone()));
                 for (Integer j : studentsCourse) {
                     if (!idsAsignados.contains(j) && students.get(j).patronCompatible(c.getArraySecciones().get(i).getPatronUsado())) {
                         stids.get(i).y.add(j);
                         hashStudents_cantPatrones.put(j, hashStudents_cantPatrones.get(j) + 1);   
                     }
                 }           
+            }
+
+                  
         }
-           
-        equilibrarGender(stids,students);
-        
         //Ordena la lista de conjuntos por numero de estudiantes de mayor a menor.
         try {
             stids.sort(new CompConjuntos());
@@ -1780,6 +1804,16 @@ public class Algoritmo {
         }
     }
 
+    private String getGenero(int idGenero){
+        switch (idGenero){
+            case 0:
+                return "Female";
+            case 1:
+                return "Male";
+            default:
+                return "Male";
+        }
+    }
     private Boolean esValido() {
         return false;
     }
