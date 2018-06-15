@@ -567,7 +567,7 @@ public class Algoritmo {
         }
      return aux;
     }
-  
+  ///
     private void chargeStatusStudents(Restrictions r,Course c){
         for (int i = 0; i < c.getArraySecciones().size(); i++) {
             for (int j = 0; j < c.getArraySecciones().get(i).getIdStudents().size(); j++) {
