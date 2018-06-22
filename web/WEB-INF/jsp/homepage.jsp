@@ -210,66 +210,68 @@
 
                     <%
                         for (Course t : courses) {
-                            out.println("<div class='col-xs-12 course'>");
-                            out.println("<h3>" + cs.getAbbrevCourses().get(t.getIdCourse()) + " - " + cs.nameCourse(t.getIdCourse()) + "</h3>");
-                            //   out.println("<h3>" + t.getIdCourse() + "</h3>");
-                            out.println("<table id='table_id' width='100%' border='0' class=''>");
-                            out.println("<tr class='students'>");
-                            for (int j = 0; j < t.getArraySecciones().size(); j++) {
-                                String studentNames = "";
-                                String nameTeacher = "" + hashPersons.get(t.getArraySecciones().get(j).getIdTeacher());
-                                /*  String nameTeacher = "No Teacher";
-                                
-                               if (hashPersons.containsKey(t.getArraySecciones().get(j).getIdTeacher())) {
-                                    nameTeacher = hashPersons.get(t.getArraySecciones().get(j).getIdTeacher());
-                                }*/
-                                out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"
-                                        + "Teacher: " + nameTeacher + " </strong>");
-                                for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
-                                    studentNames += "<br>" + (k + 1) + "- " + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
-                                }
-                                out.println(studentNames);
-                                out.println("</td>");
+                            if(t.hayEstudiantes()){
+                               out.println("<div class='col-xs-12 course'>");
+                                out.println("<h3>" + cs.getAbbrevCourses().get(t.getIdCourse()) + " - " + cs.nameCourse(t.getIdCourse()) + "</h3>");
+                               //   out.println("<h3>" + t.getIdCourse() + "</h3>");
+                               out.println("<table id='table_id' width='100%' border='0' class=''>");
+                               out.println("<tr class='students'>");
+                               for (int j = 0; j < t.getArraySecciones().size(); j++) {
+                                   String studentNames = "";
+                                   String nameTeacher = "" + hashPersons.get(t.getArraySecciones().get(j).getIdTeacher());
+                                   /*  String nameTeacher = "No Teacher";
 
-                            }
-                            out.println("</tr>");
+                                  if (hashPersons.containsKey(t.getArraySecciones().get(j).getIdTeacher())) {
+                                       nameTeacher = hashPersons.get(t.getArraySecciones().get(j).getIdTeacher());
+                                   }*/
+                                   out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"
+                                           + "Teacher: " + nameTeacher + " </strong>");
+                                   for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
+                                       studentNames += "<br>" + (k + 1) + "- " + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
+                                   }
+                                   out.println(studentNames);
+                                   out.println("</td>");
 
-                            /* String[][] matSections = new String[TAMX][TAMY];
-                     
-                        for (int i = 0; i < TAMX; i++) {
-                            for (int j = 0; j < TAMY; j++) {
-                                matSections[i][j] ="";
-                            }
-                        }
-                             */
-                            out.println(headCols);
-                            swapcolor = true;
-                            for (int i = 0; i < TAMY; i++) {
-                                if (swapcolor) {
-                                    out.println("<tr class='tcolores horario'>");
-                                    swapcolor = false;
-                                } else {
-                                    out.println("<tr class='horario'>");
-                                    swapcolor = true;
-                                }
-                                if (i < headRow.size()) {
-                                    out.println("<td>" + headRow.get(i).text() + "</td>");
-                                } else {
-                                    out.println("<td></td>");
-                                }
-                                for (int j = 0; j < TAMX; j++) {
-                                    if (!t.getHuecos()[j][i].equals("0")) {
-                                        String aux = t.getHuecos()[j][i];
-                                        out.println("<td class='text-center'> section " + aux + "</td>");
-                                    } else {
-                                        out.println("<td> </td>");
-                                    }
+                               }
+                               out.println("</tr>");
 
-                                }
-                                out.println("</tr>");
+                               /* String[][] matSections = new String[TAMX][TAMY];
+
+                           for (int i = 0; i < TAMX; i++) {
+                               for (int j = 0; j < TAMY; j++) {
+                                   matSections[i][j] ="";
+                               }
+                           }
+                                */
+                               out.println(headCols);
+                               swapcolor = true;
+                               for (int i = 0; i < TAMY; i++) {
+                                   if (swapcolor) {
+                                       out.println("<tr class='tcolores horario'>");
+                                       swapcolor = false;
+                                   } else {
+                                       out.println("<tr class='horario'>");
+                                       swapcolor = true;
+                                   }
+                                   if (i < headRow.size()) {
+                                       out.println("<td>" + headRow.get(i).text() + "</td>");
+                                   } else {
+                                       out.println("<td></td>");
+                                   }
+                                   for (int j = 0; j < TAMX; j++) {
+                                       if (!t.getHuecos()[j][i].equals("0")) {
+                                           String aux = t.getHuecos()[j][i];
+                                           out.println("<td class='text-center'> section " + aux + "</td>");
+                                       } else {
+                                           out.println("<td> </td>");
+                                       }
+
+                                   }
+                                   out.println("</tr>");
+                               }
+                               out.println("</table>");
+                               out.println("</div>");
                             }
-                            out.println("</table>");
-                            out.println("</div>");
                         }
                     %>
 

@@ -33,6 +33,7 @@ public class Consultas {
     private Teacher tdefault;
     private Student stDefault;
     public static HashMap<Integer, String> courseName;
+    public static int DEFAULT_RANK = 10;
     //*****////
     private HashMap<Integer, String> namePersons;
     private HashMap<Integer, String> nameCourses;
@@ -299,7 +300,7 @@ public class Consultas {
                             hashObject.put(rs.getInt("id"), Integer.parseInt(aux));
                             break;
                         case "Boolean":
-                            if (aux.equals("true")) {
+                            if (aux.equals("1")) {
                                 hashObject.put(rs.getInt("id"), true);
                             } else {
                                 hashObject.put(rs.getInt("id"), false);
@@ -329,11 +330,16 @@ public class Consultas {
         try {
             ResultSet rs;
 
-            consulta = "select * from courses"
+          /*  consulta = "select * from courses"
                     + " where Elementary=" + tempinfo[0]
                     + " and HS=" + tempinfo[1]
                     + " and MidleSchool=" + tempinfo[2]
-                    + " and PreSchool=" + tempinfo[3];
+                    + " and PreSchool=" + tempinfo[3]
+                    + " and active=1";*/
+           consulta = "select * from courses"
+                    + " where "
+                    + getWhereTemplate(tempinfo)
+                    + " and active=1";
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 hashUno.put(rs.getInt("courseid"), "");
@@ -390,6 +396,13 @@ public class Consultas {
                     courseName.put(ids[i], this.nameCourses.get(ids[i]));
                 }
             }
+            //HashMap<String, String> map = new HashMap<>();
+          /*  for (HashMap.Entry<Integer, String> entry : hashUno.entrySet()) {
+                Course r = new Course(entry.getKey());
+                ret.add(r);
+                courseName.put(entry.getKey(), this.nameCourses.get(entry.getKey()));
+            }
+*/
             HashMap<Integer, Object> hashBlocksPerWeek = new HashMap<>();
             HashMap<Integer, Object> hashGR = new HashMap<>();
             HashMap<Integer, Object> hashMaxSections = new HashMap<>();
@@ -550,7 +563,12 @@ public class Consultas {
                     }
                 }*/
                 if (hashRank.containsKey(ret.get(i).getIdCourse())) {
-                    ret.get(i).setRank((int) hashRank.get(ret.get(i).getIdCourse()));
+                    if(!hashRank.containsKey(ret.get(i).getIdCourse())){
+                        ret.get(i).setRank(DEFAULT_RANK);
+                    }
+                    else{
+                        ret.get(i).setRank((int) hashRank.get(ret.get(i).getIdCourse()));
+                    }
                 }
                 /*
                 consulta = "select udd.data\n"
@@ -570,11 +588,32 @@ public class Consultas {
                     s = rs.getString(1).split(",");
                 }*/
 
-                String[] s = new String[2];
+                String[] s = new String[100];
                 if (hashTeachers.containsKey(ret.get(i).getIdCourse())) {
                     s = ((String) hashTeachers.get(ret.get(i).getIdCourse())).split(",");
                 }
+                
+                
+                /* SOLO MD-PAN*/
+                ArrayList<String> aux = new ArrayList<String>(Arrays.asList(s));
+                int auxTeacherDefault =-1;
+                consulta = "select DefaultStaffID from courses where courseid="
+                        + ret.get(i).getIdCourse();
+                rs = DBConnect.renweb.executeQuery(consulta);
+                while (rs.next()) {
+                   if(rs.getInt(1) != 0){
+                       auxTeacherDefault = rs.getInt(1);
+                   };
+                }
+               // s[s.length] = auxTeacherDefault;                
                 ArrayList<Integer> ar = new ArrayList<>();
+                if(auxTeacherDefault != -1){
+                    ar.add(auxTeacherDefault);
+                    if (!teachers.contains(auxTeacherDefault)) {
+                            teachers.add(auxTeacherDefault);
+                        }
+                }
+                
                 for (String s2 : s) {
                     if (s2 != null) {
                         int idt = convertString(s2);
@@ -788,20 +827,20 @@ public class Consultas {
             ResultSet rs;
             String consulta = "select patternGroup from courses where CourseID = " + c.getIdCourse();
             rs = DBConnect.renweb.executeQuery(consulta);
-            if(rs.next() && !rs.getString(1).equals("")){
+            if (rs.next() && !rs.getString(1).equals("")) {
                 consulta = "SELECT PatternNumber FROM SchedulePatterns where "
-                        + "PatternGroup = '"+rs.getString(1)+"' and templateID ="+templateId;
+                        + "PatternGroup = '" + rs.getString(1) + "' and templateID =" + templateId;
                 rs = DBConnect.renweb.executeQuery(consulta);
                 Stack<Integer> auxPatternNumbers = new Stack<>();
-                while(rs.next()){
+                while (rs.next()) {
                     auxPatternNumbers.push(rs.getInt(1));
-                } 
-                while(!auxPatternNumbers.isEmpty()){
-                    consulta = "SELECT * from SchedulePatternsTimeTable " +
-                               " where patternnumber ="+auxPatternNumbers.peek()+" and templateID ="+templateId;
+                }
+                while (!auxPatternNumbers.isEmpty()) {
+                    consulta = "SELECT * from SchedulePatternsTimeTable "
+                            + " where patternnumber =" + auxPatternNumbers.peek() + " and templateID =" + templateId;
                     rs = DBConnect.renweb.executeQuery(consulta);
-                    ArrayList<Tupla> auxTuplas =new ArrayList<>();
-                    while(rs.next()){ 
+                    ArrayList<Tupla> auxTuplas = new ArrayList<>();
+                    while (rs.next()) {
                         auxTuplas.add(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
                     }
                     auxPatternNumbers.pop();
@@ -1048,7 +1087,7 @@ public class Consultas {
              */
             //   String consulta = "SELECT * FROM Person_Staff where active=1 and faculty=1";
             String consulta = "SELECT staffID FROM Person_Staff ps inner join Person p on (ps.StaffID = p.PersonID)\n"
-                    + "                        where ps.active=1 and ps.faculty=1";
+                    + "                        where ps.active=1 and ps.faculty=1 ";
 
             ResultSet rs;
             rs = DBConnect.renweb.executeQuery(consulta);
@@ -1328,7 +1367,7 @@ public class Consultas {
      * @param yearid
      * @return
      */
-    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int[] tempinfo, String schoolCode) {
+    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse , String yearid, int[] tempinfo, String schoolCode) {
         String consulta = "";
         ResultSet rs;
         ArrayList<Integer> CoursesScheduleActive = new ArrayList<>();
@@ -1387,7 +1426,7 @@ public class Consultas {
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 int courseid = rs.getInt("courseid");
-                if (CoursesScheduleActive.contains(courseid)) {
+               // if (CoursesScheduleActive.contains(courseid)) {
                     int studentid = rs.getInt("studentid");
                     Student st = new Student(studentid);
                     st.setGenero(rs.getString("gender"));
@@ -1402,7 +1441,7 @@ public class Consultas {
                         stCourse.put(courseid, new ArrayList());
                     }
                     stCourse.get(courseid).add(studentid);
-                }
+             //   }
             }
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
@@ -1758,5 +1797,56 @@ public class Consultas {
         }
         return ret;
     }
+    
+    private String getWhereTemplate(int[] tempInfo){
+                if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0){
+                    return " Elementary=0 and HS=0 and MidleSchool=0 and PreSchool=0 " ;
+        }
+        else if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1){
+                     return " Elementary=0 and HS=0 and MidleSchool=0 and PreSchool=1 " ;
+        }
+        else if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0){
+                     return " Elementary=0 and HS=0 and MidleSchool=1 and PreSchool=0 " ;
+        }
+        else if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1){
+                     return " Elementary=0 and HS=0 and ( MidleSchool=1 or PreSchool=1 ) " ;
+        }
+         else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0){
+                     return " Elementary=0 and HS=1 and MidleSchool=0 and PreSchool=0 " ;
+        }
+        else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1){
+                     return " Elementary=0  and MidleSchool=0 and (PreSchool=1 or HS=1) " ;
+        }
+        else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0){
+                    return " Elementary=0 and (HS=1 or MidleSchool=1) and PreSchool=0 " ;
+        }
+         else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 1){
+                    return " Elementary=0 and (HS=1 or MidleSchool=1 or PreSchool=1) " ;                    
+        }
+        else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0){
+                     return " Elementary=1 and HS=0 and MidleSchool=0 and PreSchool=0 " ;
+        }
+        else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1){
+                     return "  HS=0 and MidleSchool=0 and (Elementary=1 or PreSchool=1) " ;             
+        }
+         else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0){
+                    return " (Elementary=1 and MidleSchool=1) and HS=0  and PreSchool=0 " ;
+        }
+        else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1){
+                    return "  HS=0 and (Elementary=1 or MidleSchool=1 or PreSchool=1) " ;
+        }
+        else if(tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0){
+                    return " ( Elementary=1 or HS=1 ) and MidleSchool=0 and PreSchool=0 " ;
+        }
+         else if(tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1){
+                    return " ( Elementary=1 or HS=1 or PreSchool=1 )and MidleSchool=0 " ;
+        }
+        else if(tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0){
+                    return " (Elementary=1 or HS=1 or MidleSchool=1) and PreSchool=0 " ;
+        }
+        else {
+                    return " (Elementary=1 or HS=1 or MidleSchool=1 or PreSchool=1) " ;
 
+        }
+    }
 }

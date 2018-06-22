@@ -104,7 +104,8 @@ public class LoginVerification {
         User u = null;
        //user = 'shahad' and pswd = 'shahad1234' group = Spring
         String query = "select * from Person where username = '"+user+"' and pswd = HASHBYTES('MD5', CONVERT(nvarchar(4000),'"+password+"'));";
-     
+      //      String query = "select * from Person where username = '"+user+"';";
+
          ResultSet rs = SQLQuery(query);
          if(!rs.next()) 
          {u=new User();

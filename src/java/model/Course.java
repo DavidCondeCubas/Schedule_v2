@@ -1269,6 +1269,13 @@ public class Course {
     public void setOpcionesPatternGroup(ArrayList<ArrayList<Tupla>> opcionesPatternGroup) {
         this.opcionesPatternGroup = opcionesPatternGroup;
     }
-
+    
+    //solo testing
+    public boolean hayEstudiantes(){
+        for (int i = 0; i < this.getArraySecciones().size(); i++) {
+            if(this.getArraySecciones().get(i).getIdStudents().size() > 0) return true;
+        }
+        return false;
+    }
     
 }
