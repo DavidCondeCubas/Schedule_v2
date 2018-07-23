@@ -206,6 +206,11 @@ public class Course {
     public void addRoom(int id) {
         rooms.add(id);
     }
+    public void addArrayRooms(ArrayList<Integer> idsRooms){
+        for (int i = 0; i < idsRooms.size(); i++) {
+            rooms.add(idsRooms.get(i));
+        }
+    }
 
     /**
      * Actualiza el nnumero de alumnos que no se han podido matricular.
@@ -821,7 +826,10 @@ public class Course {
             }
         }
     }
-
+    
+    public void resetRooms(){
+        this.rooms = new ArrayList<>();
+    }
     public int getMinSections() {
         return minSections;
     }
@@ -1213,7 +1221,13 @@ public class Course {
     }
 
     public void addSeccion(Seccion e) {
-        this.arraySecciones.add(e);
+        this.arraySecciones.add(new Seccion(e));
+    }
+    
+    public void addSeccionWithoutPattern(Seccion e) {
+        Seccion auxS = new Seccion(e);
+        auxS.setPatronUsado(new ArrayList<Tupla> ());
+        this.arraySecciones.add(auxS);
     }
     
     public void addOption(ArrayList<Tupla> e) {
@@ -1278,4 +1292,7 @@ public class Course {
         return false;
     }
     
+    public Seccion getLastSeccion(){
+        return this.arraySecciones.get(this.arraySecciones.size()-1);
+    }
 }

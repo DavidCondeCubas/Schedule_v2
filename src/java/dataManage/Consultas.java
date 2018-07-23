@@ -321,7 +321,7 @@ public class Consultas {
     }
 
     //AQUI ES DONDE TARDA *****
-    public ArrayList<Course> getRestriccionesCourses(int[] ids, int[] tempinfo, String templateID) {
+    public ArrayList<Course> getRestriccionesCourses(int[] ids, int[] tempinfo, String templateID, HashMap<String, ArrayList<Integer>> groupCourses) {
         ArrayList<Course> ret = new ArrayList<>();
         String consulta = "";
         HashMap<Integer, String> hashUno = new HashMap<>();
@@ -330,15 +330,15 @@ public class Consultas {
         try {
             ResultSet rs;
 
-          /*  consulta = "select * from courses"
+            /*  consulta = "select * from courses"
                     + " where Elementary=" + tempinfo[0]
                     + " and HS=" + tempinfo[1]
                     + " and MidleSchool=" + tempinfo[2]
                     + " and PreSchool=" + tempinfo[3]
                     + " and active=1";*/
-           consulta = "select * from courses"
+            consulta = "select * from courses"
                     + " where "
-                    + getWhereTemplate(tempinfo)
+                    + getWhereTemplate(tempinfo, "MidleSchool")
                     + " and active=1";
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -397,12 +397,12 @@ public class Consultas {
                 }
             }
             //HashMap<String, String> map = new HashMap<>();
-          /*  for (HashMap.Entry<Integer, String> entry : hashUno.entrySet()) {
+            /*  for (HashMap.Entry<Integer, String> entry : hashUno.entrySet()) {
                 Course r = new Course(entry.getKey());
                 ret.add(r);
                 courseName.put(entry.getKey(), this.nameCourses.get(entry.getKey()));
             }
-*/
+             */
             HashMap<Integer, Object> hashBlocksPerWeek = new HashMap<>();
             HashMap<Integer, Object> hashGR = new HashMap<>();
             HashMap<Integer, Object> hashMaxSections = new HashMap<>();
@@ -563,10 +563,9 @@ public class Consultas {
                     }
                 }*/
                 if (hashRank.containsKey(ret.get(i).getIdCourse())) {
-                    if(!hashRank.containsKey(ret.get(i).getIdCourse())){
+                    if (!hashRank.containsKey(ret.get(i).getIdCourse())) {
                         ret.get(i).setRank(DEFAULT_RANK);
-                    }
-                    else{
+                    } else {
                         ret.get(i).setRank((int) hashRank.get(ret.get(i).getIdCourse()));
                     }
                 }
@@ -592,28 +591,27 @@ public class Consultas {
                 if (hashTeachers.containsKey(ret.get(i).getIdCourse())) {
                     s = ((String) hashTeachers.get(ret.get(i).getIdCourse())).split(",");
                 }
-                
-                
+
                 /* SOLO MD-PAN*/
                 ArrayList<String> aux = new ArrayList<String>(Arrays.asList(s));
-                int auxTeacherDefault =-1;
+                int auxTeacherDefault = -1;
                 consulta = "select DefaultStaffID from courses where courseid="
                         + ret.get(i).getIdCourse();
                 rs = DBConnect.renweb.executeQuery(consulta);
                 while (rs.next()) {
-                   if(rs.getInt(1) != 0){
-                       auxTeacherDefault = rs.getInt(1);
-                   };
+                    if (rs.getInt(1) != 0) {
+                        auxTeacherDefault = rs.getInt(1);
+                    };
                 }
-               // s[s.length] = auxTeacherDefault;                
+                // s[s.length] = auxTeacherDefault;                
                 ArrayList<Integer> ar = new ArrayList<>();
-                if(auxTeacherDefault != -1){
+                if (auxTeacherDefault != -1) {
                     ar.add(auxTeacherDefault);
                     if (!teachers.contains(auxTeacherDefault)) {
-                            teachers.add(auxTeacherDefault);
-                        }
+                        teachers.add(auxTeacherDefault);
+                    }
                 }
-                
+
                 for (String s2 : s) {
                     if (s2 != null) {
                         int idt = convertString(s2);
@@ -652,20 +650,63 @@ public class Consultas {
                     }
                 }
                  */
+ /*if (groupCourses.containsKey(templateID)) {
+                    ret.get(i).addArrayRooms(groupCourses.get(templateID));
+                }
                 String rooms = "";
                 if (hashRooms.containsKey(ret.get(i).getIdCourse())) {
                     rooms = (String) hashRooms.get(ret.get(i).getIdCourse());
                 }
                 if (!rooms.equals("")) {
-                    for (String room : rooms.split(",")) {
+                    if (ret.get(i).getIdCourse() == 1245) {
+                        System.err.println("");
+                        int a = 2;
+                    }
+                    // groupOfRooms = rs.getString(1);
+                    String result = rooms;
+                    String groupOfRooms;
+                    boolean exito = false;
+                    String[] resultSplit = result.split(";");
+                    int k = 0;
+
+                    while (k < resultSplit.length && !exito) {
+                        groupOfRooms = resultSplit[k].substring(1, resultSplit[k].length() - 1);
+
+                        String[] sResult;
+                        sResult = groupOfRooms.split(",");
+                        if (sResult.length == 2) {
+                            String auxTemplate = sResult[0];
+                            //  auxTemplate = auxTemplate.substring(1, auxTemplate.length());
+                            if (auxTemplate.equals(templateID)) {
+                                String auxRooms = sResult[1];
+                                auxRooms = auxRooms.substring(1, auxRooms.length() - 1);
+                                sResult = auxRooms.split("-");
+                                ret.get(i).resetRooms();
+                                for (String s2 : sResult) {
+                                    try {
+
+                                        ret.get(i).addRoom(Integer.parseInt(s2));
+
+                                    } catch (Exception ex) {
+                                        Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                }
+                                //roomsTemplate.put(auxTemplate, rooms);
+                                exito = true;
+                            }
+                        }
+                        k++;
+                    }
+
+                    /*   for (String room : rooms.split(",")) {
                         try {
                             ret.get(i).addRoom(Integer.parseInt(room));
                         } catch (Exception e) {
                             System.err.println("no se puede leer bien el campo rooms en el curso"
                                     + ret.get(i).getIdCourse());
                         }
-                    }
-                }
+                    }*/
+                //}
                 /*
                 consulta = "select udd.data\n"
                         + "                from uddata udd\n"
@@ -1081,13 +1122,13 @@ public class Consultas {
              consulta = "select * from courses"
                     + " where Elementary=" + tempinfo[0]
                     + " and HS=" + tempinfo[1]
-                    + " and MidleSchool=" + tempinfo[2]
+            x        + " and MidleSchool=" + tempinfo[2]
                     + " and PreSchool=" + tempinfo[3];
             rs = DBConnect.renweb.executeQuery(consulta);
              */
             //   String consulta = "SELECT * FROM Person_Staff where active=1 and faculty=1";
             String consulta = "SELECT staffID FROM Person_Staff ps inner join Person p on (ps.StaffID = p.PersonID)\n"
-                    + "                        where ps.active=1 and ps.faculty=1 ";
+                    + "                        where ps.active=1 and ps.faculty=1 and " + getWhereTemplate(tempinfo, "MiddleSchool");
 
             ResultSet rs;
             rs = DBConnect.renweb.executeQuery(consulta);
@@ -1327,8 +1368,10 @@ public class Consultas {
         return ret;
     }
 
-    public ArrayList<Integer> roomsGroup(String groupOfRooms) {
+    public HashMap<String, ArrayList<Integer>> roomsGroup(String groupOfRooms, String tmpId) {
+        HashMap<String, ArrayList<Integer>> roomsTemplate = new HashMap();
         ArrayList<Integer> rooms = new ArrayList();
+        boolean exito = false;
         if (!groupOfRooms.equals("0")) {
             try {
                 String consulta = "select udd.data\n"
@@ -1343,21 +1386,42 @@ public class Consultas {
 
                 ResultSet rs = DBConnect.renweb.executeQuery(consulta);
                 while (rs.next()) {
-                    groupOfRooms = rs.getString(1);
-                    String[] s = groupOfRooms.split(",");
-                    for (String s2 : s) {
-                        try {
-                            rooms.add(Integer.parseInt(s2));
-                        } catch (Exception ex) {
-                            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+                    // groupOfRooms = rs.getString(1);
+                    String result = rs.getString(1);
+
+                    String[] resultSplit = result.split(";");
+                    int i = 0;
+                    while (i < resultSplit.length) {
+                        groupOfRooms = resultSplit[i].substring(1, resultSplit[i].length() - 1);
+                        rooms = new ArrayList<>();
+                        String[] s;
+                        s = groupOfRooms.split(",");
+                        if (s.length == 2) {
+                            String auxTemplate = s[0];
+                            //  auxTemplate = auxTemplate.substring(1, auxTemplate.length());
+
+                            String auxRooms = s[1];
+                            auxRooms = auxRooms.substring(1, auxRooms.length() - 1);
+                            s = auxRooms.split("-");
+
+                            for (String s2 : s) {
+                                try {
+                                    rooms.add(Integer.parseInt(s2));
+                                } catch (Exception ex) {
+                                    Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            }
+                            roomsTemplate.put(auxTemplate, (ArrayList<Integer>) rooms.clone());
+                            //exito = true;
                         }
+                        i++;
                     }
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        return rooms;
+        return roomsTemplate;
     }
 
     /**
@@ -1367,11 +1431,22 @@ public class Consultas {
      * @param yearid
      * @return
      */
-    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse , String yearid, int[] tempinfo, String schoolCode) {
+    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int[] tempinfo, String schoolCode) {
         String consulta = "";
+        HashMap<Integer, String> hashUno = new HashMap<>();
         ResultSet rs;
         ArrayList<Integer> CoursesScheduleActive = new ArrayList<>();
         try {
+
+            consulta = "select * from courses"
+                    + " where "
+                    + getWhereTemplate(tempinfo, "MidleSchool")
+                    + " and active=1";
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                hashUno.put(rs.getInt("courseid"), "");
+            }
+
             consulta = "select udd.id\n"
                     + "                from uddata udd\n"
                     + "                inner join udfield udf\n"
@@ -1384,7 +1459,10 @@ public class Consultas {
                     + "                    and udd.data = '1'";
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
-                CoursesScheduleActive.add(rs.getInt("id"));
+                int id = rs.getInt(1);
+                if (hashUno.containsKey(id)) {
+                    CoursesScheduleActive.add(id);
+                }
             }
         } catch (Exception e) {
             System.out.println("dataManage.Consultas.restriccionesStudent()");
@@ -1426,7 +1504,7 @@ public class Consultas {
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 int courseid = rs.getInt("courseid");
-               // if (CoursesScheduleActive.contains(courseid)) {
+                if (CoursesScheduleActive.contains(courseid)) {
                     int studentid = rs.getInt("studentid");
                     Student st = new Student(studentid);
                     st.setGenero(rs.getString("gender"));
@@ -1441,7 +1519,7 @@ public class Consultas {
                         stCourse.put(courseid, new ArrayList());
                     }
                     stCourse.get(courseid).add(studentid);
-             //   }
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
@@ -1604,14 +1682,13 @@ public class Consultas {
     }
     //HashMap<Integer,HashMap<Integer,Seccion>> mapSecciones;//HashMap<idCourse,HashMap<numSeccion,Seccion>>
 
-    public HashMap<Integer, ArrayList<Seccion>> getDataSections(HashMap<Integer, Student> students, HashMap<Integer, Teacher> teachers, ArrayList<Course> courses, String yearID, String templateID, HashMap<String, Course> linkedCourses) {
+    public HashMap<Integer, ArrayList<Seccion>> getDataSections(HashMap<Integer, Student> students, HashMap<Integer, Teacher> teachers, HashMap<Integer, Room> rooms, ArrayList<Course> courses, String yearID, String templateID, HashMap<String, Course> linkedCourses) {
         //HashMap<Integer,ArrayList<Seccion>> rsSection = new ArrayList();
         HashMap<Integer, ArrayList<Seccion>> auxSections = new HashMap<>();
         ArrayList<ArrayList<Integer>> sectionsModificadas = new ArrayList<>();
         ArrayList<Seccion> auxSectionsIn;
 
-        try {
-            /*        String consulta = "SELECT distinct Section,Classes.YearId,StaffID,Pattern,CourseId FROM Classes inner join roster on\n" +
+        /*        String consulta = "SELECT distinct Section,Classes.YearId,StaffID,Pattern,CourseId FROM Classes inner join roster on\n" +
 "                                           (Classes.ClassID = roster.ClassID)";
                 ResultSet rs = DBConnect.renweb.executeQuery(consulta);
                 while (rs.next()) {
@@ -1621,20 +1698,29 @@ public class Consultas {
                     aux.add(rs.getInt(3)); // pattern
                     sectionsModificadas.add(aux);
                 }
-             */
-
-            for (Course course : courses) {
+         */
+        for (Course course : courses) {
+            try {
                 int idCourse = course.getIdCourse();
+                if (idCourse == 1303) {
+                    System.err.println("");
+                }
+                //int numSeccion = 1;
+                //String sAux =
                 auxSectionsIn = new ArrayList<>();
                 sectionsModificadas = new ArrayList<>();
-                String consulta = "SELECT distinct Section,StaffID,Pattern,LockEnrollment,LockSchedule,Classes.ClassID FROM Classes left join roster on \n"
+                String consulta = "SELECT distinct Section,StaffID,Pattern,LockEnrollment,LockSchedule,Classes.ClassID,RequiredRoom FROM Classes left join roster on \n"
                         + "                        (Classes.ClassID = roster.ClassID)\n"
                         + "                        where CourseId = " + course.getIdCourse() + " and Classes.YearId = " + yearID;
                 ResultSet rs = DBConnect.renweb.executeQuery(consulta);
                 while (rs.next()) {
                     ArrayList<Integer> aux = new ArrayList<>();
-
+                    //try {
                     aux.add(rs.getInt(1)); // section
+                    /* } catch (Exception e) {
+                        aux.add(1);
+                    }*/
+
                     aux.add(rs.getInt(2)); // staffId
                     aux.add(rs.getInt(3)); // pattern
 
@@ -1649,6 +1735,8 @@ public class Consultas {
                         aux.add(0); //  lockSchedulle
                     }
                     aux.add(rs.getInt(6)); // classID
+
+                    aux.add(rs.getInt(7)); // room
                     sectionsModificadas.add((ArrayList<Integer>) aux.clone());
                 }
                 if (!sectionsModificadas.isEmpty()) {
@@ -1672,12 +1760,18 @@ public class Consultas {
                         auxSec.setLockSchedule(sectionsModificadas.get(i).get(4));
                         auxSec.setTeacher(teachers.get(sectionsModificadas.get(i).get(1)));
                         auxSec.setClassId(sectionsModificadas.get(i).get(5));
-
+                        //   auxSec.setIdRoom(sectionsModificadas.get(i).get(6));
+                        auxSec.setIdRoom(999);
                         consulta = "SELECT * from SchedulePatternsTimeTable "
                                 + " where patternnumber = " + sectionsModificadas.get(i).get(2) + " and templateID =" + templateID;
                         rs = DBConnect.renweb.executeQuery(consulta);
                         while (rs.next()) {
                             auxSec.addTuplaPatron(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
+                            /*  if (rooms.containsKey(auxSec.getIdRoom())) {
+                                ArrayList<Tupla> auxTupla = new ArrayList<>();
+                                auxTupla.add(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
+                                rooms.get(auxSec.getIdRoom()).ocuparHueco(course.getIdCourse(), auxSec.getNumSeccion(), auxTupla);
+                            }*/
                         }
                         auxSec.setCourseID(idCourse);
                         auxSectionsIn.add(new Seccion(auxSec));
@@ -1685,17 +1779,22 @@ public class Consultas {
                     }
                     auxSections.put(course.getIdCourse(), (ArrayList<Seccion>) auxSectionsIn.clone());
                 }
+            } catch (Exception e) {
+                System.err.println("");
             }
-        } catch (Exception e) {
-            System.err.println("");
         }
+
         return auxSections;
     }
 
     private void updateStudent_fromRenWeb_Sections(HashMap<Integer, Student> students, ArrayList<Integer> arrayStud, Seccion auxSec, HashMap<String, Course> linkedCourses) {
         //linkedCourses.containsValue(auxSec)
         for (Integer arrayStud1 : arrayStud) {
-            students.get(arrayStud1).addSeccionFromrenweb(new Seccion(auxSec));
+            try {
+                students.get(arrayStud1).addSeccionFromrenweb(new Seccion(auxSec));
+            } catch (Exception e) {
+
+            }
         }
     }
 
@@ -1797,55 +1896,40 @@ public class Consultas {
         }
         return ret;
     }
-    
-    private String getWhereTemplate(int[] tempInfo){
-                if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0){
-                    return " Elementary=0 and HS=0 and MidleSchool=0 and PreSchool=0 " ;
-        }
-        else if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1){
-                     return " Elementary=0 and HS=0 and MidleSchool=0 and PreSchool=1 " ;
-        }
-        else if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0){
-                     return " Elementary=0 and HS=0 and MidleSchool=1 and PreSchool=0 " ;
-        }
-        else if(tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1){
-                     return " Elementary=0 and HS=0 and ( MidleSchool=1 or PreSchool=1 ) " ;
-        }
-         else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0){
-                     return " Elementary=0 and HS=1 and MidleSchool=0 and PreSchool=0 " ;
-        }
-        else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1){
-                     return " Elementary=0  and MidleSchool=0 and (PreSchool=1 or HS=1) " ;
-        }
-        else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0){
-                    return " Elementary=0 and (HS=1 or MidleSchool=1) and PreSchool=0 " ;
-        }
-         else if(tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 1){
-                    return " Elementary=0 and (HS=1 or MidleSchool=1 or PreSchool=1) " ;                    
-        }
-        else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0){
-                     return " Elementary=1 and HS=0 and MidleSchool=0 and PreSchool=0 " ;
-        }
-        else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1){
-                     return "  HS=0 and MidleSchool=0 and (Elementary=1 or PreSchool=1) " ;             
-        }
-         else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0){
-                    return " (Elementary=1 and MidleSchool=1) and HS=0  and PreSchool=0 " ;
-        }
-        else if(tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1){
-                    return "  HS=0 and (Elementary=1 or MidleSchool=1 or PreSchool=1) " ;
-        }
-        else if(tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0){
-                    return " ( Elementary=1 or HS=1 ) and MidleSchool=0 and PreSchool=0 " ;
-        }
-         else if(tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1){
-                    return " ( Elementary=1 or HS=1 or PreSchool=1 )and MidleSchool=0 " ;
-        }
-        else if(tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0){
-                    return " (Elementary=1 or HS=1 or MidleSchool=1) and PreSchool=0 " ;
-        }
-        else {
-                    return " (Elementary=1 or HS=1 or MidleSchool=1 or PreSchool=1) " ;
+
+    private String getWhereTemplate(int[] tempInfo, String MS_Column) {
+        if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
+        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=1 ";
+        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+            return " Elementary=0 and HS=0 and " + MS_Column + "=1 and PreSchool=0 ";
+        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
+            return " Elementary=0 and HS=0 and ( " + MS_Column + "=1 or PreSchool=1 ) ";
+        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+            return " Elementary=0 and HS=1 and " + MS_Column + "=0 and PreSchool=0 ";
+        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+            return " Elementary=0  and " + MS_Column + "=0 and (PreSchool=1 or HS=1) ";
+        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+            return " Elementary=0 and (HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
+        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 1) {
+            return " Elementary=0 and (HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
+        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+            return " Elementary=1 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
+        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+            return "  HS=0 and " + MS_Column + "=0 and (Elementary=1 or PreSchool=1) ";
+        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+            return " (Elementary=1 and " + MS_Column + "=1) and HS=0  and PreSchool=0 ";
+        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
+            return "  HS=0 and (Elementary=1 or " + MS_Column + "=1 or PreSchool=1) ";
+        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+            return " ( Elementary=1 or HS=1 ) and " + MS_Column + "=0 and PreSchool=0 ";
+        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+            return " ( Elementary=1 or HS=1 or PreSchool=1 )and " + MS_Column + "=0 ";
+        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+            return " (Elementary=1 or HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
+        } else {
+            return " (Elementary=1 or HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
 
         }
     }

@@ -23,6 +23,7 @@ public class Seccion {
     String gender;
     int indicePatronUsado;
     int numSeccion;
+    String nameSeccion;
     int idTeacher;
     boolean lockSchedule;
     boolean lockEnrollment;
@@ -38,6 +39,7 @@ public class Seccion {
         this.lockEnrollment = false;
         this.lockSchedule = false;
         this.patternRenWeb = 0;
+        this.idRoom = 0;
     }
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche, int cID, int courseID) {
@@ -53,6 +55,8 @@ public class Seccion {
         this.classId = cID;
         this.courseID = courseID;
         this.patternRenWeb = 0;
+        this.idRoom = 0;
+        this.nameSeccion = ""+numS;
     }
 
     public Seccion(Seccion s) {
@@ -61,6 +65,7 @@ public class Seccion {
         this.numStudents = s.numStudents;
         this.patronUsado = s.patronUsado;
         this.gender = s.gender;
+        this.idRoom = s.getIdRoom();
         this.idStudents = s.idStudents;
         this.indicePatronUsado = s.indicePatronUsado;
         this.numSeccion = s.numSeccion;
@@ -69,6 +74,7 @@ public class Seccion {
         this.classId = s.classId;
         this.courseID = s.courseID;
         this.patternRenWeb = s.patternRenWeb;
+        this.nameSeccion = s.getNameSeccion();
     }
 
     public Seccion() {
@@ -78,6 +84,8 @@ public class Seccion {
         this.lockEnrollment = false;
         this.lockSchedule = false;
         this.patternRenWeb = 0;
+        this.idRoom = 0;
+        this.nameSeccion = "";
     }
 
     public Teacher getTeacher() {
@@ -240,5 +248,14 @@ public class Seccion {
     public void setPatternRenWeb(int patternRenWeb) {
         this.patternRenWeb = patternRenWeb;
     }
+
+    public String getNameSeccion() {
+        return nameSeccion;
+    }
+
+    public void setNameSeccion(String nameSeccion) {
+        this.nameSeccion = nameSeccion;
+    }
+    
     
 }

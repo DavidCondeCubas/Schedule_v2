@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 public class Room {
     private int roomid;
     private int[][] huecos;
+    private int[][] huecosSeccion;
     private String name;
     private int size;
     private int disponibilidad;
@@ -50,6 +51,8 @@ public class Room {
         this.size = size;
         this.disponibilidad = Algoritmo.TAMX * Algoritmo.TAMY;
         this.huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY]; 
+        this.huecosSeccion = new int[Algoritmo.TAMX][Algoritmo.TAMY]; 
+    
     }
     
     public ArrayList<ArrayList<Tupla>> patronescompatibles(ArrayList<ArrayList<Tupla>> sec){
@@ -63,10 +66,11 @@ public class Room {
     
     
     
-    public boolean ocuparHueco(int valor ,ArrayList<Tupla> ar){
+    public boolean ocuparHueco(int valor ,int seccion,ArrayList<Tupla> ar){
         for(Tupla<Integer,Integer> t:ar){
             if(huecos[t.x][t.y] == 0){
-               huecos[t.x][t.y] = valor; 
+               huecos[t.x][t.y] = valor;
+               huecosSeccion[t.x][t.y] = seccion;
             }else{
                 return false;
             }
@@ -134,5 +138,15 @@ public class Room {
     public void setSize(int size) {
         this.size = size;
     }
+
+    public int[][] getHuecosSeccion() {
+        return huecosSeccion;
+    }
+
+    public void setHuecosSeccion(int[][] huecosSeccion) {
+        this.huecosSeccion = huecosSeccion;
+    }
+
     
+   
 }

@@ -30,6 +30,8 @@
                 
                 $("#nameSchoolTitle").text(nameSchool);
                 $("#schoolcode").val(id);
+                $("#schoolName").val(nameSchool);
+                
                 if (id !== "") {
                     $.ajax({
                         type: "POST",
@@ -167,7 +169,8 @@
         <div class="col-xs-12">
             <form:form action="menu/create.htm" method="POST" id="crearhorario">                
                 <input id="schoolcode" name="schoolcode" type="hidden" value="">
-                <div class="col-xs-4">         
+                <input id="schoolName" name="schoolName" type="hidden" value="">
+                <div class="col-xs-3">        
                     <fieldset>
                         <legend>Select Year</legend>
                         <select class="form-control" id="selectyear" name="yearid" onchange="templates()">
@@ -178,33 +181,33 @@
                         </select>
                     </fieldset>
                 </div>
-                <div class="col-xs-4">
+                <div class="col-xs-3">
                     <fieldset>
                         <legend>Select Template</legend>
                         <select class="form-control" name="templateInfo" id="selecttemplate">
                         </select>
                     </fieldset>
                 </div>
-                <div class="col-xs-3 hide">
+                <div class="col-xs-2 ">
                     <fieldset>
-                        <legend>schedule mode</legend>
-                        <select class="form-control" id="roomsmode" name="rooms" onchange="hideroomsgroup()">
+                        <legend>Suffle Rosters</legend>
+                        <select class="form-control" id="suffleCheck" name="suffleCheck">
                             <option value="0">disabled</option>
-                            <option value="1">only courses with room restrictions</option>
-                            <option value="2">only default school user defined</option>
-                            <option value="3">both (courses and default)</option>
-                        </select>
-                        <legend>Select rooms</legend>
-                        <select class="form-control" id="grouprooms" name="groupofrooms">
-                            <option value="rooms01">rooms 01</option>
-                            <option value="rooms02">rooms 02</option>
-                            <option value="rooms03">rooms 03</option>
-                            <option value="rooms04">rooms 04</option>
+                            <option value="1">enabled</option>
                         </select>
                     </fieldset>
                 </div>
-
-                <div class="col-xs-4">
+                <div class="col-xs-2 ">
+                    <fieldset>
+                        <legend>Active Rooms</legend>
+                        <select class="form-control" id="roomsCheck" name="roomsCheck" disabled="">
+                            <option value="0">disabled</option>
+                            <option value="1">enabled</option>
+                        </select>
+                    </fieldset>
+                </div>
+               
+                <div class="col-xs-2">
                     <fieldset>
                         <legend>Create Schedule</legend>
                         <input id="buttonCreate" disabled="" class="btn col-xs-12" type="button" name="Submit" value="Create" style="background-color: #2d2f42 !important;color: azure;" onclick="enviando()">

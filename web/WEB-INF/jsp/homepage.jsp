@@ -172,8 +172,8 @@
             List<Student> studentsOrdered = (List) request.getAttribute("orderedStudents");
             HashMap<Integer, String> hashPersons = (HashMap) request.getAttribute("persons");
             ArrayList<String> log = (ArrayList<String>) request.getAttribute("log");
-            ArrayList<Integer> groupRooms = (ArrayList<Integer>) request.getAttribute("grouprooms");
-            HashMap<Integer, Room> rooms = (HashMap<Integer, Room>) request.getAttribute("rooms");
+          //  ArrayList<Integer> groupRooms = (ArrayList<Integer>) request.getAttribute("grouprooms");
+            //HashMap<Integer, Room> rooms = (HashMap<Integer, Room>) request.getAttribute("rooms");
             boolean swapcolor = true;
             double totalenrolled = 0;
             double totalnoenrolled = 0;

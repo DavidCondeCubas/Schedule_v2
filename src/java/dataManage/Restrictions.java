@@ -43,10 +43,12 @@ public class Restrictions {
     
     
     public ArrayList<Teacher> teachers;
-    public ArrayList<Integer> groupRooms;
+    public HashMap<String,ArrayList<Integer>> groupRooms;
     public String tempid;
     public ArrayList<ArrayList<Boolean>> totalBlocks;
     public HashMap<String, Course> linkedCourses = new HashMap<>();
+    public boolean shuffleRosters;
+    public boolean activeRooms;
 
     public Restrictions(String yearid, String tempid, String groupofrooms) {
         this.tempid = tempid;
@@ -54,7 +56,7 @@ public class Restrictions {
         this.totalBlocks = this.cs.getTotalBlocksStart();
         this.idCourses = new ArrayList();
         this.students = new HashMap<>();
-        this.groupRooms = cs.roomsGroup(groupofrooms);
+        //this.groupRooms = cs.roomsGroup(groupofrooms);
 
         //   this.rooms = new HashMap();
         // this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses),cs.templateInfo(tempid));
@@ -65,6 +67,8 @@ public class Restrictions {
            st = (new Conjuntos<Student>()).union(st,
                 cs.restriccionesStudent(idCourses,studentsCourse,yearid));  //1min 20 sg
          */
+        shuffleRosters = false;
+        activeRooms = false;
     }
 
     public Restrictions(String yearid, String tempid, String groupofrooms, int mode,String schoolCode) {
@@ -73,7 +77,8 @@ public class Restrictions {
         this.cs = new Consultas(tempid);
         this.hashTeachers = new HashMap<>();
         this.idCourses = new ArrayList();
-        this.groupRooms = cs.roomsGroup(groupofrooms);
+      //  this.groupRooms = cs.roomsGroup(groupofrooms) ; comentado por pruebas
+       // this.groupRooms = cs.roomsGroup("Rooms",tempid) ; 
         ArrayList<Student> st = new ArrayList();
         int[] tempInfo =  cs.templateInfo(tempid);
       //  this.studentsCourse = Consultas.getCoursesGroups(st, idCourses, yearid, tempid); //5sg
@@ -92,14 +97,19 @@ public class Restrictions {
 
         this.totalBlocks = this.cs.getTotalBlocksStart();
         this.linkedCourses = this.cs.getLinkedCourses();
-        this.rooms = cs.getRooms();
+    //    this.rooms = cs.getRooms();
 
         /*ArrayList<Integer> auxPrueba = new ArrayList<>();
         auxPrueba.add(idCourses.get(0));*/
         
-        this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses), tempInfo,tempid);//aqui es donde tarda mucho
+        this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses), tempInfo,tempid,this.groupRooms);//aqui es donde tarda mucho
+        try{
         this.courses.sort(new Restrictions.CompCoursesRank());
-       
+        }
+        catch(Exception e){
+            System.out.println("dataManage.Restrictions.<init>()");
+        }
+            
         this.teachers = cs.teachersList(tempid,tempInfo);
         
         for (Teacher teacher : this.teachers) {
@@ -107,10 +117,12 @@ public class Restrictions {
         }
         
         cs.fillHashCourses(this.courses);
-        this.mapSecciones = cs.getDataSections(this.students,this.hashTeachers,this.courses,yearid,tempid,linkedCourses);
+        this.mapSecciones = cs.getDataSections(this.students,this.hashTeachers,this.rooms,this.courses,yearid,tempid,linkedCourses);
         
         Student stPrueba = this.students.get(1203906);
         System.out.println("");
+        shuffleRosters = false;
+        activeRooms = false;
     }
 
     private void chargeHashStudents(){
@@ -224,5 +236,32 @@ public class Restrictions {
     public void setLinkedCourses(HashMap<String, Course> linkedCourses) {
         this.linkedCourses = linkedCourses;
     }
+    public void updateShuffleRosters(String booleanString){
+        if(booleanString.equals("1")) 
+            this.shuffleRosters = true;
+    }
 
+    public boolean isShuffleRosters() {
+        return shuffleRosters;
+    }
+    
+    public void setShuffleRosters(boolean shuffleRosters) {
+        this.shuffleRosters = shuffleRosters;
+    }
+
+    public void updateActiveRooms(String booleanString){
+        if(booleanString.equals("1")) 
+            this.activeRooms = true;
+    }
+
+    public boolean isActiveRooms() {
+        return activeRooms;
+    }
+
+    public void setActiveRooms(boolean activeRooms) {
+        this.activeRooms = activeRooms;
+    }
+    
+    
+    
 }

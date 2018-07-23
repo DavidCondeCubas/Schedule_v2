@@ -143,7 +143,9 @@
 
     <div class="col-xs-9 text-center">
         <div class="col-xs-12">
-            <h1 id="nameSchoolTitle" class="text-center"></h1>
+            <h1 id="nameSchoolTitle" class="text-center">
+                <c:out value="${sessionScope.schoolName}"/>
+            </h1>
         </div>
         <div class="col-xs-12">
             <h3 class="text-center">Hi, <c:out value="${sessionScope.user.name}"/></h3>

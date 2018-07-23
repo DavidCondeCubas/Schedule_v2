@@ -95,14 +95,20 @@ public class Homepage extends MultiActionController {
 
         String posSelectTemplate = data.split("#")[1];
         data = data.split("#")[0];
+        HttpSession session = hsr.getSession();
 
         posSelectTemplate = posSelectTemplate.split(" ")[0];
         String yearid = hsr.getParameter("yearid");
         String roomMode = hsr.getParameter("rooms");
         String groupRoom = hsr.getParameter("groupofrooms");
         String schoolcode = hsr.getParameter("schoolcode");
+        String schoolName = hsr.getParameter("schoolName");
+        session.setAttribute("schoolName", schoolName);
+        
+        String shuffle = hsr.getParameter("suffleCheck");
+        String actvRoom = hsr.getParameter("roomsCheck");
         String[] datost = data.split("-");
-        ModelAndView mv = new ModelAndView("redirect:/schedule/renweb.htm?schoolcode=" + schoolcode + "&grouproom=" + groupRoom + "&roommode=" + roomMode + "&tempid=" + datost[0] + "&posSelectTemplate=" + posSelectTemplate + "&yearid=" + yearid + "&id=" + datost[0] + "&rows=" + datost[1] + "&cols="
+        ModelAndView mv = new ModelAndView("redirect:/schedule/renweb.htm?actvRoom=" + actvRoom + "&schoolcode=" + schoolcode + "&shuffle=" + shuffle +  "&grouproom=" + groupRoom + "&roommode=" + roomMode + "&tempid=" + datost[0] + "&posSelectTemplate=" + posSelectTemplate + "&yearid=" + yearid + "&id=" + datost[0] + "&rows=" + datost[1] + "&cols="
                 + datost[2]);
         ArrayList<Tupla<Integer, String>> ar = Consultas.getYears("IS-PAN");
         ar.sort(new Comp());
@@ -137,6 +143,7 @@ public class Homepage extends MultiActionController {
     @RequestMapping
     public ModelAndView login(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
         HttpSession session = hsr.getSession();
+      
         User user = new User();//cambiar
         int scgrpid = 0;
         boolean result = false;
@@ -175,6 +182,7 @@ public class Homepage extends MultiActionController {
 //                       user.setId(10332);//profe
                         setTipo(user);
                         session.setAttribute("user", user);
+                        session.setAttribute("schoolName", "");
                         return menu(hsr, hsr1, districtCode);
                     }
                     else{

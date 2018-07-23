@@ -22,6 +22,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.io.File;
 import java.io.InputStream;
+import javax.servlet.http.HttpSession;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -50,12 +51,13 @@ public class ScheduleController {
         String tempid = hsr.getParameter("tempid");
         String xs = hsr.getParameter("cols");
         String ys = hsr.getParameter("rows");
-
+        //String schoolName = hsr.getParameter("schoolName");
         String schoolCode = hsr.getParameter("schoolcode");
-
+        String shuffle = hsr.getParameter("shuffle");
+        String actvRoom = hsr.getParameter("actvRoom");
         String roomgroup = hsr.getParameter("grouproom");
        // String posSelectTemplate = hsr.getParameter("posSelectTemplate");
-        int roommode = Integer.parseInt(hsr.getParameter("roommode"));
+       // int roommode = Integer.parseInt(hsr.getParameter("roommode"));
         int id = Integer.parseInt(hsr.getParameter("id"));
         String yearid = hsr.getParameter("yearid");
         int x = Integer.parseInt(xs);
@@ -68,7 +70,9 @@ public class ScheduleController {
         Algoritmo algo = new Algoritmo(x, y);
         Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1,schoolCode);
         //r.syncOwnDB();
-        algo.algo(mv, r, roommode,schoolCode,yearid,tempid);
+        r.updateShuffleRosters(shuffle);
+        r.updateActiveRooms(actvRoom);
+        algo.algo(mv, r,schoolCode,yearid,tempid);
         String json = r.teachersJSON();
         return mv;
     }
