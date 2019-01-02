@@ -84,7 +84,9 @@ public class Algoritmo {
 
         int vueltas =0;
         for (Course course : r.courses) {
-            
+            if(course.getIdCourse() == 1234){
+                System.err.println("");
+            }
             HashMap<Integer,Integer> teachers_numSections = new HashMap<>();
                            
             vueltas++;
@@ -93,12 +95,9 @@ public class Algoritmo {
 
                 int maxSections ;
                 if(course.getMaxSections() == null || course.getMaxSections().equals("")){
-                 /*   maxSections = r.studentsCourse.get(course.getIdCourse()).size() / course.getMaxChildPerSection();
+                   maxSections = r.studentsCourse.get(course.getIdCourse()).size() / course.getMaxChildPerSection();
                     if(r.studentsCourse.get(course.getIdCourse()).size() % course.getMaxChildPerSection() !=0)
                         maxSections++;
-
-                */
-                    maxSections = 2;
                 }
                 else{
                     maxSections = Integer.parseInt(course.getMaxSections());
@@ -120,7 +119,7 @@ public class Algoritmo {
                 else if(!course.getOpcionesPatternGroup().isEmpty() ){
                     opciones = course.getOpcionesPatternGroup();
                }
-                                                        ArrayList<Integer> noAsign = new ArrayList<>();
+                ArrayList<Integer> noAsign = new ArrayList<>();
 
                 if(r.studentsCourse.containsKey(course.getIdCourse())){
                     noAsign = (ArrayList<Integer>) r.studentsCourse.get(course.getIdCourse()).clone();
@@ -149,7 +148,15 @@ public class Algoritmo {
                     }
                     else{ // lockSchedule && lockEnrollment
                         for (int j = 0; j < course.getArraySecciones().get(i).getIdStudents().size(); j++) {
-                            r.students.get(course.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
+                            int idStudent = course.getArraySecciones().get(i).getIdStudents().get(j);
+                            if(r.students.containsKey(course.getArraySecciones().get(i).getIdStudents().get(j))){
+                              r.students.get(course.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(), course.getIdCourse() * 100 + course.getArraySecciones().get(i).getNumSeccion());
+
+                            }
+                            else{
+                                System.err.println("");
+                            }
+
                         }
                         course.ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(),course.getArraySecciones().get(i).getNumSeccion());
                         course.getArraySecciones().get(i).setLockSchedule(true);

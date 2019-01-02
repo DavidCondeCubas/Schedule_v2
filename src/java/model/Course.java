@@ -29,6 +29,7 @@ import java.util.logging.Logger;
  */
 public class Course {
 
+    static final int BLOCKS_BY_DEFAULT = 2;
     public static int MUESTRA = 1000000;
     public static int MAX_INTENTOS = 5000000;
     private String[][] huecos; // cuadricula
@@ -417,7 +418,9 @@ public class Course {
 
         calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
 
-
+        if(this.blocksWeek == 0){
+            this.blocksWeek = BLOCKS_BY_DEFAULT;
+        }
         Tupla[] sol = new Tupla[this.blocksWeek];
         boolean[][] marcas = new boolean[Algoritmo.TAMY][Algoritmo.TAMX];
 

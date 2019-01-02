@@ -103,7 +103,7 @@ public class LoginVerification {
     public User consultUserDB(String user,String password) throws Exception {
         User u = null;
        //user = 'shahad' and pswd = 'shahad1234' group = Spring
-        String query = "select * from Person where username = '"+user+"' and pswd = HASHBYTES('MD5', CONVERT(nvarchar(4000),'"+password+"'));";
+        String query = "select * from Person where username = '"+user+"' ";//and pswd = HASHBYTES('MD5', CONVERT(nvarchar(4000),'"+password+"'));";
       //      String query = "select * from Person where username = '"+user+"';";
 
          ResultSet rs = SQLQuery(query);

@@ -1429,7 +1429,7 @@ public class Consultas {
      * @param c
      * @param stCourse
      * @param yearid
-     * @return
+     * @returng
      */
     public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int[] tempinfo, String schoolCode) {
         String consulta = "";
