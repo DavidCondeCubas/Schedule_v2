@@ -29,7 +29,7 @@
     <bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
         <property name="defaultLocale" value="en" />
     </bean>
-
+<!-- Declaración de claves de controladores que se usarán luego en mappings para conexión de vistas con controladores: -->
     <bean class="controladores.Homepage" id="homepage">
         <property name="methodNameResolver">
             <bean class="org.springframework.web.servlet.mvc.multiaction.ParameterMethodNameResolver">
@@ -58,6 +58,9 @@
                 <ref bean="localeChangeInterceptor"/>
             </list>
         </property>
+        
+<!-- Mappings que unen los jsp con los diferentes controladores: -->
+
         <property name="mappings">
             <props>
                 <prop key="index.htm">indexController</prop>

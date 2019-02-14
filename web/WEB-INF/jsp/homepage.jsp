@@ -1,3 +1,6 @@
+<%@page import="model.Algoritmo"%>
+<%@page import="dataManage.Restrictions"%>
+<%@page import="java.util.TreeMap"%>
 <%@page import="model.Room"%>
 <%@page import="dataManage.Tupla"%>
 <%@page import="java.util.Map"%>
@@ -16,6 +19,9 @@
     "http://www.w3.org/TR/html4/loose.dtd">
 
 <html>
+    <%try {
+
+    %>
     <head>
         <!-- ESTO ES EL NUEVO BRANCH-->
         <%@ include file="infouser.jsp" %>
@@ -46,6 +52,11 @@
             {
                 height: 35px;
             }
+            .contentTable{
+                text-align: center;
+
+            }
+
             @media print
             {
                 .noPrint
@@ -82,7 +93,13 @@
                 });
 
                 $("#showRooms").click(function () {
-                    $("#roomstable").toggleClass('in');
+                    $("#Roomstable").toggleClass('in');
+                });
+                $("#showRooms2").click(function () {
+                    $("#Roomstable2").toggleClass('in');
+                });
+                $("#showRoomsdisp").click(function () {
+                    $("#Roomsdisp").toggleClass('in');
                 });
 
                 $("#showCoursesenrol").click(function () {
@@ -109,7 +126,7 @@
                     $("#StudentsEnrolled").toggleClass('in');
                 });
 
-
+                //  alert(cursosSin1);
             });
 
             function enviando()
@@ -160,19 +177,24 @@
     </head>
     <body>
 
-        <%
-            Consultas cs = (Consultas) request.getAttribute("cs");
+        <%  Consultas cs = (Consultas) request.getAttribute("cs");
             Integer TAMX = (Integer) request.getAttribute("TAMX");
             Integer TAMY = (Integer) request.getAttribute("TAMY");
             ArrayList<Tupla<String, String>> headRow = (ArrayList<Tupla<String, String>>) request.getAttribute("hFilas");
             ArrayList<String> headCol = (ArrayList<String>) request.getAttribute("hcols");
             List<Course> courses = (List) request.getAttribute("Courses");
             List<Teacher> lista = (List) request.getAttribute("profesores");
+            HashMap<Integer, Room> roomsHash = (HashMap<Integer, Room>) request.getAttribute("rooms");
+            ArrayList<Room> rooms = new ArrayList<>(roomsHash.values());
+            HashMap<String, ArrayList<Integer>> groupRooms = (HashMap<String, ArrayList<Integer>>) request.getAttribute("groupRooms");
+            //ArrayList<Object> rooms2 = new ArrayList<>(groupRooms.values());
+            //List<String> cursosSin1 = (List) request.getAttribute("cursosSinEstudiantes");
+            //List<String> cursosSin1 = (List) request.getAttribute("cursosSinEstudiantes");
             HashMap<Integer, Student> lista2 = (HashMap) request.getAttribute("students");
             List<Student> studentsOrdered = (List) request.getAttribute("orderedStudents");
             HashMap<Integer, String> hashPersons = (HashMap) request.getAttribute("persons");
             ArrayList<String> log = (ArrayList<String>) request.getAttribute("log");
-          //  ArrayList<Integer> groupRooms = (ArrayList<Integer>) request.getAttribute("grouprooms");
+            //ArrayList<Integer> groupRooms = (ArrayList<Integer>) request.getAttribute("grouprooms");
             //HashMap<Integer, Room> rooms = (HashMap<Integer, Room>) request.getAttribute("rooms");
             boolean swapcolor = true;
             double totalenrolled = 0;
@@ -184,13 +206,19 @@
             }
             headCols += "</tr>";
         %>
-        <div class="col-xs-12 text-center noPrint" id="myTab">
-            <div class="col-xs-9">
-                <ul class="nav nav-tabs">
-                    <li class="active"><a id="Courses" data-toggle="tab" href="#courses" role="tab" >Courses</a></li>
-                    <li><a id="Teachers" data-toggle="tab" href="#teachers" role="tab">Teachers</a></li>
-                    <li><a id="Students" data-toggle="tab" href="#students" role="tab">Students</a></li>
-                    <li><a id="Rooms" data-toggle="tab" href="#rooms" role="tab">Rooms</a></li>               
+
+
+
+        <c:out value="${estudiante.identificacion}"></c:out>
+            <div class="col-xs-12 text-center noPrint" id="myTab">
+                <div class="col-xs-9">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a id="Courses" data-toggle="tab" href="#courses" role="tab" >Courses</a></li>
+                        <li><a id="Teachers" data-toggle="tab" href="#teachers" role="tab">Teachers</a></li>
+                        <li><a id="Students" data-toggle="tab" href="#students" role="tab">Students</a></li>
+                        <%if (Algoritmo.roomsActivation==true) {%>
+                    <li><a id="Rooms" data-toggle="tab" href="#rooms" role="tab">Rooms</a></li>       
+                        <%  }%>     
                 </ul>
             </div>
             <div class="col-xs-3">
@@ -206,71 +234,147 @@
                     <span class="col-xs-12 text-right glyphicon glyphicon-triangle-bottom">
                     </span>
                 </legend>
+
+
+
                 <div class="form-group collapse" id="Coursestable">
 
                     <%
+                        //Con este for se imprime en la parte de Courses/Schedule los cursos que no tienen estudiantes asignados desde la BBDD(RenWeb/Academic/Courses/Requests)
+                        out.println("<div class='col-xs-12 course'>");
+                        out.println("<h2 id='showCourses' class='noPrint'>");
+                        if (!Consultas.CoursesWithoutStudents.isEmpty()) {
+
+                            //***   *///
+                            out.println(" Course/s empty of students, with ActiveSchedule enabled: " + "<br/>");
+
+                            for (Map.Entry<Integer, String> entry : Consultas.CoursesWithoutStudents.entrySet()) {
+
+                                out.println("-Id: " + entry.getKey() + ", Course name: " + entry.getValue() + "." + "<br/>");
+
+                            }
+
+                        }
+                        //Antiguo aviso de si hay asignada (en Renweb) una seccion con un template diferente a la del curso de origen: 
+
+                        /*   if (!Consultas.tempIdSect.isEmpty()) {
+
+                          
+                            out.println(" Section/s with different template respect its origin course: " + "<br/>");
+
+                            for (Map.Entry<Integer, String> entry : Consultas.tempIdSect.entrySet()) {
+
+                                out.println("-Id Class: " + entry.getKey() + " " + entry.getValue() + "." + "<br/>");
+
+                            }
+
+                        }   */
+                        //Con esto se imprime el aviso de si hay asignada (en Renweb) una seccion con un template diferente a la del curso de origen.
+                        if (!Consultas.tempIdSect.isEmpty()) {
+                            out.println(" Section/s with different template respect its origin course: " + "<br/>");
+
+                    %><%=Consultas.tempidsect%><%
+
+                        }
+
+                        //Gracias al siguiente if se puede visualizar por pantalla de forma correcta
+                        //si hay alumnos asignados a secciones que no están en los requests del curso de origen de la que parte la seccion:
+                        //Nota: la forma correcta de visualización ya se ha calculado en un treeMap de Consultas. Desde este treeMap
+                        //se han volcado todos los datos a una variable String, que es la que se visualiza aquí.
+                        //----PENDIENTE CAMBIO PARA REALIZAR TODO EL CALCULO AQUÍ(AUNQUE HOY POR HOY FUNCIONA PERFECTAMENTE)
+                        if (!Consultas.arrayStuderroneos.isEmpty()) {
+                            out.println(" Students out of Course Requests, added on Roster from next Class Section/s: " + "<br/>");
+
+                    %><%=Consultas.studE%><%
+
+                        }
+
+                        out.println("</h2>");
+                        out.println("</div>");
+
                         for (Course t : courses) {
-                            if(t.hayEstudiantes()){
-                               out.println("<div class='col-xs-12 course'>");
+                            if (t.hayEstudiantes()) {
+                                out.println("<div class='col-xs-12 course'>");
+
                                 out.println("<h3>" + cs.getAbbrevCourses().get(t.getIdCourse()) + " - " + cs.nameCourse(t.getIdCourse()) + "</h3>");
-                               //   out.println("<h3>" + t.getIdCourse() + "</h3>");
-                               out.println("<table id='table_id' width='100%' border='0' class=''>");
-                               out.println("<tr class='students'>");
-                               for (int j = 0; j < t.getArraySecciones().size(); j++) {
-                                   String studentNames = "";
-                                   String nameTeacher = "" + hashPersons.get(t.getArraySecciones().get(j).getIdTeacher());
-                                   /*  String nameTeacher = "No Teacher";
+                                //   out.println("<h3>" + t.getIdCourse() + "</h3>");
+                                out.println("<table id='table_id' width='100%' border='0' class=''>");
+                                out.println("<tr class='students'>");
+                                for (int j = 0; j < t.getArraySecciones().size(); j++) {
+                                    String studentNames = "";
+                                    String nameTeacher = "" + hashPersons.get(t.getArraySecciones().get(j).getIdTeacher());
+                                    /*  String nameTeacher = "No Teacher";
 
                                   if (hashPersons.containsKey(t.getArraySecciones().get(j).getIdTeacher())) {
                                        nameTeacher = hashPersons.get(t.getArraySecciones().get(j).getIdTeacher());
                                    }*/
-                                   out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNumSeccion() + ":<br>"
-                                           + "Teacher: " + nameTeacher + " </strong>");
-                                   for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
-                                       studentNames += "<br>" + (k + 1) + "- " + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
-                                   }
-                                   out.println(studentNames);
-                                   out.println("</td>");
+                                    if (t.getArraySecciones().get(j).getIdStudents().size() > 0) {
+                                        out.println("<td><strong>Section " + t.getArraySecciones().get(j).getNameSeccion() + ":<br>"
+                                                + "Teacher: " + nameTeacher + " </strong>");
+                                    }
+                                    for (int k = 0; k < t.getArraySecciones().get(j).getIdStudents().size(); k++) {
+                                        studentNames += "<br>" + (k + 1) + "- " + lista2.get(t.getArraySecciones().get(j).getIdStudents().get(k)).getName();
+                                    }
+                                    out.println(studentNames);
+                                    out.println("</td>");
 
-                               }
-                               out.println("</tr>");
+                                }
+                                out.println("</tr>");
 
-                               /* String[][] matSections = new String[TAMX][TAMY];
+                                /* String[][] matSections = new String[TAMX][TAMY];
 
                            for (int i = 0; i < TAMX; i++) {
                                for (int j = 0; j < TAMY; j++) {
                                    matSections[i][j] ="";
                                }
                            }
-                                */
-                               out.println(headCols);
-                               swapcolor = true;
-                               for (int i = 0; i < TAMY; i++) {
-                                   if (swapcolor) {
-                                       out.println("<tr class='tcolores horario'>");
-                                       swapcolor = false;
-                                   } else {
-                                       out.println("<tr class='horario'>");
-                                       swapcolor = true;
-                                   }
-                                   if (i < headRow.size()) {
-                                       out.println("<td>" + headRow.get(i).text() + "</td>");
-                                   } else {
-                                       out.println("<td></td>");
-                                   }
-                                   for (int j = 0; j < TAMX; j++) {
-                                       if (!t.getHuecos()[j][i].equals("0")) {
-                                           String aux = t.getHuecos()[j][i];
-                                           out.println("<td class='text-center'> section " + aux + "</td>");
-                                       } else {
-                                           out.println("<td> </td>");
-                                       }
+                                 */
+                                out.println(headCols);
+                                swapcolor = true;
+                                for (int i = 0; i < TAMY; i++) {
+                                    if (swapcolor) {
+                                        out.println("<tr class='tcolores horario'>");
+                                        swapcolor = false;
+                                    } else {
+                                        out.println("<tr class='horario'>");
+                                        swapcolor = true;
+                                    }
+                                    if (i < headRow.size()) {
+                                        out.println("<td>" + headRow.get(i).text() + "</td>");
+                                    } else {
+                                        out.println("<td></td>");
+                                    }
+                                    for (int j = 0; j < TAMX; j++) {
+                                        if (t.getHuecos()[j][i].contains("and")) {
+                                            String aux = t.getHuecos()[j][i];
+                                            ArrayList<Integer> cadena = new ArrayList<>();
+                                            String acumulacion = "";
+                                            String[] splitString = null;
+                                            splitString = aux.split(" and ");
+                                            
+                                            cadena = new ArrayList<>();
+                                            for (String st : splitString) {
+                                                cadena.add(((t.getIdCourse() * 100) + Integer.parseInt(st)));
+                                            }
+                                            for (Integer st : cadena) {
+                                                acumulacion += cs.nameSection(st) + " and ";
+                                            }
+                                            acumulacion = acumulacion.substring(0, acumulacion.length() - 5);
+                                            out.println("<td class='text-center'>" +cs.nameCourse(t.getIdCourse())+" Sections: "+ acumulacion + "</td>");
+                                        } else if (!t.getHuecos()[j][i].equals("0")) {
+                                            int aux = Integer.parseInt(t.getHuecos()[j][i]);
+                                            aux = t.getIdCourse() * 100 + aux;
+                                            out.println("<td class='text-center'>" + cs.nameCourseAndSection(aux) + "</td>");
 
-                                   }
-                                   out.println("</tr>");
-                               }
-                               out.println("</table>");
-                               out.println("</div>");
+                                        } else {
+                                            out.println("<td> </td>");
+                                        }
+
+                                    }
+                                    out.println("</tr>");
+                                }
+                                out.println("</table>");
+                                out.println("</div>");
                             }
                         }
                     %>
@@ -462,8 +566,17 @@
                             out.println("<tr>");
                             out.println("<td>Courses teaching</td>");
                             out.println("<td>");
+                            String sumaCursos = "";
                             for (Integer i : t.getPrepsComplete()) {
-                                out.println(", " + cs.nameCourse(i));
+                                //out.println(", " + cs.nameCourse(i));
+
+                                sumaCursos = sumaCursos.concat(", " + cs.nameCourse(i));
+                            }
+                            if (!sumaCursos.equals("")) {
+                                sumaCursos = sumaCursos.substring(1, sumaCursos.length());
+                                out.println(sumaCursos);
+                            } else {
+                                out.println("0");
                             }
                             out.println("</td>");
                             out.println("</tr>");
@@ -562,9 +675,141 @@
                         }
                     %>
                 </div>
+                <%-- ------------------------------------------------------------------------ROOOOOMS----------------------------------------------------------------------------- --%>
+            </div>
+            <div role="tabpanel" class="col-xs-12 tab-pane" id="rooms">
+                <legend id="showRooms">
+                    Schedule
+                    <span class="col-xs-12 text-right glyphicon glyphicon-triangle-bottom">
+                    </span>
+                </legend>
+                <div class="form-group collapse" id="Roomstable">
+                    <%
+                        out.println("<h2>Rooms</h2>");
+                        for (Room r : rooms) {
+                            out.println("<h3>" + r.getName() + "</h3>");
+                            out.println("<table id='table_id' class='table'>");
+                            out.println(headCols);
+                            swapcolor = true;
+                            for (int i = 0; i < TAMY; i++) {
+                                if (swapcolor) {
+                                    out.println("<tr class='tcolores'>");
+                                    swapcolor = false;
+                                } else {
+                                    out.println("<tr>");
+                                    swapcolor = true;
+                                }
+                                if (i < headRow.size()) {
+                                    out.println("<td>" + headRow.get(i).text() + "</td>");
+                                } else {
+                                    out.println("<td></td>");
+                                }
+                                for (int j = 0; j < TAMX; j++) {
+                                    if (r.getHuecos()[j][i] != 0) {
+                                        /* for (Course t : courses) {
+                                            for (int z = 0; z < t.getArraySecciones().size(); z++) {
+                                                if (cs.nameCourse(r.getHuecos()[j][i]).contains(cs.nameCourse(t.getIdCourse()))) {*/
+                                        out.println("<td class='contentTable'>" + cs.nameCourseAndSection((r.getHuecos()[j][i] * 100) + r.getHuecosSeccion()[j][i]) + "</td>");
+                                    } //+ " Section " + t.getArraySecciones().get(z).getNameSeccion()
+                                    /*   }
+                                        }
+
+                                    } */ else {
+                                        out.println("<td></td>");
+                                    }
+                                }
+                                out.println("</tr>");
+                            }
+                            out.println("</table>");
+                        }
+                    %>
+                </div>
+
+                <legend id="showRooms2">
+                    Rooms Master Schedule
+                    <span class="col-xs-12 text-right glyphicon glyphicon-triangle-bottom">
+                    </span>
+                </legend>
+                <div class="form-group collapse" id="Roomstable2">
+                    <%
+                        countDays = 0;
+                        for (String s : headCol) {
+                            out.println("<h3>" + s + "</h3>");
+                            out.println("<table class='table'>");
+                            swapcolor = true;
+                            out.println("<tr>");
+                            out.println("<th>Rooms | Hours</th>");
+                            for (int i = 0; i < headRow.size(); i++) {
+                                out.println("<th>" + headRow.get(i).text() + "</th>");
+                            }
+                            out.println("</tr>");
+
+                            for (Room r : rooms) {
+                                if (swapcolor) {
+                                    out.println("<tr class='tcolores'>");
+                                    swapcolor = false;
+                                } else {
+                                    out.println("<tr>");
+                                    swapcolor = true;
+                                }
+                                out.println("<td>" + r.getName() + "</td>");
+                                for (int i = 0; i < TAMY; i++) {
+                                    if (r.getHuecos()[countDays][i] != 0) {
+                                        out.println("<td class='contentTable'>" + cs.nameCourseAndSection((r.getHuecos()[countDays][i] * 100) + r.getHuecosSeccion()[countDays][i]) + "</td>");
+                                    } else {
+                                        out.println("<td></td>");
+                                    }
+                                }
+                                out.println("</tr>");
+                            }
+
+                            countDays++;
+                            out.println("</table>");
+                        }
+
+                    %>
+                </div>
+
+                <legend id="showRoomsdisp">
+                    Availability
+                    <span class="col-xs-12 text-right glyphicon glyphicon-triangle-bottom">
+                    </span>
+                </legend>
+                <div class="form-group collapse" id="Roomsdisp">
+                    <% for (Room r : rooms) {
+                            out.println("<h3>" + r.getName() + "</h3>");
+                            out.println("<table id='table_id' class='table'>");
+                            out.println("<tr><th>Field</th><th>Content</th></tr>");
+
+                            out.println("<tr>");
+                            out.println("<td>Room Occupation Percent</td>");
+                            out.println("<td>");
+
+                            out.println(r.getPercentOcupation());
+
+                            out.println("</td>");
+                            out.println("</tr>");
+
+                            out.println("<tr>");
+                            out.println("<td>Room availability</td>");
+                            out.println("<td>" + r.getDisponibilidad() + "</td>");
+                            out.println("</tr>");
+
+                            out.println("<tr>");
+                            out.println("<td>Room occupation</td>");
+                            out.println("<td>" + r.getOcupacion() + "</td>");
+                            out.println("</tr>");
+
+                            out.println("</table>");
+                        }
+
+                    %>
+                </div>
 
             </div>
-
         </div>
     </body>
+    <%} catch (Exception e) {
+            e.getMessage();
+        }%>
 </html>

@@ -37,36 +37,73 @@ public class LoginVerification {
         fillDataConnection(districtCode,hsr);
     }
     public LoginVerification(String url, String lName,String pass){
-        url = url;
+//CAMBIO: se asigna el parametro url a la variable static url (previamente estaba asignado a sí mismo, con lo que era redundante.)        
+        this.url = url;
         loginName = lName;
         password = pass;
     }
-    
+ //-->A través de getBean se obtiene la información almacenada en el fichero applicationContext.
+ //applicationContext es un fichero que guarda los datos de las credenciales necesarias para entrar en la aplicación web.
+ //Si al aplicar el LoginVerification, los datos coinciden con los de la applicationContext.xml, dicha aplicación permite acceder al usuario.
      private Object getBean(String nombrebean, ServletContext servlet) {
+//AplicationContext es una interfaz que proporciona configuración a aplicaciones, en este caso servlet.         
+//WebApplicationContextUtils.getRequiredWebApplicationContext(servlet)-->Encuentre la raíz WebApplicationContext para esta aplicación web.
         ApplicationContext contexto = WebApplicationContextUtils.getRequiredWebApplicationContext(servlet);
+//Mediante getBean devuelve una instancia si coincide con el tipo de dato especificado. Esto se guarda en el objeto beanobject y se retorna.        
         Object beanobject = contexto.getBean(nombrebean);
         return beanobject;
     }
      
     private void fillDataConnection(String districtCode, HttpServletRequest hsr){
+ //Guarda consultas de la BBDD cuyo districtCode viene dado de antemano:
         String consulta = "select * from schoolsdata where districtcode='" +districtCode+"'";
+//AQUÍ SE CAMBIA LA ESTRUCTURA A LA CONEXIÓN DE BBDD PARA PODER CERRARLA HAYA FALLOS O NO
+//Se capturan excepciones de tipo SQL para mayor depuración:
+        Connection cn = null;
+        Statement s = null;
+        ResultSet rs = null;
         try {
-           
+//Para coger datos de la bean de aplicationContext cuyo Id es"dataSource",
+//a través de la URL específica del colegio, con su loginName y password:           
             DriverManagerDataSource dataSource2 = (DriverManagerDataSource) this.getBean("dataSource", hsr.getServletContext());
-            Connection cn = null;
+
             cn = dataSource2.getConnection();
-            Statement s = cn.createStatement();
-            ResultSet rs = s.executeQuery(consulta);
+            s = cn.createStatement();
+            rs = s.executeQuery(consulta);
             while (rs.next()) {
                 url = rs.getString("url");
                 loginName = rs.getString("loginname");
                 password= rs.getString("password");
             }
-        } catch (Exception e) {
-            System.err.println("");
+        } catch (SQLException e) {
+
+        }
+        finally{
+             try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+               
+            }
+            try {
+                if (s != null) {
+                    s.close();
+                }
+            } catch (SQLException e) {
+                
+            }
+            try {
+                if (cn != null) {
+                    cn.close();
+                }
+            } catch (SQLException e) {
+                
+            }
         }
     }
-    
+//Los siguientes 3 métodos: SQLConnection, Query y SQLQuery son necesarios para obtener el query y posteriormente 
+//en ConsultUserDB se comprueba si el usuario está en la BBDD (a través de la comprobación de username, passoword y el ID PERSONAL)
     public static Connection SQLConnection() throws SQLException {
         System.out.println("database.SQLMicrosoft.SQLConnection()");
       /*  String url = "jdbc:sqlserver://ca-pan.odbc.renweb.com\\ca_pan:1433;databaseName=ca_pan";
@@ -81,7 +118,7 @@ public class LoginVerification {
             System.out.println("No se puede conectar con el Motor");
             System.err.println(ex.getMessage());
         }
-
+ 
         return cn;
     }
 
@@ -99,7 +136,7 @@ public class LoginVerification {
     public static ResultSet SQLQuery(String queryString) throws SQLException {
         return Query(SQLConnection(), queryString);
     }
-
+//comprobación de username, passoword y el ID PERSONAL:
     public User consultUserDB(String user,String password) throws Exception {
         User u = null;
        //user = 'shahad' and pswd = 'shahad1234' group = Spring
@@ -121,6 +158,10 @@ public class LoginVerification {
             }}
         return u;
     }
+//El último paso para la verificación del login, después de verificar los datos con el query,
+//es comprobar si el usuario está dentro del grupo EWSchedule a través del ID de grupo.
+    
+//Con este siguiente método se obtiene el ID de grupo del usuario:
     public int getSecurityGroupID(String name) throws SQLException{
         int sgid = 0;
         String query ="select groupid from SecurityGroups where Name like '"+name+"'";
@@ -130,7 +171,8 @@ public class LoginVerification {
             }
         return sgid;
     }
-    
+//Con el siguiente método se verifica si el usuario pertenece al grupo o no (en caso afirmativo devuelve aux=true)
+//    a través del groupId y el staffId que obtiene previamente de la BBDD.    
     public boolean fromGroup(int groupid, int staffid) throws SQLException{
         boolean aux  = false;
         String query = "select * from SecurityGroupMembership where groupid = "+groupid+" and StaffID = " + staffid;

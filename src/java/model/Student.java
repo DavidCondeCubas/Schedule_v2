@@ -49,7 +49,9 @@ public class Student {
     public void setNumPatrones(int numPatrones) {
         this.numPatrones = numPatrones;
     }
-
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU: 
+    //En renweb no se modificar BD
+ /*   
     public void insertarOActualizarDB() {
         String consulta = "select * from students where id=" + id;
         boolean actualizar = false;
@@ -73,7 +75,7 @@ public class Student {
             Logger.getLogger(Teacher.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+*/
     public Student(int id, int numPatrones) {
         this.id = id;
         this.numPatrones = numPatrones;

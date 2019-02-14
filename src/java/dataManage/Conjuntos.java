@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public class Conjuntos <T>{ // CLASE ENCARGADA DE COMPARAR ARRAYLIST (UNION, INTERSECCION, COMPARACION)
 
     public ArrayList<T> union(ArrayList<T> primero, ArrayList<T> segundo) {
+//Se añade en el primer array la información del segundo:        
         ArrayList<T> retVal = new ArrayList<T>(primero);
         for (T worte : segundo) {
             if (!primero.contains(worte)) {

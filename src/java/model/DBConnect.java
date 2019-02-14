@@ -24,30 +24,35 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
  *
  * @author Norhan
  */
+//ESTA CLASE SE USA PARA UTILIZAR LA CONEXION A RENWEB
 public class DBConnect {
-
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
+    
     private Connection cn;
-    private Connection cn2;
+//  private Connection cn2;
     public static Statement renweb;
-    public static Statement own;
+//   public static Statement own;
 
     public DBConnect(HttpServletRequest hsr) {
         try {
             
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
             cn = SQLConnection();
-            cn2 = SQLConnection2(hsr);
+     //       cn2 = SQLConnection2(hsr);
             renweb = cn.createStatement();
-            own = cn2.createStatement();
+     //      own = cn2.createStatement();
         } catch (SQLException ex) {
             Logger.getLogger(DBConnect.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    private Object getBean(String nombrebean, ServletContext servlet) {
+//El getBean se quita porque no se utiliza en DBConnect (este método era necesario para comprobación de credenciales en LoginVerification)
+    
+    /*private Object getBean(String nombrebean, ServletContext servlet) {
         ApplicationContext contexto = WebApplicationContextUtils.getRequiredWebApplicationContext(servlet);
         Object beanobject = contexto.getBean(nombrebean);
         return beanobject;
     }
+   */
 
     public static Connection SQLConnection() throws SQLException {
         /*System.out.println("database.SQLMicrosoft.SQLConnection()");
@@ -66,8 +71,10 @@ public class DBConnect {
 
         return cn;
     }
-
-    public Connection SQLConnection2(HttpServletRequest hsr) throws SQLException {
+    
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
+    
+   /*public Connection SQLConnection2(HttpServletRequest hsr) throws SQLException {
         System.out.println("database schedule conexion");
         DriverManagerDataSource dataSource2 = (DriverManagerDataSource) this.getBean("dataSource", hsr.getServletContext());
 
@@ -81,6 +88,6 @@ public class DBConnect {
         }
 
         return cn;
-    }
+    }*/
 
 }

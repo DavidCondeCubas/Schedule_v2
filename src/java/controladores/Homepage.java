@@ -75,22 +75,29 @@ public class Homepage extends MultiActionController {
     
 
     @RequestMapping("/menu.htm")
+//Se accede a menu a través del método login o a través de un mapping del dispatcher posteriormente (el primer acceso es desde el login, al final).
+    
     public ModelAndView menu(HttpServletRequest hsr, HttpServletResponse hsr1, String districtCode) {
         ModelAndView mv = new ModelAndView("menu");
+//Se define una tupla en la que se están guardando los datos de las schools correspondientes al districtCode elegido:
+//Por ejemplo, si se escoge el district code RWI-SPAIN, se añaden Elementary School, Middle School y High School
         ArrayList<Tupla<String, String>> schools = Consultas.getSchools(districtCode);
     //    ArrayList<Tupla<Integer, String>> ar = Consultas.getYears(districtCode);
 
        // ar.sort(new Comp());
+//sort sirve para ordenar alfabeticamente los objetos recogidos en la Tupla(por ejemplo para RWI-SPAIN: primero pone Middle, luego High y luego Elementary):        
         schools.sort(new CompString());
 
        // mv.addObject("years", ar);
-      
+//Aquí se añaden los datos de la tupla en el mv, para enviarlo a menu.jsp:      
         mv.addObject("schools", schools);
+    
         return mv;
     }
 
     @RequestMapping("/menu/create.htm") // DATA ES ID DE TEMPLATE
     public ModelAndView create(HttpServletRequest hsr, HttpServletResponse hsr1) {
+//Se guarda en data el parametro recogido de templateInfo (que está en menu.jsp): es la ID de template:        
         String data = hsr.getParameter("templateInfo");
 
         String posSelectTemplate = data.split("#")[1];
@@ -98,11 +105,13 @@ public class Homepage extends MultiActionController {
         HttpSession session = hsr.getSession();
 
         posSelectTemplate = posSelectTemplate.split(" ")[0];
+//Se obtienen los parámetros del Request para posteriormente redireccionar a schedule/renweb con esos parámetros:      
         String yearid = hsr.getParameter("yearid");
         String roomMode = hsr.getParameter("rooms");
         String groupRoom = hsr.getParameter("groupofrooms");
         String schoolcode = hsr.getParameter("schoolcode");
         String schoolName = hsr.getParameter("schoolName");
+//Aquí se establece el nombre de la escuela a la sesión (p. ej: high school):        
         session.setAttribute("schoolName", schoolName);
         
         String shuffle = hsr.getParameter("suffleCheck");
@@ -110,12 +119,16 @@ public class Homepage extends MultiActionController {
         String[] datost = data.split("-");
         ModelAndView mv = new ModelAndView("redirect:/schedule/renweb.htm?actvRoom=" + actvRoom + "&schoolcode=" + schoolcode + "&shuffle=" + shuffle +  "&grouproom=" + groupRoom + "&roommode=" + roomMode + "&tempid=" + datost[0] + "&posSelectTemplate=" + posSelectTemplate + "&yearid=" + yearid + "&id=" + datost[0] + "&rows=" + datost[1] + "&cols="
                 + datost[2]);
+//Se obtienen los datos del año en función de la escuela que se introduzca(en estecaso IS-PAN). Lo obtiene del método getYears de Consultas:        
         ArrayList<Tupla<Integer, String>> ar = Consultas.getYears("IS-PAN");
+//Se ordena alfabéticamente:        
         ar.sort(new Comp());
+//Se introducen los datos (en model del mv), y se mandan a "years", en menu.jsp:        
         mv.addObject("years", ar);
         return mv;
     }
-
+//Aquí se accede a través de la funcion templates, que se accede a su vez con el Select Year (al inicio de create).
+//Se obtienen los datos de Consultas.getTemplates(proporcionando el id correspondiente), y se devuelve un array con los datos:
     @RequestMapping("/menu/temp.htm")
     @ResponseBody
     public String getTemplates(HttpServletRequest hsr, HttpServletResponse hsr1) throws JSONException {
@@ -139,55 +152,73 @@ public class Homepage extends MultiActionController {
         }
         return null;
     }
-
+//Se accede a login a través de:
+//1º: userform.jsp --> userform=login
+//2º: declarando en dispatcher una id para la clase controlador homepage.
     @RequestMapping
+//HttpServletRequest: permite obtener los datos que se rellenan en el formulario de la página web. Para ello se crea un objeto: hsr,
+// utilizado posteriormente para usar el método getParameter.
+//HttpServletResponse:
     public ModelAndView login(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
         HttpSession session = hsr.getSession();
-      
+//Se declara un objeto de la clase User: para utilizar getters y setters y aplicarlos posteriormente ()      
         User user = new User();//cambiar
         int scgrpid = 0;
         boolean result = false;
         
         ModelAndView mv = new ModelAndView();
 
-//            setTipo(user);//borrar
-//            session.setAttribute("user", user); //borrar
+        //            setTipo(user);//borrar
+        //            session.setAttribute("user", user); //borrar
+
+//Mediante getParameter podemos obtener los valores de los campos del formulario de userform.
         String txtusuario = hsr.getParameter("txtusuario");
         String districtCode = hsr.getParameter("selectDistrictCode");
-        
+//Se hace el LoginVerification: con esto permite comprobar si los datos del usuario personales y de grupo coinciden con las credenciales:
+//Para ello se hace una conexión a la BD y se cierra al comprobar todos los datos.
         LoginVerification login = new LoginVerification(districtCode,hsr);
         DBConnect db = new DBConnect(hsr);
         // menu(hsr,hsr1,schoolCode);
       
-
+//Verificación de los datos introducidos por el usuario, gracias a la clase LoginVerification:
+//Primero comprueba si el campo del usuario está vacío. Si es así devuelve un mensaje y refreca la página.
+//En caso de que se haya rellenado, pasa a comprobar si el usuario y contraseña son correctos. Si son incorrectos, 
+//devuelve de nuevo un mensaje. Si son correctos, pasa a comprobar si la ID de grupo es correcta. Si es incorrecta
+//devuelve otro mensaje. Si finalmente la ID de grupo es correcta entra en el Menu:
         if(txtusuario==null){
-               return new ModelAndView("userform");
+               mv = new ModelAndView("userform");
+               String message="Username text field is empty, try again please.";  
+               mv.addObject("message",message);
+               return mv;
             }else{
-            
-               user = login.consultUserDB(hsr.getParameter("txtusuario"), hsr.getParameter("txtpassword"));
-               // if the username or password incorrect
+//consultUserDB se declaraba en LoginVerification y servía para:comprobación de username, password y el ID PERSONAL
+               user = login.consultUserDB(hsr.getParameter("txtusuario"), hsr.getParameter("txtpassword"));             
+               
+//Si el username o el password es incorrecto(es decir, no obtiene ninguna Id del usuario):               
                if(user.getId()==0){
                     mv = new ModelAndView("userform");
-                    String message = "Username or password incorrect";
+                    String message = "Username or password incorrect, try again please.";
                     mv.addObject("message", message);
                     return mv;
                 }
-                //if the user is not part of the group
+//Comprobación de si pertenece al grupo a través de la GroupID(EWSchedule es el grupo al que debe pertenecer):
                 else{
                     scgrpid = login.getSecurityGroupID("EWSchedule");
                     result = login.fromGroup(scgrpid, user.getId());
-                    
+// Entra en este if si todos los campos son correctos: 
+                
                     if (result == true){
 //                       user.setId(10393);//padre
 //                       user.setId(10332);//profe
                         setTipo(user);
                         session.setAttribute("user", user);
                         session.setAttribute("schoolName", "");
+//Aquí devuelve el método menu con los datos de la navegación y el districtCode(ver menu más arriba):                        
                         return menu(hsr, hsr1, districtCode);
                     }
                     else{
                         mv = new ModelAndView("userform");
-                        String message = "Username or Password incorrect";
+                        String message = "GroupID incorrect, try again please.";
                         mv.addObject("message", message);
                         return mv;
                     }
@@ -198,6 +229,8 @@ public class Homepage extends MultiActionController {
 
     //user.setId(10333);
     //user.setId(10366);
+//En este método se definen los tipos de usuarios. Se va a comprobar si el usuario es un profesor, es un padre, o es un profesor y padre a la vez:
+//En función de esto, se definirá un tipo de usuario u otro(user.setType(...))    
     public void setTipo(User user) {
         boolean padre = false, profesor = false;
         try {
@@ -212,7 +245,8 @@ public class Homepage extends MultiActionController {
                 padre = rs2.getInt("cuenta") > 0;
             }
         } catch (SQLException ex) {
-            System.out.println("error");
+            //System.out.println("error");
+            ex.getMessage();
         }
         if (padre && profesor) {
             user.setType(0);

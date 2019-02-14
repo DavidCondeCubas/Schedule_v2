@@ -45,7 +45,9 @@ public class Teacher{
         this.numSecciones++;
     }
     
-    
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU: 
+//En renweb no se puede modificar la DB
+ /*   
     public void insertarOActualizarDB(){
         String consulta="select * from teachers where id="+idTeacher;
         boolean actualizar = false;
@@ -65,7 +67,7 @@ public class Teacher{
             Logger.getLogger(Teacher.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+*/    
     public Teacher(){
         huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
         blocksPerDay = new int[Algoritmo.TAMY];

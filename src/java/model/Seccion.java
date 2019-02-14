@@ -16,8 +16,9 @@ import java.util.HashMap;
 public class Seccion {
 
     Teacher teacher;
+    Room room;
     ArrayList<Integer> idStudents;
-    int idRoom;
+    Integer idRoom;
     int numStudents;
     ArrayList<Tupla> patronUsado;
     String gender;
@@ -30,6 +31,8 @@ public class Seccion {
     int classId;
     int courseID;
     int patternRenWeb;
+    
+
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron) {
         this.teacher = currentT;
@@ -41,8 +44,19 @@ public class Seccion {
         this.patternRenWeb = 0;
         this.idRoom = 0;
     }
+    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, Room currentR) {
+        this.teacher = currentT;
+        this.room=currentR;
+        this.numStudents = numStudents;
+        this.patronUsado = patron;
+        this.gender = "mixto";
+        this.lockEnrollment = false;
+        this.lockSchedule = false;
+        this.patternRenWeb = 0;
+        this.idRoom = 0;
+    }
 
-    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS, boolean lockEnr, boolean lockSche, int cID, int courseID) {
+    public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS ,boolean lockEnr, boolean lockSche, int cID, int courseID) {
         this.teacher = currentT;
         this.numStudents = numStudents;
         this.patronUsado = patron;
@@ -88,6 +102,15 @@ public class Seccion {
         this.nameSeccion = "";
     }
 
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+    
+
     public Teacher getTeacher() {
         return teacher;
     }
@@ -101,10 +124,11 @@ public class Seccion {
     }
 
     public void setIdStudents(ArrayList<Integer> idStudents) {
+        
         this.idStudents = idStudents;
     }
 
-    public int getIdRoom() {
+    public Integer getIdRoom() {
         return idRoom;
     }
 

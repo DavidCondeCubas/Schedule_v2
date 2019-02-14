@@ -49,7 +49,7 @@ public class Restrictions {
     public HashMap<String, Course> linkedCourses = new HashMap<>();
     public boolean shuffleRosters;
     public boolean activeRooms;
-
+    
     public Restrictions(String yearid, String tempid, String groupofrooms) {
         this.tempid = tempid;
         this.cs = new Consultas(tempid);
@@ -70,59 +70,81 @@ public class Restrictions {
         shuffleRosters = false;
         activeRooms = false;
     }
-
-    public Restrictions(String yearid, String tempid, String groupofrooms, int mode,String schoolCode) {
+//Aquí se define la estructura inicial de las restricciones para luego poder manejarlas:
+    public Restrictions(String yearid, String tempid, String groupofrooms, int mode,String schoolCode) throws Exception {
       //  this.hashCourses = new HashMap<>();
+      try{
+          
+      
         this.tempid = tempid;
+//Se crea el objeto cs para instanciar la estructura que se va a llevar a cabo al aplicar las restricciones posteriores(cs es un objeto de Consultas):
+//Se capturan los datos de Consultas en función del tempid que ha devuelto el redirect, que a su vez ha devuelto el menu:
+//En cs se guarda la estructura para poder establecer datos como profesores, estudiantes, nombres, apellidos, sexo...
         this.cs = new Consultas(tempid);
         this.hashTeachers = new HashMap<>();
         this.idCourses = new ArrayList();
-      //  this.groupRooms = cs.roomsGroup(groupofrooms) ; comentado por pruebas
-       // this.groupRooms = cs.roomsGroup("Rooms",tempid) ; 
+  //Con este método se cogen las rooms por defecto de school
+       this.groupRooms = cs.roomsGroup(groupofrooms,tempid) ; 
+//1º--> se recogen las restricciones de los estudiantes. Pra ello lo primero se crea un array de tipo clase estudiante: st       
         ArrayList<Student> st = new ArrayList();
+        ArrayList<Course> cr = new ArrayList();
         int[] tempInfo =  cs.templateInfo(tempid);
       //  this.studentsCourse = Consultas.getCoursesGroups(st, idCourses, yearid, tempid); //5sg
         this.studentsCourse = new HashMap<>();
         this.students = new HashMap<>();
-        
+
+//En st se añaden las restricciones de estudiantes obtenidas de la clase Consultas(el array Conjuntos se ocupa de añadir el contenido de
+//cs.restriccionesStudent en st):
         st = (new Conjuntos<Student>()).union(st,
-                cs.restriccionesStudent(idCourses, studentsCourse, yearid,tempInfo,schoolCode));
-        
-        
+                cs.restriccionesStudent(idCourses, studentsCourse, yearid,(Integer.parseInt(tempid)),schoolCode));
+   
         //chargeHashStudents();
-        
+//Aquí se carga el array students de todas las restricciones de los estudiantes en función de su id:        
         for (Student s : st) {
             this.students.put(s.getId(), s);
         }
-
+//Con el método getTotalBlocksStart se obtienen las restricciones de inicio de bloques(el nº de bloques con el que se inicia)
+//, obtenidas en función del metodo TotalBlocksStart:
         this.totalBlocks = this.cs.getTotalBlocksStart();
+//        
         this.linkedCourses = this.cs.getLinkedCourses();
-    //    this.rooms = cs.getRooms();
+ //En getRooms se obtienen todos los datos de las rooms: ids, nombres, a la school que pertenecen...      
+        
+        this.rooms = cs.getRooms();
 
         /*ArrayList<Integer> auxPrueba = new ArrayList<>();
         auxPrueba.add(idCourses.get(0));*/
-        
+//2º-->        
+//Obtencion de las restricciones de los cursos de la clase consultas:      
+//Se guardan todas las restricciones recogidas a través de los hash de consultas en el array courses declarado al principio de esta clase:  
         this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses), tempInfo,tempid,this.groupRooms);//aqui es donde tarda mucho
         try{
+//Se priorizan unos cursos sobre otros (a través de los rangos) una vez aplicadas las restricciones anteriores:       
         this.courses.sort(new Restrictions.CompCoursesRank());
         }
         catch(Exception e){
             System.out.println("dataManage.Restrictions.<init>()");
         }
-            
+//Se guarda la lista de profesores con sus restricciones obtenidas de cada uno en teachers:            
         this.teachers = cs.teachersList(tempid,tempInfo);
-        
+//Se agregan los datos de teachers al hashTeachers, con identificador el id de Teacher. Esto se hace para todos:       
         for (Teacher teacher : this.teachers) {
             this.hashTeachers.put(teacher.getIdTeacher(), teacher);
         }
-        
+//Se añaden los nombres de los cursos en función de los ids que hay en courses(nota: es Static):      
         cs.fillHashCourses(this.courses);
-        this.mapSecciones = cs.getDataSections(this.students,this.hashTeachers,this.rooms,this.courses,yearid,tempid,linkedCourses);
+//Se añaden las secciones(aulas) en función de los estudiantes, los profesores, rooms, cursos, año, template:        
+        this.mapSecciones = cs.getDataSections(this.students,this.hashTeachers,this.rooms,this.courses,yearid,tempid,linkedCourses,schoolCode, studentsCourse);
         
         Student stPrueba = this.students.get(1203906);
         System.out.println("");
+//Se establece el Shuffle y el ActiveRooms desabled por defecto:
+
         shuffleRosters = false;
         activeRooms = false;
+        }catch(Exception e){
+          System.out.println(e.getMessage());
+      }
     }
 
     private void chargeHashStudents(){
@@ -153,6 +175,9 @@ public class Restrictions {
      * Realiza consultas en nuestra base de datos para sacar todas las
      * restricciones
      */
+/*    
+   //OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
+    
     public void extraerDatosOwnDB() {
         this.courses = cs.getCoursesOwnDB();
 
@@ -168,6 +193,8 @@ public class Restrictions {
     /**
      * Sincroniza los datos de renweb con nuestra base de datos
      */
+/*    
+    //OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
     public void syncOwnDB() {
         for (Teacher t : teachers) {
             t.insertarOActualizarDB();
@@ -192,7 +219,9 @@ public class Restrictions {
             }
         }
     }
-
+*/
+    //Con este método se comparan los rangos de los cursos (estos son necesarios para algunas asignaturas se generen antes y tengan más patrones.
+//disponibles y rosters más completos):
     private class CompCoursesRank implements Comparator<Course> {
 
         @Override

@@ -24,7 +24,21 @@ public class Room {
     private int size;
     private int disponibilidad;
     private int ocupacion;
-    
+    /*  private int numSecciones;
+
+    public int getNumSecciones() {
+        return numSecciones;
+    }
+
+    public void setNumSecciones(int numSecciones) {
+        this.numSecciones = numSecciones;
+    }
+    public void incrementarNumSecciones(){
+        this.numSecciones++;
+    }*/
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU: 
+    //insertarOActualizarDB no está para renweb porque desde nuestra aplicacion no se puede modificar la DB
+ /*    
     public void insertarOActualizarDB(){
         String consulta="select * from rooms where id="+roomid;
         boolean actualizar = false;
@@ -44,7 +58,7 @@ public class Room {
             Logger.getLogger(Teacher.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+*/    
     public Room(int roomid, String name, int size) {
         this.roomid = roomid;
         this.name = name;
@@ -66,10 +80,10 @@ public class Room {
     
     
     
-    public boolean ocuparHueco(int valor ,int seccion,ArrayList<Tupla> ar){
-        for(Tupla<Integer,Integer> t:ar){
+    public boolean ocuparHueco(int idCourse ,int seccion,ArrayList<Tupla> patron){
+        for(Tupla<Integer,Integer> t:patron){
             if(huecos[t.x][t.y] == 0){
-               huecos[t.x][t.y] = valor;
+               huecos[t.x][t.y] = idCourse;
                huecosSeccion[t.x][t.y] = seccion;
             }else{
                 return false;

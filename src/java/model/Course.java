@@ -28,29 +28,29 @@ import java.util.logging.Logger;
  * @author Norhan
  */
 public class Course {
-
-    static final int BLOCKS_BY_DEFAULT = 2;
+//Aqií se definen las variables que se van a utilizar como restricciones en Consultas.getRestriccionesCourses:Ñ
+    static final int BLOCKS_BY_DEFAULT = 2;//2 bloques por defecto
     public static int MUESTRA = 1000000;
     public static int MAX_INTENTOS = 5000000;
     private String[][] huecos; // cuadricula
     private int idCourse; // id del curso
-    private String nameCourse;
+    private String nameCourse;//nombre del curso
     private int blocksWeek; // bloques por semana
     private String maxSections; // maximo numero de grupos
     private int minGapBlocks; // espacio minimo entre bloques
-    private int minSections;
+    private int minSections;//minimo de secciones
     private int minGapDays; //cada cuantos dias entre bloques
     private int rank; // prioridad
-    private boolean GR; //
-    private boolean balanceTeachers;
+    private boolean GR; //crear secciones separadas por género
+    private boolean balanceTeachers;//para asignar secciones a cada profesor
     private ArrayList<Integer> excludeRows; // bloques que no se pueden usar
     private ArrayList<Integer> excludeCols;
     private ArrayList<ArrayList<Tupla<Integer, Integer>>> preferedBlocks;
     private ArrayList<Tupla<Integer, Integer>> excludeBlocks;
-    private int maxBlocksPerDay;
-    private int sections;
-    private int sectionsNoEnrolled;
-    private double percentEnrolled;
+    private int maxBlocksPerDay;//maximo de bloques al dia
+    private int sections;//secciones
+    private int sectionsNoEnrolled;//secciones no matriculadas
+    private double percentEnrolled;//porcentaje matriculado
     private ArrayList<Integer> studentsNoAsignados;
     private ArrayList<Integer> studentsAsignados;
     private ArrayList<ArrayList<Tupla>> patronesStudents;
@@ -74,7 +74,7 @@ public class Course {
         this.minGapBlocks = c.getMinGapBlocks(); // espacio minimo entre bloques
         this.minSections = c.getMinSections();
         this.minGapDays = c.getMinGapDays(); //cada cuantos dias entre bloques
-        this.rank = c.getRank(); // prioridad
+        this.rank = c.getRank(); // prioridad (se comparan los rangos para dar prioridad a los cursos)
         this.GR = c.isGR(); //
         this.balanceTeachers = c.isBalanceTeachers();
         this.excludeRows = c.getExcludeRows(); // bloques que no se pueden usar
@@ -279,7 +279,10 @@ public class Course {
         }
         return ret;
     }
-
+//Se calculan las tuplas en función de las columnas, filas y bloques habilitados, necesario para la generación de patron en función de restricciones:
+//fila habilitada: fila con todas los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de fila).
+//columna habilitada: columna con todos los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de columna).
+//tupla habilitada: se refiere solo a un bloque individual(las tuplas x e y marcan la posición).
     private void calcularTuplas(ArrayList<String> log, ArrayList<Integer> colsHabilitadas, ArrayList<Integer> rowsHabilitadas, ArrayList<Tupla> tuplasHabilitadas) {
         if (this.mandatoryBlockRange != null && !this.mandatoryBlockRange.equals("") && !this.mandatoryBlockRange.equals("*,*;")) {
             String[] parts = this.mandatoryBlockRange.split(";");
@@ -401,7 +404,7 @@ public class Course {
 
     ArrayList<ArrayList<Tupla>> opciones(ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<String> log) {
 
-        //AQUI HAY QUE LIMITAR LA CANTIDAD DE OCPIONES SI QUERERMOS QUE TENGAN BLOQUES OBLIGATORIOS ASIGNADOS.
+//-->AQUI HAY QUE LIMITAR LA CANTIDAD DE OCPIONES SI QUERERMOS QUE TENGAN BLOQUES OBLIGATORIOS ASIGNADOS.
         ArrayList<ArrayList<Tupla>> ret = new ArrayList<>();
         try {
             if (maxSections == null && Integer.parseInt(maxSections) == 0
@@ -415,22 +418,27 @@ public class Course {
         ArrayList<Integer> rowsHabilitadas = new ArrayList<>();
 
         ArrayList<Tupla> tuplasHabilitadas = new ArrayList<>();
-
+//Se calculan las tuplas en función de las columnas, filas y bloques habilitados, necesario para la generación de patron en función de restricciones:
+//fila habilitada: fila con todas los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de fila).
+//columna habilitada: columna con todos los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de columna).
+//tupla habilitada: se refiere solo a un bloque individual(las tuplas x e y marcan la posición).
         calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
-
+//Si el campo de bloques por semana es 0 en el schedule, se cogen bloques por defecto(2), asignados aquí porque en RenWeb/school,
+//no hay un campo que se pueda utilizar para poner bloques por semana por defecto.
         if(this.blocksWeek == 0){
             this.blocksWeek = BLOCKS_BY_DEFAULT;
         }
         Tupla[] sol = new Tupla[this.blocksWeek];
         boolean[][] marcas = new boolean[Algoritmo.TAMY][Algoritmo.TAMX];
-
+//Las marcas se refiere a la asignación/bloqueo de bloques(se asigna true o false, por eso es boolean):
         for (int i = 0; i < Algoritmo.TAMY; i++) {
             for (int j = 0; j < Algoritmo.TAMX; j++) {
                 marcas[i][j] = false;
             }
         }
         int maxVueltas = 0;
-        
+//El recurOpciones sirve para vuelta atraás y adelante, tanteando opciones para ver si funciona:  
+//Para ello genera opciones previas basándose en el tamaño del template
         recurOpciones( maxVueltas,ret, Algoritmo.TAMX, Algoritmo.TAMY, sol, 0, marcas,  totalBlocks);
 
         //RECORRE LAS TUPLAS DEFINIDAS COMO MANDATORY
@@ -1116,6 +1124,8 @@ public class Course {
     /**
      * inserta o actualiza si ya existe ,el curso en nuestra base de datos.
      */
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
+/*    
     public void insertarOActualizarCurso() {
         String consulta = "select * from courses where id=" + this.idCourse;
         boolean actualizar = false;
@@ -1155,7 +1165,7 @@ public class Course {
                         +" ,excluderows="+this.excludeRows.toString()+" ,teachers="+ this.trestricctions.toString()
                         +" ,balanceteacher="+this.balanceTeachers + " , preferedblocks="+ this.preferedBlockString + "where ";
                  */
-
+/*
             }
         } catch (SQLException ex) {
             Logger.getLogger(Course.class
@@ -1163,7 +1173,7 @@ public class Course {
         }
 
     }
-
+*/
     @Override
     public boolean equals(Object c) {
         return this.idCourse == ((Course) c).idCourse;

@@ -67,17 +67,20 @@
 
             }
         </script>
+ <%-- Estructura de la página Web de inicio:  --%>
         <div class="col-sm-12" style="margin-top: 10px;">
             <div class="panel panel-success">
                 <div class="panel-body"align="center">
                     <div class="container " style="margin-top: 10%; margin-bottom: 10%;">
-
+                        
                         <div class="panel panel-success" style="max-width: 35%;" align="left">
                             <div class="panel-heading form-group fondoGris">
                                 <img class="img-responsive center-block" src="recursos/img/logoeduweb.png" alt="logo"/>
                             </div>
                             <div class="panel-body" >
                                 <!--<form id="idForm" name ="form1" action="userform.htm?opcion=login" method="post" >-->
+ <%--form: Estructura de la introducción de datos(District Code, User, Password) --%> 
+ <%-- A través de opcion=login puede entrar en @RequestMaping de la clase Homepage, método login mediante dispatcher(mappings--> prop key="userform.htm">homepage</prop):--%>
                                 <form  name ="form1" action="userform.htm?opcion=login" method="post" >
                                     <div
                                         <c:if test="${message != null}">
@@ -88,6 +91,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="exampleDistrictCode"><spring:message code="etiq.txtDistrictCode"/></label> 
+ <%-- Lista desplegable de District Code: --%>
                                         <select class="form-control" name="selectDistrictCode" id="selectSchoolCode">
                                             <option value="IS-PAN">IS-PAN</option>
                                             <option value="MD-PAN">MD-PAN</option>
@@ -96,16 +100,19 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="exampleInputEmail1"><spring:message code="etiq.txtuser"/></label> 
+ <%-- Input de User : --%>                                        
                                         <input type="text" class="form-control" name="txtusuario" id="txtusuario" placeholder="<spring:message code='etiq.txtinsertuser'/>" required="required">    
                                     </div>
                                     <div class="form-group">
                                         <label for="exampleInputPassword1"><spring:message code="etiq.txtpassword"/></label> 
+ <%-- Input de Password: --%>                                        
                                         <input type="password" class="form-control" name="txtpassword" id="txtpassword" placeholder="<spring:message code='etiq.txtinsertpassword'/>" ><!--required="required"-->
                                     </div>
                                     <button  type="submit" name="submit" value='<spring:message code="etiq.txtlogin"/>' style="width: 100%; font-size:1.1em;" class="btn btn-large btn btn-success btn-lg btn-block" ><b>Login</b></button>
-                                    
+ <%--Fin de form, y el resto de divisiones: --%>                                    
                                 </form>
                                 <div class="center-block text-center">
+   <%--Se utiliza esto para el idioma; --%>                                    
                                     <a class="btn" href="datosIdioma.htm?lenguaje=en"><spring:message code="etiq.txtenglish"/></a>
                                     <a class="btn" href="datosIdioma.htm?lenguaje=es"><spring:message code="etiq.txtspanish"/></a>
                                     <a class="btn" href="datosIdioma.htm?lenguaje=ar"><spring:message code="etiq.txtarabic"/></a>
@@ -114,7 +121,7 @@
                         </div>
 
                     </div>
-
+ <%--Texto del pie de página: --%>  
                 </div>
                 <div class="panel-footer" align="center"><font style="color: #111">Copyright @2016, EduWeb Group, All Rights Reserved. </font></div>
             </div>

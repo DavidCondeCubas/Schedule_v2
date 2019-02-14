@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import model.Algoritmo;
 import dataManage.Consultas;
+import dataManage.Exceptions;
 import dataManage.Restrictions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,14 +44,20 @@ import org.w3c.dom.Node;
  * @author Chema
  */
 @Controller
-public class ScheduleController {
-
+public class ScheduleController   {
+//Este es el schedule que está actualmente en uso(local):
     @RequestMapping("/schedule/renweb.htm")
     public ModelAndView scheduleEduweb(HttpServletRequest hsr, HttpServletResponse hsr1) {
+//Se cogen los parámetros del redirect y se guarda en diferentes variables para poder implementarlas posteriormente.
+//id, x e y se implementan en el mv para las cabeceras de columnas y filas:
         ModelAndView mv = new ModelAndView("homepage");
+        
+//APLICAR TRY DESDE AQUI:
+try{
         String tempid = hsr.getParameter("tempid");
         String xs = hsr.getParameter("cols");
         String ys = hsr.getParameter("rows");
+    
         //String schoolName = hsr.getParameter("schoolName");
         String schoolCode = hsr.getParameter("schoolcode");
         String shuffle = hsr.getParameter("shuffle");
@@ -62,18 +69,44 @@ public class ScheduleController {
         String yearid = hsr.getParameter("yearid");
         int x = Integer.parseInt(xs);
         int y = Integer.parseInt(ys);
+//Los siguientes objetos implementan en el mv los datos de las cabeceras de filas y columnas: 
+//El getRowHeader contiene las horas de cada clase, de tamaño 10 (es la primera columna, que se sitúa a la izquiera del horario):
         mv.addObject("hFilas", Consultas.getRowHeader(id, y)); //4sg
+//El getColReader contiene el nombre de los días de la semana, de tamaño 5 (es la primera fila, se sitúa en la parte superior del horario):        
         mv.addObject("hcols", Consultas.getColHeader(id, x)); //2sg
         
-        
+//Después se instancian objetos de algoritmo y restricciones: 
+
         //saveXML_FTP(yearid, tempid, schoolCode);
         Algoritmo algo = new Algoritmo(x, y);
-        Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1,schoolCode);
+     
+//Se aplican las restricciones en funcion de los datos introducidos en el menu previo:        
+      Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1,schoolCode);
         //r.syncOwnDB();
-        r.updateShuffleRosters(shuffle);
-        r.updateActiveRooms(actvRoom);
+//shuffle y actvRoom se capturan del redirect que se hace desde Homepage.menu, que a su vez se captura de menu.jsp:
+//en la vista del menu, aparecen los valores de 0=disabled y 1=enabled.
+//Los dos siguientes métodos capuran un boolean, que si vale 1 es = true, pero si es diferente se mantiene en false, ya que
+//así ha sido declarado en el constructor de Restrictions:
+//Básicamente lo que hacen los métodos, es que activan el Shuffle y el ActiveRoom si en el menú se les ha indicado esa opción:
+
+       r.updateShuffleRosters(shuffle);
+      r.updateActiveRooms(actvRoom);
+ 
+//-------------->IMPORTANTE, APLICAR TRY CATCH DESDE ARRIBA PARA CAPTURAR ERRORES DE :
+//1º RENWEB: EN SECTION DENTRO DE COURSES, SI PONES LETRAS EN LA PARTE DE SECTION:
+//2º: EN COURSES, REQUEST ESTÁ VACÍO DE ESTUDIANTES, AVISAR QUE NO SE HAN AÑADIDO:
+//comprobar(r);
+//Se aplica el algoritmo en función de las restricciones, el schoolCode, el yearid y el tempid, y se retorna el mv correspondiente:    
+
         algo.algo(mv, r,schoolCode,yearid,tempid);
-        String json = r.teachersJSON();
+       String json = r.teachersJSON();
+       
+//CATCH HASTA AQUÍ        
+}catch (Exception e){
+    System.out.println(e.getMessage());
+    
+}
+                
         return mv;
     }
 
@@ -89,7 +122,10 @@ public class ScheduleController {
      * @param hsr1
      * @return
      */
-    @RequestMapping("/schedule/own.htm")
+//Esta esta en desuso(es el de EEUU):
+//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
+    /*
+    @RequestMapping("/schedule/own.htm")   
     public ModelAndView scheduleOwn(HttpServletRequest hsr, HttpServletResponse hsr1) {
         ModelAndView mv = new ModelAndView("index");
         String tempid = hsr.getParameter("tempid");
@@ -109,7 +145,7 @@ public class ScheduleController {
         //algo.algo(mv, r, roommode);
         return mv;
     }
-
+*/    
     @RequestMapping("/schedule/teacherMasterSchedule.htm")
     public String masterSchedule(HttpServletRequest hsr, HttpServletResponse hsr1) {
 

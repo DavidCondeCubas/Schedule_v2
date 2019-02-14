@@ -88,6 +88,7 @@
         setInterval(function () {
             alert("Your session is going to be end by 5 min, Please click OK and continue")
         }, 3000000);
+ 
     });
     var ajax;
     function terms() {
@@ -147,6 +148,7 @@
                 <c:out value="${sessionScope.schoolName}"/>
             </h1>
         </div>
+<%--El idioma por defecto es en inglés:--%>  
         <div class="col-xs-12">
             <h3 class="text-center">Hi, <c:out value="${sessionScope.user.name}"/></h3>
         </div>
