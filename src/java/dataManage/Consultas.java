@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package dataManage;
 
 import java.sql.ResultSet;
@@ -28,18 +24,15 @@ import model.Template;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-/**
- *
- * @author Norhan
- */
+
 public class Consultas {
 
     private ArrayList<Integer> teachers;
+    public static HashMap<Integer, ArrayList<Integer>> teachersCOURSE;
     private Teacher tdefault;
     private Student stDefault;
     public static HashMap<Integer, String> courseName;
     public static int DEFAULT_RANK = 10;
-    //*****////
     private HashMap<Integer, String> namePersons;
     private HashMap<Integer, String> nameCourses;
     private HashMap<Integer, String> abbrevCourses;
@@ -49,24 +42,27 @@ public class Consultas {
     public static TreeMap<String, ArrayList<String>> tempIdSect = new TreeMap<>();
     public static String tempidsect;
     public static ArrayList<String> arrayStuderroneos = new ArrayList<>();
-    public TreeMap<String, TreeMap< String, ArrayList<String>>> studError = new TreeMap<>();
+    public static TreeMap<String, TreeMap< String, ArrayList<String>>> studError = new TreeMap<>();
     public static String studE;
     public static String error;
-    /**
-     *
-     *////
+    public static HashMap<Integer, Integer> countCourse = new HashMap<>();
+    public static HashMap<Integer, ArrayList<Integer>> countCourse2 = new HashMap<>();
+    public static HashMap<Integer, ArrayList<Integer>> countSchool = new HashMap<>();
+    public static String alert = "";
+
     private ArrayList<ArrayList<Boolean>> totalBlocksStart;
     private int totalBlocks;
 
     public Consultas(String tempid) {
         teachers = new ArrayList<>();
+        teachersCOURSE = new HashMap<>();
         tdefault = teacherDefault();
         stDefault = new Student(0);
         stDefault.setGenero("Male");
         stDefault.setName("default");
         courseName = new HashMap<>();
         totalBlocksStart = this.totalBlocksStart(tempid);
-
+        //El siguiente totalBlocks es de prueba, el bueno es totalBlocksStart.
         totalBlocks = this.totalBlocks();
         CoursesWithoutStudents = new HashMap<>();
         cargarNames();
@@ -355,6 +351,7 @@ public class Consultas {
 //ESTE ES EL ARRAY DONDE SE VAN A CARGAR TODAS LAS RESTRICCIONES DE LOS CURSOS(ret):        
         ArrayList<Course> ret = new ArrayList<>();
         String consulta = "";
+
 //Estos dos Hash son para hacer match entre el ID de los cursos con template activado y el ID de los cursos con el Schedule activado.
 //Los cursos con template activado se pueden ver en: RenWeb/ReportManager/Schedules/SchedulesCourseTemplate y print(Hash1)
 //Los cursos con Schedule activado se pueden ver en RenWeb/Academic/Courses y se selecciona el curso, se aplica en User Defined y se comprueba
@@ -706,7 +703,9 @@ public class Consultas {
                 /* SOLO MD-PAN al principio, ahora se aplica a todos:*/
                 ArrayList<String> aux = new ArrayList<String>(Arrays.asList(s));
                 int auxTeacherDefault = -1;
-                consulta = "select DefaultStaffID from courses where courseid="
+                int auxRoomDefault = -1;
+                ArrayList<Integer> ar = new ArrayList<>();
+                consulta = "select DefaultStaffID, RequiredRoomId from courses where courseid="
                         + ret.get(i).getIdCourse();
                 rs = DBConnect.renweb.executeQuery(consulta);
 //Aquí se ha añadido el id a auxTeacherDefault (10584) a través de la consulta de arriba:                
@@ -714,12 +713,18 @@ public class Consultas {
                     if (rs.getInt(1) != 0) {
                         auxTeacherDefault = rs.getInt(1);
                     }//;
+                    if (rs.getInt(2) != 0) {
+                        auxRoomDefault = rs.getInt(2);
+                    }
                 }
-                ArrayList<Integer> ar = new ArrayList<>();
+               
                 ArrayList<Integer> sectionTeachers = new ArrayList<>();
-                consulta = "SELECT distinct StaffID FROM Classes left join roster on \n"
+                /*  SELECT staffid, requiredroom FROM Classes left join roster on 
+                        (Classes.ClassID = roster.ClassID)
+                        where CourseId = 649 and templateid=57 */
+                consulta = "SELECT distinct StaffID,RequiredRoom FROM Classes left join roster on \n"
                         + "                        (Classes.ClassID = roster.ClassID)\n"
-                        + "                        where CourseId = " + ret.get(i).getIdCourse() + " and Classes.YearId = " + templateID;
+                        + "                        where CourseId = " + ret.get(i).getIdCourse() + " and templateId = " + templateID;
                 rs = DBConnect.renweb.executeQuery(consulta);
                 while (rs.next()) {
                     if (rs.getInt(1) != 0) {
@@ -733,12 +738,13 @@ public class Consultas {
                 // s[s.length] = auxTeacherDefault;    
 //Se añade a ar y a teachers el id del profesor auxiliar:                
 //Se crea un array al que se le añade el id del profesor por defecto si es diferente de -1:
-
+                teachersCOURSE.put(ret.get(i).getIdCourse(), new ArrayList<>());
                 if (auxTeacherDefault != -1) {
                     ar.add(auxTeacherDefault);
 //Aquí se indica que si la variable teachers no contiene el valor de auxTeacherDefault, que se le añada: 
                     if (!teachers.contains(auxTeacherDefault)) {
                         teachers.add(auxTeacherDefault);
+                        teachersCOURSE.get(ret.get(i).getIdCourse()).add(auxTeacherDefault);
                     }
                 }
 //Y aquí se termina de añadir a teachers y a ar los dos valores de los profesores que se han seleccionado:
@@ -748,6 +754,7 @@ public class Consultas {
                         ar.add(idt);
                         if (!teachers.contains(idt)) {
                             teachers.add(idt);
+                            teachersCOURSE.get(ret.get(i).getIdCourse()).add(idt);
                         }
                     }
                 }
@@ -790,24 +797,52 @@ public class Consultas {
 //en School, si encuentra el template que tienen asignado.
 //3ª En el caso de que el template del que se parta no tenga ids de rooms por defecto, se añade el identificador -1
 // que no corresponde a ninguna room pero que posibilita que no caiga el programa.
+                rs = DBConnect.renweb.executeQuery(consulta);
                 String rooms = "";
+                int contaRoomsSec = 0;
+                int contaRoomsCourse = 0;
+                countCourse2.put(ret.get(i).getIdCourse(), new ArrayList<>());
+                countSchool.put(ret.get(i).getIdCourse(), new ArrayList<>());
+                while (rs.next()) {
+                    if (rs.getInt(2) != 0) {
+                        contaRoomsSec++;
+                        ret.get(i).addRoom(rs.getInt(2));
+                    }
+                }
+                if (auxRoomDefault != -1) {
+                    ret.get(i).addRoom(auxRoomDefault);
+                    contaRoomsCourse++;
+                    countCourse2.get(ret.get(i).getIdCourse()).add(auxRoomDefault);
+
+                }
                 if (hashRooms.containsKey(ret.get(i).getIdCourse())) {
+
                     rooms = (String) hashRooms.get(ret.get(i).getIdCourse());
                     for (String room : rooms.split(",")) {
                         try {
+                            contaRoomsCourse++;
                             ret.get(i).addRoom(Integer.parseInt(room));
+                            countCourse2.get(ret.get(i).getIdCourse()).add(Integer.parseInt(room));
+
                         } catch (Exception e) {
                             System.err.println("no se puede leer bien el campo rooms en el curso"
                                     + ret.get(i).getIdCourse());
                         }
                     }
+
                 } else if (groupCourses.containsKey(templateID)) {
                     ret.get(i).addArrayRooms(groupCourses.get(templateID));
+                    
 
-                } else {
-                    rooms = "-1";
-                    ret.get(i).addRoom(Integer.parseInt(rooms));
-
+                } //else if (!groupCourses.containsKey(templateID)) {
+//                    rooms = "-1";
+//                    ret.get(i).addRoom(Integer.parseInt(rooms));
+//                }
+                countCourse.put(ret.get(i).getIdCourse(), contaRoomsCourse);
+                if(groupCourses.containsKey(templateID)) {
+                   for (Integer room : groupCourses.get(templateID)) {
+                        countSchool.get(ret.get(i).getIdCourse()).add(room);
+                    } 
                 }
                 // groupOfRooms = rs.getString(1);
                 /* String result = rooms;
@@ -1118,7 +1153,8 @@ public class Consultas {
     protected HashMap<String, Course> getLinkedCourses() { //return hash de linkeados
         //Como clave sera la asignatura(curso) que se debera insertar primero y como valor
         // la que tiene que estar como consecutiva:
-//El getLinkedCourses sirve para aplicar las restricciones de un curso en otro:
+//El getLinkedCourses sirve para aplicar las restricciones de un curso en otro(se copian los roster de cada seccion, o de las indicadas. NOTA: el nº de secciones debe ser igual en ambos cursos):
+
         HashMap<String, Course> resultHash = new HashMap<>();
         String linkedIds = "";
 //El grouptype 'school' corresponde al campo de RenWeb/System/Configuration/SchoolConfiguration/LinkedCourses:        
@@ -1149,8 +1185,19 @@ public class Consultas {
                     aux = aux.replace("[", "");
                     aux = aux.replace("]", "");
                     String[] idsCourses = aux.split(",");
+//Con los siguientes if/else se calcula el curso hijo.
+
+//En el caso de que la longitud sea 2, significa que no se indican las secciones 
+// (se cogerían todas en este caso, por lo que es importante que el número de secciones sean las mismas).
+//Además se indicaría sólo el id del curso puesto que no es necesario añadir información de las secciones.
+
+//En el caso de que se indiquen las secciones, significa que la longitud es mayor que 2 (curso padre, secciones, curso hijo).
+//Además, se cogería un objeto de curso entero para añadir el id del curso y posteriormente las secciones linkeadas 
+//y el maxSections a través de la longitud de las secciones que hay.
+//Sea como sea, se guarda en resultHash el curso padre primero (solo id, como key) y luego el curso hijo(objeto/id de curso como value):
                     if (idsCourses.length == 2) {
                         resultHash.put(idsCourses[0], new Course(Integer.parseInt(idsCourses[1])));
+
                     } else { // hay sectiones linkeadas
                         Course auxC = new Course(Integer.parseInt(idsCourses[2]));
                         String s = idsCourses[1];
@@ -1194,7 +1241,7 @@ public class Consultas {
         try {
 
             rs = DBConnect.renweb.executeQuery(consulta);
-//Se quitan los bloques excluidos
+//Se quitan los bloques excluidos (los indicados en Configuration de School):
             while (rs.next()) {
                 if (!excludes.contains(rs.getString(1))) {
                     excludes += rs.getString(1);
@@ -1215,7 +1262,7 @@ public class Consultas {
             rs = DBConnect.renweb.executeQuery(consulta);
             List<String> arrExcludeWords = new ArrayList<>();
             while (rs.next()) {
-//Palabras excluidas, en este caso: Lunch(esta palabra se recoge para luego aplicarla al template, y que en los bloques bloqueados ponga:Lunch):                
+//Palabras excluidas (Exclude Words de Configuration/School), en este caso: Lunch(esta palabra se recoge para luego aplicarla al template, y que en los bloques bloqueados ponga:Lunch):                
                 String[] auxS = rs.getString("data").split(",");
                 arrExcludeWords = Arrays.asList(auxS);
             }
@@ -1304,8 +1351,9 @@ public class Consultas {
             rs = DBConnect.renweb.executeQuery(consulta);
              */
             //   String consulta = "SELECT * FROM Person_Staff where active=1 and faculty=1";
+
             String consulta = "SELECT staffID FROM Person_Staff ps inner join Person p on (ps.StaffID = p.PersonID)\n"
-                    + "                        where ps.active=1 and ps.faculty=1";
+                    + "                        where ps.active=1 and ps.faculty=1 and "+getWhereTemplate(tempinfo);
 //Se guardan en el array teachers las ids de los profesores sacadas de la BBDD que hay en el PersonStaff de la escuela en concreto:
             ResultSet rs;
             rs = DBConnect.renweb.executeQuery(consulta);
@@ -1830,7 +1878,7 @@ public class Consultas {
         String nombre = "";
         for (Map.Entry<Integer, String> entry : NumNomSection.entrySet()) {
 
-            if (entry.getKey()==(idc*100+id)) {
+            if (entry.getKey() == (idc * 100 + id)) {
                 nombre = entry.getValue();
             }
 
@@ -1838,17 +1886,18 @@ public class Consultas {
 
         return nameCourse(idc) + " Section: " + nombre;
     }
-    public String nameSection (int id){
+
+    public String nameSection(int id) {
         if (id == 0) {
             return "0";
         }
         String nombre = "";
         for (Map.Entry<Integer, String> entry : NumNomSection.entrySet()) {
 
-            if (entry.getKey()==id) {
+            if (entry.getKey() == id) {
                 nombre = entry.getValue();
             }
-            }
+        }
         return nombre;
     }
 
@@ -1972,6 +2021,7 @@ public class Consultas {
         ArrayList<ArrayList<Integer>> sectionsModificadas = new ArrayList<>();
         ArrayList<String> sectionsModificadasName = new ArrayList<>();
         ArrayList<String> sectionsModificadasFullName = new ArrayList<>();
+        ArrayList<String> CourseName = new ArrayList<>();
         ArrayList<Seccion> auxSectionsIn;
         tempidsect = "";
 
@@ -2001,6 +2051,7 @@ public class Consultas {
                 sectionsModificadas = new ArrayList<>();
                 sectionsModificadasName = new ArrayList<>();
                 sectionsModificadasFullName = new ArrayList<>();
+                CourseName = new ArrayList<>();
 //----------------->CAMBIO: SE HA AÑADIDO A LA CONSULTA EL TEMPLATEID (ES DE LA SECCION EN CONCRETO, SE HA HECHO ESTO PARA COMPROBAR QUE ES IGUAL AL DEL CURSO
 //esto habría que hacerlo si se activa la opción de lock schedule, aunque hay que capturarlo aquí de una forma u otra porque si no no captura la sección, ni el curso
 //ni el resto de cursos,ni pinta nada en pantalla(captura todo o nada)) :
@@ -2025,7 +2076,12 @@ public class Consultas {
                     }*/
 
                     aux.add(rs.getInt(2)); // staffId
-                    aux.add(rs.getInt(3)); // pattern
+                    if (rs.getBoolean(5)) {
+                        aux.add(rs.getInt(3)); // pattern
+                    } else {
+                        aux.add(-1);//pattern=-1 si no está activado el lockSchedule, para que luego no cargue los huecos de ambos
+                    }
+
 //Estos boolean son para activar o desactivar los lock:
                     if (rs.getBoolean(4)) {
                         aux.add(1); // lockEnrollment
@@ -2040,7 +2096,9 @@ public class Consultas {
                     aux.add(rs.getInt(6)); // classID
 
                     aux.add(rs.getInt(7)); // room
-
+//                    if(rs.getInt(7)==0 && Consultas.countCourse.get(course.getIdCourse())){ Se ha usado más abajo
+//                        )
+//                    }
                     //AÑADIDO: templateId de la SECCION EN CONCRETO.
                     templateIdSection = rs.getInt(8);
 
@@ -2052,20 +2110,21 @@ public class Consultas {
                     if (templateIdSection == Integer.parseInt(templateID)) {
                         sectionsModificadas.add((ArrayList<Integer>) aux.clone());
                         sectionsModificadasName.add(rs.getString(1));
-                        sectionsModificadasFullName.add(rs.getString(9) + ":" + rs.getString(1));
-                        
-                        NumNomSection.put(idCourse*100+count, rs.getString(1));
-                        
+                        sectionsModificadasFullName.add(this.nameCourses.get(course.getIdCourse()) + ": " + rs.getString(1));
+                        CourseName.add(this.nameCourses.get(course.getIdCourse()));
+
+                        NumNomSection.put(idCourse * 100 + count, rs.getString(1));
+
                         count++;
                         //En tempIdSect se guardan las secciones con un template diferente a la del curso de origen.
                     } else {
                         String p1 = "Course Name: " + this.nameCourses.get(course.getIdCourse());
-                        String p2 = ",-Class Section: " + rs.getString(9) + ":" + rs.getString(1);
+                        String p2 = "-Class Section: " + rs.getString(9) + ":" + rs.getString(1);
 
                         if (!tempIdSect.containsKey(p1)) {
                             tempIdSect.put(p1, new ArrayList<>());
                             tempIdSect.get(p1).add(p2);
-                            tempidsect = tempidsect.concat("<br/><br/>" + p1 + ": " + "<br/>" + p2);
+                            tempidsect = tempidsect.concat("<br/>" + p1 + ": " + "<br/>" + p2);
 
                         } else {
                             tempIdSect.get(p1).add(p2);
@@ -2098,10 +2157,44 @@ public class Consultas {
                         auxSec.setLockEnrollment(sectionsModificadas.get(i).get(3));
                         auxSec.setLockSchedule(sectionsModificadas.get(i).get(4));
                         auxSec.setTeacher(teachers.get(sectionsModificadas.get(i).get(1)));
+                        if (auxSec.getIdTeacher() == 0 && !Consultas.teachersCOURSE.get(course.getIdCourse()).isEmpty()) {
+                            auxSec.setTeacher(teachers.get(Consultas.teachersCOURSE.get(course.getIdCourse()).get(0)));
+                            auxSec.setIdTeacher(Consultas.teachersCOURSE.get(course.getIdCourse()).get(0));
+                        }
                         auxSec.setClassId(sectionsModificadas.get(i).get(5));
 //Aquí se le añade el id del Room para que posteriormente se le pueda añadir el nombre:                        
                         auxSec.setIdRoom(sectionsModificadas.get(i).get(6));
                         auxSec.setRoom(rooms.get(sectionsModificadas.get(i).get(6)));
+
+                        if ((auxSec.getIdRoom() == 0 || course.getMaxChildPerSection() > auxSec.getRoom().getSize()) && !Consultas.countCourse2.get(course.getIdCourse()).isEmpty()) {
+                            if (auxSec.getIdRoom() == 0) {
+                                alert += "Room text field in " + sectionsModificadasFullName.get(i) + " is empty. <br/>";
+                            }
+                            if (auxSec.getIdRoom() != 0 && course.getMaxChildPerSection() > auxSec.getRoom().getSize()) {
+                                alert += "Room "+auxSec.getRoom().getName()+" size in Section " + sectionsModificadasFullName.get(i) + " is smaller than Course " + CourseName.get(i) + " max size. <br/>";
+                            }
+                            auxSec.setRoom(rooms.get(Consultas.countCourse2.get(course.getIdCourse()).get(0)));
+                            auxSec.setIdRoom(Consultas.countCourse2.get(course.getIdCourse()).get(0));
+
+                            if (course.getMaxChildPerSection() > auxSec.getRoom().getSize()) {
+                                alert += "Room "+auxSec.getRoom().getName()+" size in Course " + CourseName.get(i) + " is smaller than course max size too. <br/>";
+                                if (!Consultas.countSchool.get(course.getIdCourse()).isEmpty()) {
+                                    auxSec.setRoom(rooms.get(Consultas.countSchool.get(course.getIdCourse()).get(0)));
+                                     auxSec.setIdRoom(Consultas.countSchool.get(course.getIdCourse()).get(0));
+                                }
+                               
+                            }
+
+                        } else if ((auxSec.getIdRoom() == 0 || course.getMaxChildPerSection() > auxSec.getRoom().getSize()) && !Consultas.countSchool.get(course.getIdCourse()).isEmpty()) {
+                            auxSec.setRoom(rooms.get(Consultas.countSchool.get(course.getIdCourse()).get(0)));
+                            auxSec.setIdRoom(Consultas.countSchool.get(course.getIdCourse()).get(0));
+                            if (auxSec.getIdRoom() == 0) {
+                                alert += "Room text fields in " + sectionsModificadasFullName.get(i) + " and " + CourseName.get(i) + " are empty. <br/>";
+                            } else if (course.getMaxChildPerSection() > auxSec.getRoom().getSize()) {
+                                alert += "Room "+auxSec.getRoom().getName()+" size in Course " + CourseName.get(i) + " is smaller than course max size. <br/>";
+                            }
+                        }
+
 //                        consulta = " select sr.studentid\n"
 //                + "    from studentrequests sr\n"
 //                + "    inner join person p\n"
@@ -2198,7 +2291,7 @@ public class Consultas {
                     studError.put(p1, new TreeMap<>());
                     studError.get(p1).put(p2, new ArrayList<>());
                     studError.get(p1).get(p2).add(p3);
-                    studE = studE.concat("<br/><br/>" + p1 + ": " + "<br/>" + p2 + ": " + "<br/>" + p3);
+                    studE = studE.concat("<br/>" + p1 + ": " + "<br/>" + p2 + ": " + "<br/>" + p3);
 
                 } else if (!studError.get(p1).containsKey(p2)) {
                     studError.get(p1).put(p2, new ArrayList<>());
@@ -2210,7 +2303,9 @@ public class Consultas {
                 }
 
             }
+ 
         }
+  
 
         return auxSections;
     }
@@ -2329,40 +2424,76 @@ public class Consultas {
 //Esto se devuelve a getRestriccionesCourses los siguientes datos en función de los valores de los array:
     //Esto permite seleccionar los tipos de escuela que son susceptibles de aplicar a los horarios desde los template:
 
-    private String getWhereTemplate(int[] tempInfo, String MS_Column) {
+//    private String getWhereTemplate(int[] tempInfo, String MS_Column) {
+//        if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+//            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
+//        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+//            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=1 ";
+//        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+//            return " Elementary=0 and HS=0 and " + MS_Column + "=1 and PreSchool=0 ";
+//        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
+//            return " Elementary=0 and HS=0 and ( " + MS_Column + "=1 or PreSchool=1 ) ";
+//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+//            return " Elementary=0 and HS=1 and " + MS_Column + "=0 and PreSchool=0 ";
+//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+//            return " Elementary=0  and " + MS_Column + "=0 and (PreSchool=1 or HS=1) ";
+//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+//            return " Elementary=0 and (HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
+//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 1) {
+//            return " Elementary=0 and (HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
+//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+//            return " Elementary=1 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
+//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+//            return "  HS=0 and " + MS_Column + "=0 and (Elementary=1 or PreSchool=1) ";
+//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+//            return " (Elementary=1 and " + MS_Column + "=1) and HS=0  and PreSchool=0 ";
+//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
+//            return "  HS=0 and (Elementary=1 or " + MS_Column + "=1 or PreSchool=1) ";
+//        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
+//            return " ( Elementary=1 or HS=1 ) and " + MS_Column + "=0 and PreSchool=0 ";
+//        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
+//            return " ( Elementary=1 or HS=1 or PreSchool=1 )and " + MS_Column + "=0 ";
+//        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
+//            return " (Elementary=1 or HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
+//        } else {
+//            return " (Elementary=1 or HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
+//
+//        }
+//    }
+        
+        private String getWhereTemplate(int[] tempInfo) {
         if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
+            return "Elementary=0 and HS=0 and MiddleSchool=0 and PreSchool=0";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=1 ";
+            return "PreSchool=1 ";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-            return " Elementary=0 and HS=0 and " + MS_Column + "=1 and PreSchool=0 ";
+            return "MiddleSchool=1";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
-            return " Elementary=0 and HS=0 and ( " + MS_Column + "=1 or PreSchool=1 ) ";
+            return "MiddleSchool=1 or PreSchool=1";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-            return " Elementary=0 and HS=1 and " + MS_Column + "=0 and PreSchool=0 ";
+            return "HS=1";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-            return " Elementary=0  and " + MS_Column + "=0 and (PreSchool=1 or HS=1) ";
+            return "PreSchool=1 or HS=1";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-            return " Elementary=0 and (HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
+            return "HS=1 or MiddleSchool=1";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 1) {
-            return " Elementary=0 and (HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
+            return "HS=1 or MiddleSchool=1 or PreSchool=1 ";
         } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-            return " Elementary=1 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
+            return "Elementary=1";
         } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-            return "  HS=0 and " + MS_Column + "=0 and (Elementary=1 or PreSchool=1) ";
+            return "Elementary=1 or PreSchool=1";
         } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-            return " (Elementary=1 and " + MS_Column + "=1) and HS=0  and PreSchool=0 ";
+            return " Elementary=1 and MiddleSchool=1";
         } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
-            return "  HS=0 and (Elementary=1 or " + MS_Column + "=1 or PreSchool=1) ";
+            return "Elementary=1 or MiddleSchool=1 or PreSchool=1 ";
         } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-            return " ( Elementary=1 or HS=1 ) and " + MS_Column + "=0 and PreSchool=0 ";
+            return "Elementary=1 or HS=1";
         } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-            return " ( Elementary=1 or HS=1 or PreSchool=1 )and " + MS_Column + "=0 ";
+            return "Elementary=1 or HS=1 or PreSchool=1";
         } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-            return " (Elementary=1 or HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
+            return "Elementary=1 or HS=1 or MiddleSchool=1";
         } else {
-            return " (Elementary=1 or HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
-
+            return "Elementary=1 or HS=1 or MiddleSchool=1 or PreSchool=1";
         }
     }
 }

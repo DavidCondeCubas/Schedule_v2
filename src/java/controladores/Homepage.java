@@ -45,18 +45,11 @@ import dataManage.XMLReaderDOM;
 @RequestMapping("/")
 public class Homepage extends MultiActionController {
 
-    private Object getBean(String nombrebean, ServletContext servlet) {
-        ApplicationContext contexto = WebApplicationContextUtils.getRequiredWebApplicationContext(servlet);
-        Object beanobject = contexto.getBean(nombrebean);
-        return beanobject;
-    }
-
     public ModelAndView inicio(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
         
-        //    return menu(hsr,hsr1);
         return new ModelAndView("userform");
     }
-
+//Comparadores de datos (en tuplas):
     private class CompString implements Comparator<Tupla<String, String>> {
 
         @Override
@@ -75,29 +68,25 @@ public class Homepage extends MultiActionController {
     
 
     @RequestMapping("/menu.htm")
-//Se accede a menu a través del método login o a través de un mapping del dispatcher posteriormente (el primer acceso es desde el login, al final).
     
     public ModelAndView menu(HttpServletRequest hsr, HttpServletResponse hsr1, String districtCode) {
         ModelAndView mv = new ModelAndView("menu");
 //Se define una tupla en la que se están guardando los datos de las schools correspondientes al districtCode elegido:
 //Por ejemplo, si se escoge el district code RWI-SPAIN, se añaden Elementary School, Middle School y High School
         ArrayList<Tupla<String, String>> schools = Consultas.getSchools(districtCode);
-    //    ArrayList<Tupla<Integer, String>> ar = Consultas.getYears(districtCode);
 
-       // ar.sort(new Comp());
-//sort sirve para ordenar alfabeticamente los objetos recogidos en la Tupla(por ejemplo para RWI-SPAIN: primero pone Middle, luego High y luego Elementary):        
+//Método sort sirve para ordenar alfabeticamente los objetos recogidos en la Tupla(por ejemplo para RWI-SPAIN: primero pone Middle, luego High y luego Elementary):        
         schools.sort(new CompString());
 
-       // mv.addObject("years", ar);
 //Aquí se añaden los datos de la tupla en el mv, para enviarlo a menu.jsp:      
         mv.addObject("schools", schools);
     
         return mv;
     }
 
-    @RequestMapping("/menu/create.htm") // DATA ES ID DE TEMPLATE
+    @RequestMapping("/menu/create.htm") 
     public ModelAndView create(HttpServletRequest hsr, HttpServletResponse hsr1) {
-//Se guarda en data el parametro recogido de templateInfo (que está en menu.jsp): es la ID de template:        
+//Se guarda en data el parametro recogido de templateInfo (que está en menu.jsp)--> es la ID de template:        
         String data = hsr.getParameter("templateInfo");
 
         String posSelectTemplate = data.split("#")[1];
@@ -154,22 +143,19 @@ public class Homepage extends MultiActionController {
     }
 //Se accede a login a través de:
 //1º: userform.jsp --> userform=login
-//2º: declarando en dispatcher una id para la clase controlador homepage.
+//2º: declarando en dispatcher una id para la clase controlador homepage(<bean class="controladores.Homepage" id="homepage">,<prop key="userform.htm">homepage</prop>).
     @RequestMapping
-//HttpServletRequest: permite obtener los datos que se rellenan en el formulario de la página web. Para ello se crea un objeto: hsr,
-// utilizado posteriormente para usar el método getParameter.
-//HttpServletResponse:
+//HttpServletRequest hsr: petición.
+//HttpServletResponse: respuesta.
     public ModelAndView login(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
         HttpSession session = hsr.getSession();
-//Se declara un objeto de la clase User: para utilizar getters y setters y aplicarlos posteriormente ()      
-        User user = new User();//cambiar
-        int scgrpid = 0;
-        boolean result = false;
+//Se declara un objeto de la clase User: para utilizar getters y setters y aplicarlos posteriormente:      
+        User user;
+        int scgrpid;
+        boolean result;
         
-        ModelAndView mv = new ModelAndView();
+        ModelAndView mv;
 
-        //            setTipo(user);//borrar
-        //            session.setAttribute("user", user); //borrar
 
 //Mediante getParameter podemos obtener los valores de los campos del formulario de userform.
         String txtusuario = hsr.getParameter("txtusuario");
@@ -178,7 +164,6 @@ public class Homepage extends MultiActionController {
 //Para ello se hace una conexión a la BD y se cierra al comprobar todos los datos.
         LoginVerification login = new LoginVerification(districtCode,hsr);
         DBConnect db = new DBConnect(hsr);
-        // menu(hsr,hsr1,schoolCode);
       
 //Verificación de los datos introducidos por el usuario, gracias a la clase LoginVerification:
 //Primero comprueba si el campo del usuario está vacío. Si es así devuelve un mensaje y refreca la página.
@@ -208,8 +193,6 @@ public class Homepage extends MultiActionController {
 // Entra en este if si todos los campos son correctos: 
                 
                     if (result == true){
-//                       user.setId(10393);//padre
-//                       user.setId(10332);//profe
                         setTipo(user);
                         session.setAttribute("user", user);
                         session.setAttribute("schoolName", "");
@@ -224,11 +207,8 @@ public class Homepage extends MultiActionController {
                     }
                 }
              }
-        // return mv;
     }
 
-    //user.setId(10333);
-    //user.setId(10366);
 //En este método se definen los tipos de usuarios. Se va a comprobar si el usuario es un profesor, es un padre, o es un profesor y padre a la vez:
 //En función de esto, se definirá un tipo de usuario u otro(user.setType(...))    
     public void setTipo(User user) {
@@ -245,7 +225,6 @@ public class Homepage extends MultiActionController {
                 padre = rs2.getInt("cuenta") > 0;
             }
         } catch (SQLException ex) {
-            //System.out.println("error");
             ex.getMessage();
         }
         if (padre && profesor) {

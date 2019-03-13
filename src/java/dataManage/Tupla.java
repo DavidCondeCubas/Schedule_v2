@@ -41,6 +41,7 @@ public class Tupla <X, Y>{
     }
     @Override
     public boolean equals(Object o){
+
         return ((Tupla)o).x.equals(this.x) && ((Tupla)o).y.equals(this.y);
     }
             

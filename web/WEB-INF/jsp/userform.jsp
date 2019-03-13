@@ -5,7 +5,7 @@
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ taglib prefix="jstl" uri="http://java.sun.com/jstl/core_rt"%>
+<%@taglib prefix="jstl" uri="http://java.sun.com/jstl/core_rt"%>
 <%@taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="spring" uri="http://www.springframework.org/tags"%>
@@ -25,13 +25,7 @@
     </head>
     <body>
         <script>
-            $(document).ready(function () {
-                /* $("form input").prop("disabled", "true");
-                 $("form input").first().prop("disabled", "");
-                 $(".btn").prop("disabled", "true");*/
 
-
-            });
             function enviando()
             {
                 $('#crearhorario').submit();
@@ -78,7 +72,6 @@
                                 <img class="img-responsive center-block" src="recursos/img/logoeduweb.png" alt="logo"/>
                             </div>
                             <div class="panel-body" >
-                                <!--<form id="idForm" name ="form1" action="userform.htm?opcion=login" method="post" >-->
  <%--form: Estructura de la introducción de datos(District Code, User, Password) --%> 
  <%-- A través de opcion=login puede entrar en @RequestMaping de la clase Homepage, método login mediante dispatcher(mappings--> prop key="userform.htm">homepage</prop):--%>
                                 <form  name ="form1" action="userform.htm?opcion=login" method="post" >
@@ -106,7 +99,7 @@
                                     <div class="form-group">
                                         <label for="exampleInputPassword1"><spring:message code="etiq.txtpassword"/></label> 
  <%-- Input de Password: --%>                                        
-                                        <input type="password" class="form-control" name="txtpassword" id="txtpassword" placeholder="<spring:message code='etiq.txtinsertpassword'/>" ><!--required="required"-->
+                                        <input type="password" class="form-control" name="txtpassword" id="txtpassword" placeholder="<spring:message code='etiq.txtinsertpassword'/>" required="required">
                                     </div>
                                     <button  type="submit" name="submit" value='<spring:message code="etiq.txtlogin"/>' style="width: 100%; font-size:1.1em;" class="btn btn-large btn btn-success btn-lg btn-block" ><b>Login</b></button>
  <%--Fin de form, y el resto de divisiones: --%>                                    

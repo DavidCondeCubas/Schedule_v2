@@ -36,11 +36,10 @@ public class LoginVerification {
         password="";
         fillDataConnection(districtCode,hsr);
     }
-    public LoginVerification(String url, String lName,String pass){
-//CAMBIO: se asigna el parametro url a la variable static url (previamente estaba asignado a sí mismo, con lo que era redundante.)        
+    public LoginVerification(String url, String lName,String pass){     
         this.url = url;
-        loginName = lName;
-        password = pass;
+        this.loginName = lName;
+        this.password = pass;
     }
  //-->A través de getBean se obtiene la información almacenada en el fichero applicationContext.
  //applicationContext es un fichero que guarda los datos de las credenciales necesarias para entrar en la aplicación web.
@@ -76,7 +75,7 @@ public class LoginVerification {
                 password= rs.getString("password");
             }
         } catch (SQLException e) {
-
+            e.getMessage();
         }
         finally{
              try {
@@ -98,25 +97,20 @@ public class LoginVerification {
                     cn.close();
                 }
             } catch (SQLException e) {
-                
+                e.getMessage();
             }
         }
     }
 //Los siguientes 3 métodos: SQLConnection, Query y SQLQuery son necesarios para obtener el query y posteriormente 
-//en ConsultUserDB se comprueba si el usuario está en la BBDD (a través de la comprobación de username, passoword y el ID PERSONAL)
+//En ConsultUserDB se comprueba si el usuario está en la BBDD (a través de la comprobación de username, passoword y el ID PERSONAL)
     public static Connection SQLConnection() throws SQLException {
-        System.out.println("database.SQLMicrosoft.SQLConnection()");
-      /*  String url = "jdbc:sqlserver://ca-pan.odbc.renweb.com\\ca_pan:1433;databaseName=ca_pan";
-        String loginName = "CA_PAN_CUST";
-        String password = "RansomSigma+339";*/
       
         DriverManager.registerDriver(new SQLServerDriver());
         Connection cn = null;
         try {
             cn = DriverManager.getConnection(url, loginName, password);
         } catch (SQLException ex) {
-            System.out.println("No se puede conectar con el Motor");
-            System.err.println(ex.getMessage());
+            ex.getMessage();
         }
  
         return cn;
@@ -136,12 +130,10 @@ public class LoginVerification {
     public static ResultSet SQLQuery(String queryString) throws SQLException {
         return Query(SQLConnection(), queryString);
     }
-//comprobación de username, passoword y el ID PERSONAL:
+//Comprobación de username, passoword y el ID PERSONAL:
     public User consultUserDB(String user,String password) throws Exception {
         User u = null;
-       //user = 'shahad' and pswd = 'shahad1234' group = Spring
-        String query = "select * from Person where username = '"+user+"' ";//and pswd = HASHBYTES('MD5', CONVERT(nvarchar(4000),'"+password+"'));";
-      //      String query = "select * from Person where username = '"+user+"';";
+        String query = "select * from Person where username = '"+user+"' and pswd = HASHBYTES('MD5', CONVERT(nvarchar(4000),'"+password+"'));";
 
          ResultSet rs = SQLQuery(query);
          if(!rs.next()) 

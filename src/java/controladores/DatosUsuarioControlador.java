@@ -27,6 +27,7 @@ public class DatosUsuarioControlador implements Controller {
         try {
             RequestContextUtils.getLocaleResolver(request).setLocale(request, response, new Locale(request.getParameter("lenguaje")));
         } catch (Exception ex) {
+            ex.getMessage();
         }
 
         return new ModelAndView("userform");

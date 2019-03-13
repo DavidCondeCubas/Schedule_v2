@@ -1,9 +1,3 @@
-<%-- 
-    Document   : menu
-    Created on : 13-nov-2017, 10:13:52
-    Author     : Norhan
---%>
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -22,7 +16,6 @@
                 });
                 $('#selectIS').modal("show");
                 $("#selectIS .close").hide();
-                // var schoolsList = JSON.parse(${schools});
             });
             function getYears() {
                 var id = $("#divSelectDepartament option:selected").val();
@@ -118,10 +111,7 @@
                     }
                 }
             }
-            /*private int id;
-             private int cols;
-             private int rows;
-             private String name;*/
+
         </script>
     </head>
     <body>
@@ -157,8 +147,8 @@
         <div class="modal fade" id="pleaseWaitDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h1>Procesando por favor espere ...</h1>
+                    <div class="modal-header" align="center">
+                        <h1>Loading, wait please ...</h1>
                     </div>
                     <div class="modal-body">
                         <div class="progress">
@@ -213,7 +203,7 @@
                 <div class="col-xs-2 ">
                     <fieldset>
                         <legend>Active Rooms</legend>
-                        <select class="form-control" id="roomsCheck" name="roomsCheck" >
+                        <select class="form-control" id="roomsCheck" name="roomsCheck">
                             <option value="0">disabled</option>
                             <option value="1">enabled</option>
                         </select>

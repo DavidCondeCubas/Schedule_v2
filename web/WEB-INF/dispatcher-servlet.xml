@@ -1,5 +1,4 @@
 <?xml version='1.0' encoding='UTF-8' ?>
-<!-- was: <?xml version="1.0" encoding="UTF-8"?> -->
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:p="http://www.springframework.org/schema/p"
@@ -50,7 +49,6 @@
     </bean>
   
     <bean class="controladores.DatosUsuarioControlador" name="ControladorIdioma"/>
-<!--    <bean class="controladores.ScheduleController" name="ControladorHorarios"/>-->
     
     <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
         <property name="interceptors">

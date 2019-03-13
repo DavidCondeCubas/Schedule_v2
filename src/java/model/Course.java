@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  * @author Norhan
  */
 public class Course {
-//Aqií se definen las variables que se van a utilizar como restricciones en Consultas.getRestriccionesCourses:Ñ
+//Aqií se definen las variables que se van a utilizar como restricciones en Consultas.getRestriccionesCourses:
     static final int BLOCKS_BY_DEFAULT = 2;//2 bloques por defecto
     public static int MUESTRA = 1000000;
     public static int MAX_INTENTOS = 5000000;
@@ -439,6 +439,8 @@ public class Course {
         int maxVueltas = 0;
 //El recurOpciones sirve para vuelta atraás y adelante, tanteando opciones para ver si funciona:  
 //Para ello genera opciones previas basándose en el tamaño del template
+
+       
         recurOpciones( maxVueltas,ret, Algoritmo.TAMX, Algoritmo.TAMY, sol, 0, marcas,  totalBlocks);
 
         //RECORRE LAS TUPLAS DEFINIDAS COMO MANDATORY
@@ -546,11 +548,18 @@ public class Course {
          vueltas ++;
         if(vueltas >= MAX_INTENTOS) return;
         
+//        int contadorj=0;
+//        int contadori=0;
         for (int j = 0; j < tamY; j++) {            
             for (int i = 0; i < tamX; i++) {
+               
+//                contadori=i;
+//                contadorj=j;
                 
                 i = (int)(Math.random() * tamX); 
                 j = (int)(Math.random() * tamY); 
+                
+                
                 
                 sol[k] = new Tupla(i, j);
                 if ( solucionFinal.size() < MUESTRA && esValida(sol, k, marcas[j][i], j, i, totalBlocks)) {
@@ -568,7 +577,9 @@ public class Course {
                     }
                     marcas[j][i] = false;
                 }
-                // k = antK;            
+                // k = antK;    
+//                i=contadori;
+//                j=contadorj;
             }
         }
     }
@@ -582,7 +593,7 @@ public class Course {
 
         int i = 0;
         while (i < k) {
-            if (Math.abs((Integer) sol[i].x - x) < this.minGapDays && Math.abs((Integer) sol[i].y - y) < this.minGapBlocks) {
+            if (Math.abs((Integer) sol[i].x - x) < this.minGapDays || (Math.abs((Integer) sol[i].y - y) < this.minGapBlocks  &&  (Integer) sol[i].x==x)) {
                 return false;
             }
             i++;
@@ -641,7 +652,8 @@ public class Course {
                     gd++;
                 }
                 int sum = gd;
-                for (int i = 0; i < Algoritmo.TAMX; i++) { //i son las cols 3 en MS 
+                for (int i = 0; i < Algoritmo.TAMX; i++) { //i son las cols 3 en MS
+                    //i=i+sum;
                     ArrayList<Tupla> t = new ArrayList<>();
                     k = this.blocksWeek;
                     Tupla taux = new Tupla(i, j);

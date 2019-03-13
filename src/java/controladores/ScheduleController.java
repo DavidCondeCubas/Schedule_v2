@@ -58,13 +58,13 @@ try{
         String xs = hsr.getParameter("cols");
         String ys = hsr.getParameter("rows");
     
-        //String schoolName = hsr.getParameter("schoolName");
+//String schoolName = hsr.getParameter("schoolName");
         String schoolCode = hsr.getParameter("schoolcode");
         String shuffle = hsr.getParameter("shuffle");
         String actvRoom = hsr.getParameter("actvRoom");
         String roomgroup = hsr.getParameter("grouproom");
-       // String posSelectTemplate = hsr.getParameter("posSelectTemplate");
-       // int roommode = Integer.parseInt(hsr.getParameter("roommode"));
+// String posSelectTemplate = hsr.getParameter("posSelectTemplate");
+// int roommode = Integer.parseInt(hsr.getParameter("roommode"));
         int id = Integer.parseInt(hsr.getParameter("id"));
         String yearid = hsr.getParameter("yearid");
         int x = Integer.parseInt(xs);
@@ -77,14 +77,13 @@ try{
         
 //Después se instancian objetos de algoritmo y restricciones: 
 
-        //saveXML_FTP(yearid, tempid, schoolCode);
         Algoritmo algo = new Algoritmo(x, y);
      
 //Se aplican las restricciones en funcion de los datos introducidos en el menu previo:        
       Restrictions r = new Restrictions(yearid, tempid, roomgroup, 1,schoolCode);
         //r.syncOwnDB();
-//shuffle y actvRoom se capturan del redirect que se hace desde Homepage.menu, que a su vez se captura de menu.jsp:
-//en la vista del menu, aparecen los valores de 0=disabled y 1=enabled.
+//Shuffle y ActiveRoom se capturan del redirect que se hace desde Homepage.menu, que a su vez se captura de menu.jsp:
+//En la vista del menu, aparecen los valores de 0=disabled y 1=enabled.
 //Los dos siguientes métodos capuran un boolean, que si vale 1 es = true, pero si es diferente se mantiene en false, ya que
 //así ha sido declarado en el constructor de Restrictions:
 //Básicamente lo que hacen los métodos, es que activan el Shuffle y el ActiveRoom si en el menú se les ha indicado esa opción:
@@ -92,60 +91,21 @@ try{
        r.updateShuffleRosters(shuffle);
       r.updateActiveRooms(actvRoom);
  
-//-------------->IMPORTANTE, APLICAR TRY CATCH DESDE ARRIBA PARA CAPTURAR ERRORES DE :
-//1º RENWEB: EN SECTION DENTRO DE COURSES, SI PONES LETRAS EN LA PARTE DE SECTION:
-//2º: EN COURSES, REQUEST ESTÁ VACÍO DE ESTUDIANTES, AVISAR QUE NO SE HAN AÑADIDO:
-//comprobar(r);
 //Se aplica el algoritmo en función de las restricciones, el schoolCode, el yearid y el tempid, y se retorna el mv correspondiente:    
 
         algo.algo(mv, r,schoolCode,yearid,tempid);
        String json = r.teachersJSON();
        
-//CATCH HASTA AQUÍ        
+       
 }catch (Exception e){
-    System.out.println(e.getMessage());
+   e.getMessage();
     
 }
                 
         return mv;
     }
 
-    
-
-    
-
-    /**
-     * to do: -Teneis que revisar si funciona todo correctamente y si no le
-     * faltan datos a la DB. falta comprobar el funcionamiento
-     *
-     * @param hsr
-     * @param hsr1
-     * @return
-     */
-//Esta esta en desuso(es el de EEUU):
-//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
-    /*
-    @RequestMapping("/schedule/own.htm")   
-    public ModelAndView scheduleOwn(HttpServletRequest hsr, HttpServletResponse hsr1) {
-        ModelAndView mv = new ModelAndView("index");
-        String tempid = hsr.getParameter("tempid");
-        String xs = hsr.getParameter("cols");
-        String ys = hsr.getParameter("rows");
-        String roomgroup = hsr.getParameter("grouproom");
-        int roommode = Integer.parseInt(hsr.getParameter("roommode")); //VERIFICAR
-        int id = Integer.parseInt(hsr.getParameter("id"));
-        String yearid = hsr.getParameter("yearid");
-        int x = Integer.parseInt(xs);
-        int y = Integer.parseInt(ys);
-        mv.addObject("hFilas", Consultas.getRowHeader(id, y));
-        mv.addObject("hcols", Consultas.getColHeader(id, x));
-        Algoritmo algo = new Algoritmo(x, y);
-        Restrictions r = new Restrictions(yearid, tempid, roomgroup);
-        r.extraerDatosOwnDB();
-        //algo.algo(mv, r, roommode);
-        return mv;
-    }
-*/    
+  
     @RequestMapping("/schedule/teacherMasterSchedule.htm")
     public String masterSchedule(HttpServletRequest hsr, HttpServletResponse hsr1) {
 

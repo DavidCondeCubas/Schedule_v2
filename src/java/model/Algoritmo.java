@@ -10,6 +10,7 @@ import dataManage.Tupla;
 import dataManage.Consultas;
 import com.google.gson.Gson;
 import com.sun.org.apache.bcel.internal.generic.AALOAD;
+import static dataManage.Consultas.teachersCOURSE;
 import dataManage.Restrictions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.logging.Level;
@@ -59,6 +61,8 @@ public class Algoritmo {
     private ArrayList<String> Log;
     private Conjuntos<Integer> conjuntos;
     public static boolean roomsActivation = false;
+    public static String teachersFULL="";
+    public static String roomsFULL="";
 
     public Algoritmo() {
         Log = new ArrayList<>();
@@ -145,6 +149,7 @@ public class Algoritmo {
                     while(i < maxSections){
                         Seccion auxSeccion = new Seccion();
                         auxSeccion.setNumSeccion(i+1);
+                        auxSeccion.setNameSeccion(String.valueOf(i+1));
                         course.addSeccion(new Seccion(auxSeccion));
                         i++;
                     }
@@ -159,7 +164,7 @@ public class Algoritmo {
 //Si se cumplen estas dos premisas, se rellena opciones en base a los totalBlocks de restricciones y log:
                 if(course.getOpcionesPatternGroup().isEmpty() && needGenerateOptions(course))
 //totalBlocks es un array bidimensional con todos los bloques asignados:                    
-                    opciones = course.opciones(r.totalBlocks,Log);
+                    opciones = course.opciones(r.totalBlocks, Log);
 //Si ya hay opciones en el PatternGroup, se capturan las opciones que ya existen en base a dicho PatternGroup(no se generan nuevos patterngroup ni opciones)
 //Se cogen las patternGroup definidas en RenWeb:                
                 else if(!course.getOpcionesPatternGroup().isEmpty() ){
@@ -191,7 +196,15 @@ public class Algoritmo {
 //Con estos métodos se se asignan los estudiantes de una forma u otra, y el noAsign puede quedar vacío si se han asignado todos.
 //Con opciones 1 y 3: generan patrones, con opcion 2: se llenan las secciones porque el lockSchedule está activado.
 //Con opcion 4: se llenan secciones teniendo en cuenta que el lockSchedule y el lockEnrollment están activados (no hace falta generar patrón ni usar el método fillSection).
+
+                 
                 for (int i = 0; i < course.getArraySecciones().size(); i++) {
+//Nota: las opciones generadas solo se usan si el lockSchedule está desactivado (si no no hace falta)
+//Por lo que la preferencia sería:
+//-Si está desactivado el lockSchedule: coger las opciones del patterngroup del curso. Si está vacío, generar opciones.
+//En cualquiera de los dos casos se genera un patrón específico para la sección en base a las opciones.
+//-Si está activado el lockSchedule: no hace falta tener en cuenta opciones, simplemente se rellena las secciones con el patrón
+//específico que ya se ha indicado.
                     if(!course.getArraySecciones().get(i).lockSchedule && course.getArraySecciones().get(i).lockEnrollment){
                         noAsign = generatePattern_Section(r,r.teachers,r.rooms,course,opciones,
                               noAsign,r.students,course.getArraySecciones().get(i),teachers_numSections,rooms_numSections, templateId);
@@ -234,6 +247,7 @@ public class Algoritmo {
                     
                         noAsign = conjuntos.diferencia(noAsign, course.getArraySecciones().get(i).getIdStudents());
                     }
+                
                 }
                 //aqui tengo que meter el algoritmo que intentara acabar de llenar todas las secciones con los alumnos que no
                 //lograqron ser matriculados en estas secciones.
@@ -253,7 +267,9 @@ public class Algoritmo {
                 }*/
 
              //   c.setStudentsAsignados(idsAsignados); // se actualiza la lista aunque no se usaron a todos los estudiantes
-
+//A PARTIR DE AQUÍ SE AÑADEN ESTUDIANTES A LAS SECCIONES QUE YA TIENEN LOS MÍNIMOS DE ESTUDIANTES, ES DECIR, 
+//EN LOS 4 IF DE ARRIBA SE RELLENAN LOS MÍNIMOS DE ESTUDIANTES POR SECCIÓN, Y AHORA SE TERMINAN DE RELLENAR LAS SECCIONES (PRIMERO SE RELLENAN SERIALMENTE LOS MÍNIMOS DE ESTUDIANTES
+//DE TODAS LAS SECCIONES, Y SI QUEDAN ESTUDIANTES, SE SIGUEN RELLENANDO SERIALMENTE HASTA LLEGAR A LOS MÁXIMOS )
 //Este for entra en cada seccion del curso concreto:
                 for (int j = 0; j < course.getArraySecciones().size(); j++) {
 //Si la seccion en concreto no tiene asignado lockEnrollment:
@@ -330,6 +346,8 @@ public class Algoritmo {
             if (r.getLinkedCourses().containsKey("" + course.getIdCourse())) {
                 int k = 0;
                 boolean encontrado = false;
+//Luego se sigue el bucle hasta que se recorran todos los cursos o hasta que se encuentre el linked course.  
+//Es decir, se busca el curso hijo en el has
                 while (k < r.courses.size() && !encontrado) {
                     if (r.courses.get(k).getIdCourse() == r.getLinkedCourses().get("" + course.getIdCourse()).getIdCourse()) {
                         encontrado = true;
@@ -339,28 +357,38 @@ public class Algoritmo {
                     }
 
                 }
-//Si encontrado==true, se asigna el id del curso asociado.                
+//Si encontrado==true, se copia el objeto del curso hijo (linkeado) a courseAsociado              
                 if (encontrado) {
                     Course courseAsociado = r.courses.get(k);
                     ArrayList<Integer> seccionesHabilitadas = new ArrayList<>();
+//En seccionesHabilitadas se capturan las secciones que se han linkeado en consultas (los números que están enntre el curso padre y el curso hijo).                    
                     seccionesHabilitadas = r.getLinkedCourses().get("" + course.getIdCourse()).getSectionsLinkeadas();
-                        ArrayList<ArrayList<Tupla>> opcionesAsoc = new ArrayList<>();
-//Se va aplicando el algoritmo de las secciones del curso asociado en función de la aplicación al curso principal(es una copia):
+                    ArrayList<ArrayList<Tupla>> opcionesAsoc = new ArrayList<>();
+//Con el if siguiente se guardan en courseAsociado (curso hijo) las secciones (a través de los datos de DataSections de Restrictions):
                     if (courseAsociado.getArraySecciones() == null || courseAsociado.getArraySecciones().isEmpty()) {
                         courseAsociado.setArraySecciones(chargeArraySections(r, courseAsociado));
                     }
                     // courseAsociado.setArraySecciones(course.getArraySecciones());
+                    
+//Si no encuentra patterngroup (en el curso) y hay necesidad de generar optionslinked (que se basa en si hay menos secciones en el curso hijo que en el padre
+//o si el curso hijo no tiene un patron usado(se refiere al Pattern del Schedule de cada seccion)): en ese caso genera opciones
+//de la misma forma que en el apartado de cursos no linkeados:
                     if(courseAsociado.getOpcionesPatternGroup().isEmpty() && needGenerateOptionsLinked(courseAsociado,course)){
                         opcionesAsoc = courseAsociado.opciones(r.totalBlocks,Log);
                     }
+//Si no hay necesidad de generar opciones pero existe un patterngroup del curso padre: se vincula ese patrón al curso hijo:                    
                     else if(!course.getOpcionesPatternGroup().isEmpty() ){
                         opcionesAsoc = courseAsociado.getOpcionesPatternGroup();
                     }
                     for (int i = 0; i < course.getArraySecciones().size(); i++) {
                         if(courseAsociado.getIdCourse() == 1301){
                             System.err.println("    ");
-                        }
-                        if (courseAsociado.getArraySecciones().size() <= i) {
+                            }
+//Para cada seción                        
+//1º if: si hay más o igual número de secciones en el curso padre que en el hijo: se añade una seccion al curso hijo y se le añade un patron:                        
+//???????(por que se tiene en cuenta =i, qué necesidad hay de crear una nueva sección si tienen los dos cursos el mismo nº de secciones):  
+//SOLUCION TEMPORAL: quitar el = :
+                            if (courseAsociado.getArraySecciones().size() < i) {
                             courseAsociado.addSeccionWithoutPattern(course.getArraySecciones().get(i));
                             
                             assignPatternToSection(r,course,course.getArraySecciones().get(i),opcionesAsoc,courseAsociado);
@@ -368,36 +396,45 @@ public class Algoritmo {
                           //  courseAsociado.ocuparHueco(course.getArraySecciones().get(i).getPatronUsado(),course.getArraySecciones().get(i).getNumSeccion());
                             System.err.println("");
                         }
+//2º else if: si no hay secciones linkeadas (esto es en el caso de que no se hubieran indicado las secciones (solo se indico curso padre, curso hijo)):
+                    
                         else if (seccionesHabilitadas.isEmpty()) { // todos
 
                             int ind = 0;
                             boolean exito = false;
 
                             while (ind < courseAsociado.getArraySecciones().size() && !exito) {
-
+//Se irían añadiendo (según va dando vueltas el for) los datos del curso padre al curso hijo, sección por sección: 
+//(se busca que el número de sección del curso hijo coincida con el numero de seccion del curso padre):    
                                 if (courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()) {
                                     courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(ind).patronUsado, courseAsociado.getArraySecciones().get(ind).getNumSeccion());
                                     courseAsociado.getArraySecciones().get(ind).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students, courseAsociado);
                                     courseAsociado.getArraySecciones().get(ind).setPatternRenWeb(course.getArraySecciones().get(i).getPatternRenWeb());
                                     exito = true;
+                                    if(!courseAsociado.getArraySecciones().get(ind).isLockSchedule()){
+                                    assignPatternToSection(r,course,course.getArraySecciones().get(i),opcionesAsoc,courseAsociado);
+
+                                }
                                 } else {
                                     ind++;
                                 }
-                                if(!courseAsociado.getArraySecciones().get(ind).isLockSchedule()){
-                                   assignPatternToSection(r,course,course.getArraySecciones().get(i),opcionesAsoc,courseAsociado);
-
-                                }
+//Se asigna un patron a la seccion en concreto si está activado el lockSchedule:                                
+//??????? (ind ya está incrementado en 1): SOLUCION TEMPORAL: poner también en el condicional: exito==true, para que solo asigne el patrón a la seccion que se estaba buscando:                              
+                             
                             }
                         }
+//3º else:                         
                         else {
                             int ind = 0;
                             boolean exito = false;
                             while (ind < courseAsociado.getArraySecciones().size() && !exito) {
-                                if (courseAsociado.getArraySecciones().get(ind).getNumSeccion() == course.getArraySecciones().get(i).getNumSeccion()) {
-
+//FALLO: Exceptionoutofbounds: porque no tiene en cuenta si se ha indicado la seccion, solo si el numero de seccion es igual al del otro:  
+                               if (courseAsociado.getArraySecciones().get(ind).getNumSeccion()== course.getArraySecciones().get(i).getNumSeccion() && seccionesHabilitadas.contains(ind+1)) {
+//A diferencia del apartado 2º, aquí se ocupan los huecos buscando las marcas, en el anterior simplemente era un copypaste de todo
                                     courseAsociado.ocuparHueco(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).patronUsado, courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getNumSeccion());
                                     courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).copiarIdsStudents(course.getArraySecciones().get(i).getIdStudents(), r.students, courseAsociado);
                                     //courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).setTeacher(r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind)-1).getIdTeacher()));
+//Se asigna el teacher de la seccion del curso hijo:                                    
                                     Teacher t_Aux = new Teacher();
                                     if(r.hashTeachers.containsKey(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getIdTeacher()))
                                         t_Aux = r.hashTeachers.get(courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).getIdTeacher());
@@ -411,14 +448,15 @@ public class Algoritmo {
                                     courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).setTeacher(t_Aux);
                                     courseAsociado.getArraySecciones().get(seccionesHabilitadas.get(ind) - 1).setPatternRenWeb(course.getArraySecciones().get(i).getPatternRenWeb());
                                     exito = true;
+                                   if(!courseAsociado.getArraySecciones().get(ind).isLockSchedule()){
+                                   assignPatternToSection(r,course,course.getArraySecciones().get(i),opcionesAsoc,courseAsociado);
+
+                                }
                                 }
                                 else {
                                     ind++;
                                 }
-                                 if(!courseAsociado.getArraySecciones().get(ind).isLockSchedule()){
-                                   assignPatternToSection(r,course,course.getArraySecciones().get(i),opcionesAsoc,courseAsociado);
 
-                                }
                             }
                         }
                     }
@@ -462,9 +500,8 @@ catch(Exception e){
 
         mv.addObject("cs", r.cs);
         mv.addObject("rooms", r.rooms);
-      
         mv.addObject("hashTeachers",r.hashTeachers);
-        mv.addObject("grouprooms", r.groupRooms);
+        mv.addObject("activeRoom", r.activeRooms);
         mv.addObject("log", Log);
 //Se añade este objeto para poder mostrar en la vista los cursos que no tienen estudiantes y que no podrán aparecer al crear el horario (se manda a homepage)
        // mv.addObject("cursosSinEstudiantes",Consultas.CoursesWithoutStudents);
@@ -656,14 +693,21 @@ catch(Exception e){
         }
            }
            else{
-               for(int y =0;y< teachers.size();y++){
-                   if(c.getTrestricctions().contains(teachers.get(y).getIdTeacher())){
-                       teachersForCourse.add(teachers.get(y));
-                       currentSec.setTeacher(teachers.get(y));
-                       currentSec.setIdTeacher(teachers.get(y).getIdTeacher());
-                       if(!teachers_numSections.containsKey(teachers.get(y).getIdTeacher()))
-                       teachers_numSections.put(teachers.get(y).getIdTeacher(),0);
-                   }
+               for(int y =0;y< teachers.size();y++){              
+
+                     if(Consultas.teachersCOURSE.get(c.getIdCourse()).contains(teachers.get(y).getIdTeacher())){
+                         if(teachers.get(y).asignaturaCursable(c.getIdCourse())==true){
+                        teachersForCourse.add(teachers.get(y));
+                        currentSec.setTeacher(teachers.get(y));
+                        currentSec.setIdTeacher(teachers.get(y).getIdTeacher());
+                        if(!teachers_numSections.containsKey(teachers.get(y).getIdTeacher()))
+                            teachers_numSections.put(teachers.get(y).getIdTeacher(),0); 
+                         }
+                         else{
+                             teachersFULL+=teachers.get(y).getName()+";";
+                         }
+          
+                    }
                }
            }
        
@@ -742,14 +786,17 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
 //El siguiente for se aplica en el caso de que el lockEnrollment esté desactivado en la sección en concreto (cuando se estaban asignando los noAsign
 //se podía acceder a generatePattern a través de la primera y tercera opción. El siguiente for es al que se entra si el lockEnrollment estaba desactivado):
 //También tiene en cuenta los estudiantes que no han sido asignados todavía a ninguna sección:
-
+//(No se aplica lo siguiente, se evalua el nº deestudiantes fuera del generate Pattern)Se definen variables temporales para guardar info de los estudiantes. Si llegan al minimo de estudiantes, se aplica en esta seccion posteriormente. Si no, se quedan no asignados para 
+//manejarlos despues de los 4 if:
+//                        ArrayList<Integer> idsAsignadosTemporal = c.getAllIds(); 
+//                        HashMap<Integer, Student> studentsTemporal = (HashMap<Integer, Student>) students.clone();
+//                        Seccion currentSecTemporal = currentSec;
+                                 ArrayList<Integer> J = new ArrayList<>();
                                  for (Integer j : stids.get(i).y) { // studiantes
                                      if ((k < minStudentSection) && !idsAsignados.contains(j)
                                              && students.get(j).patronCompatible(sec.get(stids.get(i).x)) && !currentSec.lockEnrollment) {
-
-                                         idsAsignados.add(j);
-                                         students.get(j).ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
-                                         currentSec.addStudent(j);
+                                         J.add(j);
+                                         
                                          k++;
                                          lastStudent = i;
                                      }
@@ -760,8 +807,13 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
 //Si entra en este if, se sale del while finalmente(si i es mayor o igual que stids.size()), pero si no llega a entrar, da vueltas hasta que llegue a entrar (es decir, hasta que haya rellenado la sección con alumnos)
                                  
 
-                                    if (k > 0 || currentSec.lockEnrollment) { // se llena los huecos de ese profesor incluyendole la seccion:
-
+                                    if (k ==minStudentSection || currentSec.lockEnrollment) { // se llena los huecos de ese profesor incluyendole la seccion:
+                                        
+                                        for(Integer j:J){
+                                         idsAsignados.add(j);
+                                         students.get(j).ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
+                                         currentSec.addStudent(j);
+                                        }
                                      currentSec.setPatronUsado(sec.get(stids.get(i).x));
 
                                      currentSec.setIdTeacher(t.getIdTeacher());
@@ -795,31 +847,73 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
         //ESTE ELSE ES IGUAL QUE EL IF, PERO TENIENDO EN CUENTA LOS ACTIVE ROOM(SOLO SE AÑADE UN FOR DE ROOMS PARA TENERLO EN CUENTA AL GENERAR ALGORITMO)
       else{
             roomsActivation=true;
+            int curso=0;
+            int valor=0;
             ArrayList<Room> roomsArray = new ArrayList<>(rooms.values());
+            for (Map.Entry<Integer,Integer> entry : Consultas.countCourse.entrySet()) {
+                if(entry.getKey().equals(c.getIdCourse())){
+                    curso=entry.getKey();
+                    valor=entry.getValue();
+                }
+            }
             //Se pone distinto de 0, porque al cargar una seccion en consultas, se inicializan los ids de rooms a 0 siempre por defecto si no encuentra ninguna room:
     if(currentSec.getIdRoom()!=0){
         for(int y =0;y< roomsArray.size();y++){
             if(roomsArray.get(y).getRoomid()==currentSec.getIdRoom()){
                 roomForCourse.add(roomsArray.get(y));
-                currentSec.setRoom(roomsArray.get(y));
+                //currentSec.setRoom(roomsArray.get(y));
                     if(!rooms_numSections.containsKey(roomsArray.get(y).getRoomid()))
                         rooms_numSections.put(roomsArray.get(y).getRoomid(), 0);
                 }
                 }
         }
     else{
+    if (curso==c.getIdCourse() && valor!=0){
                 
         for(int y =0;y< roomsArray.size();y++){
             if(c.getRooms().contains(roomsArray.get(y).getRoomid())){
-                roomForCourse.add(roomsArray.get(y));
-                currentSec.setRoom(roomsArray.get(y));
-                currentSec.setIdRoom(roomsArray.get(y).getRoomid());
+                if(roomsArray.get(y).getDisponibilidad()>0){
+                    roomForCourse.add(roomsArray.get(y));
+                    
                 if(!rooms_numSections.containsKey(roomsArray.get(y).getRoomid()))
                     rooms_numSections.put(roomsArray.get(y).getRoomid(), 0);
+                }
+                else{
+                    roomsFULL+=roomsArray.get(y).getName()+";";
+                }
+
                 
             }
         }
             }
+    
+    if(curso==c.getIdCourse() && valor==0){
+
+               for (Map.Entry<String, ArrayList<Integer>> entry : Restrictions.groupRooms.entrySet()) {
+                   if(entry.getKey().equals(templateId)){
+                        for(int y =0;y< roomsArray.size();y++){
+                 for(Integer valor2:entry.getValue()){          
+                        if(valor2.equals(roomsArray.get(y).getRoomid())){
+                            if(roomsArray.get(y).getDisponibilidad()>0){                          
+                            roomForCourse.add(roomsArray.get(y));
+                          //  currentSec.setRoom(roomsArray.get(y));
+                          //  currentSec.setIdRoom(roomsArray.get(y).getRoomid());
+                            if(!rooms_numSections.containsKey(roomsArray.get(y).getRoomid()))
+                                rooms_numSections.put(roomsArray.get(y).getRoomid(), 0);
+                
+             }
+                            else{
+                        roomsFULL+=roomsArray.get(y).getName()+";";     
+                        }
+        }
+           }             
+          }                                                                                                                
+                   }
+                            }
+        
+       
+        }
+    }
             while (i < stids.size() && !exito) { // recorrido a los bloques disponibles
 
                 
@@ -842,7 +936,7 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
                                  && t.patronCompatible(sec.get(stids.get(i).x))) {
 //Si se dan esas condiciones para un profesor en concreto, primero se asigna a k el número de estudiantes de la sección actual (en el curso con id=1245, primera seccion
 //hay 6 estudiantes)
-                                 int k = currentSec.getIdStudents().size();
+                                 int k = currentSec.getIdStudents().size(); 
                                  lastTeacher = i;
      // VAMOS A TENER QUE EN CUENTA CUANDO YA ESTAN MATRICULADOS Y NO TENEMOS ASIGNADO UN PATTERN EL CUAL DEBERA COMPROBAR QUE
      //  EL PATTERN PARA LOS ESTUDIANTYES YA MATRICULADOS CUMPLEN ESA RESTRICCION
@@ -850,13 +944,12 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
 //El siguiente for se aplica en el caso de que el lockEnrollment esté desactivado en la sección en concreto (cuando se estaban asignando los noAsign
 //se podía acceder a generatePattern a través de la primera y tercera opción. El siguiente for es al que se entra si el lockEnrollment estaba desactivado):
 //También tiene en cuenta los estudiantes que no han sido asignados todavía a ninguna sección:
+                                ArrayList<Integer> J = new ArrayList<>();
                                  for (Integer j : stids.get(i).y) { // studiantes
                                      if ((k < minStudentSection) && !idsAsignados.contains(j)
                                              && students.get(j).patronCompatible(sec.get(stids.get(i).x)) && !currentSec.lockEnrollment) {
-
-                                         idsAsignados.add(j);
-                                         students.get(j).ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
-                                         currentSec.addStudent(j);
+                                         J.add(j);
+                                         
                                          k++;
                                          lastStudent = i;
                                      }
@@ -865,8 +958,13 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
                                  //y añadimos la seccion a la tabla del curso.
 //El siguiente if: k>0 se refiere a que si por lo menos hay un estudiante (si la sección se ha rellenado). En ese caso se cargan teachers en función de la sección actual:
 //Si entra en este if, se sale del while finalmente(si i es mayor o igual que stids.size()), pero si no llega a entrar, da vueltas hasta que llegue a entrar (es decir, hasta que haya rellenado la sección con alumnos)
-                                 if (k > 0 || currentSec.lockEnrollment) { // se llena los huecos de ese profesor incluyendole la seccion:
-
+                                 if (k ==minStudentSection || currentSec.lockEnrollment) { // se llena los huecos de ese profesor y room incluyendole la seccion:
+                                     for(Integer j:J){
+                                         idsAsignados.add(j);
+                                         students.get(j).ocuparHueco(sec.get(stids.get(i).x), c.getIdCourse() * 100 + c.getSections());
+                                         currentSec.addStudent(j);
+                                     }
+                                     
                                      currentSec.setPatronUsado(sec.get(stids.get(i).x));
 
                                      currentSec.setIdTeacher(t.getIdTeacher());
@@ -879,7 +977,8 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
                                     if(rooms_numSections.containsKey(roomForCourse.get(contR).getRoomid())){
                                         rooms_numSections.put(roomForCourse.get(contR).getRoomid(), rooms_numSections.get(roomForCourse.get(contR).getRoomid())+1);
                                     } 
-                                    
+                                    currentSec.setRoom(roomForCourse.get(contR));
+                                    currentSec.setIdRoom(roomForCourse.get(contR).getRoomid());
                                     r.rooms.get(roomForCourse.get(contR).getRoomid()).ocuparHueco(c.getIdCourse(), currentSec.getNumSeccion(), currentSec.getPatronUsado());
                                 
                                     
@@ -1490,20 +1589,24 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
             if(c.getArraySecciones().get(stids.get(i).x).getNumSeccion() == currentSec.getNumSeccion()){
             // while (i < stids.size()) { // recorrido a los secciones disponibles
                  int k = c.getArraySecciones().get(stids.get(i).x).getIdStudents().size();
-
+                 ArrayList<Integer> J = new ArrayList<>();
                  for (Integer j : stids.get(i).y){ // studiantes
                      if ((k < minStudentSection) && !idsAsignados.contains(j)
                              && students.get(j).patronCompatible(c.getArraySecciones().get(stids.get(i).x).getPatronUsado())) {
-                         idsAsignados.add(j);
-                         students.get(j).ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
-                         c.getArraySecciones().get(stids.get(i).x).addStudent(j);
+                         J.add(j);
+                         
                          k++;
                          lastStudent = i;
                      }
                  }
 
-                 if (k  > 0){ // se llena los huecos de ese profesor incluyendole la seccion
+                 if (k==minStudentSection){ // se llena los huecos de ese profesor incluyendole la seccion
                  //    secciones.add(new Seccion(t, k, sec.get(stids.get(i).x),students.get(stids.get(i).y.get(0)).getGenero(),idsbySeccion,stids.get(i).x,c.getSections(),true,true));
+                     for(Integer j:J){
+                         idsAsignados.add(j);
+                         students.get(j).ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
+                         c.getArraySecciones().get(stids.get(i).x).addStudent(j);
+                     }
                      c.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(),c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
                      c.getArraySecciones().get(stids.get(i).x).setLockSchedule(true);
                      if(k == c.getMaxChildPerSection())
@@ -1514,7 +1617,17 @@ for (Entry<Integer, Room> entry : roomsU.entrySet()) {
                       t_Aux = r.hashTeachers.get(c.getArraySecciones().get(stids.get(i).x).getIdTeacher());
                         }
                      else{
-                         t_Aux.setName("No found in template courses");
+                        t_Aux.setName("No found in template courses");  
+//                       r.hashTeachers.containsKey(Consultas.teachersCOURSE
+//                            for (Map.Entry<Integer, ArrayList<Integer>> entry : Consultas.teachersCOURSE.entrySet()) {
+//                                if(idCourse==entry.getKey()){
+//                                    
+//                                }
+//
+//                                t_Aux = r.hashTeachers.get(entry.getValue().get(0));
+//                                
+//                                
+//                       }
                      }
                      t_Aux.ocuparHueco(c.getArraySecciones().get(stids.get(i).x).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(stids.get(i).x).getNumSeccion());
                      t_Aux.incrementarNumSecciones();
