@@ -28,7 +28,12 @@
     <bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
         <property name="defaultLocale" value="en" />
     </bean>
-<!-- Declaración de claves de controladores que se usarán luego en mappings para conexión de vistas con controladores: -->
+<!-- Declaración de claves de controladores que se usarán luego en mappings para conexión de vistas con controladores: 
+    -> class: recoger el nombre del controlador, id: asigna un nombre que luego se recogerá en los mappings en forma de etiqueta:
+    En property, se le asigna el value=opcion, que es lo que se usará como parámetro en la vista para recoger un ModelAndView del controlador
+    gracias al key que se le da más abajo al id (en este caso al id=homepage se le da el key=index.htm).
+Por ejemplo:    -->
+
     <bean class="controladores.Homepage" id="homepage">
         <property name="methodNameResolver">
             <bean class="org.springframework.web.servlet.mvc.multiaction.ParameterMethodNameResolver">
@@ -38,6 +43,7 @@
     </bean>
 
     <bean class="controladores.ScheduleController" id="index"/>
+    
     <bean class="controladores.CerrarLogin" id="cerrarLoginController"/>
 
     <bean class="controladores.MappingFamilies" id="map">
@@ -57,16 +63,18 @@
             </list>
         </property>
         
-<!-- Mappings que unen los jsp con los diferentes controladores: -->
-
+<!-- Mappings que unen los jsp con los diferentes controladores: 
+        Las etiquetas son los ids que se dieron previamente a los controladores. Se asignan keys, que es lo que se manda (es lo que luego aparece en las direcciones)
+        Gracias a estas etiquetas se pueden enviar los ModelAndView de los controladores como valores de las propertys de los bean de los controladores definidos más arriba
+        Por ejemplo el ModelAndView login del controlador Homepage.java se obtiene en la vista userform, y se aplica así: userform.htm?opcion=login-->
+        
         <property name="mappings">
             <props>
                 <prop key="index.htm">indexController</prop>
                 <prop key="userform.htm">homepage</prop>
                 <prop key="familymap2.htm">map</prop>
                 <prop key="datosIdioma.htm">ControladorIdioma</prop>
-                <prop key="cerrarLogin.htm">cerrarLoginController</prop>
-               
+                <prop key="cerrarLogin.htm">cerrarLoginController</prop>               
             </props>
         </property>
     </bean>
@@ -79,7 +87,7 @@
     <bean name="indexController"
           class="org.springframework.web.servlet.mvc.ParameterizableViewController"
           p:viewName="userform" />
-    
+
     <bean name="inicio"
           class="org.springframework.web.servlet.mvc.ParameterizableViewController"
           p:viewName="homepage" />      

@@ -18,6 +18,7 @@ public class Seccion {
     Teacher teacher;
     Room room;
     ArrayList<Integer> idStudents;
+    ArrayList<Student> students;
     Integer idRoom;
     int numStudents;
     ArrayList<Tupla> patronUsado;
@@ -36,6 +37,7 @@ public class Seccion {
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron) {
         this.teacher = currentT;
+        this.idTeacher = currentT.getIdTeacher();
         this.numStudents = numStudents;
         this.patronUsado = patron;
         this.gender = "mixto";
@@ -43,9 +45,11 @@ public class Seccion {
         this.lockSchedule = false;
         this.patternRenWeb = 0;
         this.idRoom = 0;
+        this.room= new Room();
     }
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, Room currentR) {
         this.teacher = currentT;
+        this.idTeacher = currentT.getIdTeacher();
         this.room=currentR;
         this.numStudents = numStudents;
         this.patronUsado = patron;
@@ -53,11 +57,12 @@ public class Seccion {
         this.lockEnrollment = false;
         this.lockSchedule = false;
         this.patternRenWeb = 0;
-        this.idRoom = 0;
+        this.idRoom = currentR.getRoomid();
     }
 
     public Seccion(Teacher currentT, int numStudents, ArrayList<Tupla> patron, String gender, ArrayList<Integer> ids, int idPatron, int numS ,boolean lockEnr, boolean lockSche, int cID, int courseID) {
         this.teacher = currentT;
+        this.idTeacher = currentT.getIdTeacher();
         this.numStudents = numStudents;
         this.patronUsado = patron;
         this.gender = gender;
@@ -80,6 +85,7 @@ public class Seccion {
         this.patronUsado = s.patronUsado;
         this.gender = s.gender;
         this.idRoom = s.getIdRoom();
+        this.room=s.getRoom();
         this.idStudents = s.idStudents;
         this.indicePatronUsado = s.indicePatronUsado;
         this.numSeccion = s.numSeccion;
@@ -94,11 +100,13 @@ public class Seccion {
     public Seccion() {
         this.idStudents = new ArrayList<>();
         this.teacher = new Teacher();
+        this.idTeacher= 0;
         this.patronUsado = new ArrayList<>();
         this.lockEnrollment = false;
         this.lockSchedule = false;
         this.patternRenWeb = 0;
         this.idRoom = 0;
+        this.room= new Room();
         this.nameSeccion = "";
     }
 
@@ -144,6 +152,14 @@ public class Seccion {
         this.numStudents = numStudents;
     }
 
+    public ArrayList<Student> getStudents() {
+        return students;
+    }
+
+    public void setStudents(ArrayList<Student> students) {
+        this.students = students;
+    }
+    
     public ArrayList<Tupla> getPatronUsado() {
         return patronUsado;
     }
@@ -279,6 +295,21 @@ public class Seccion {
 
     public void setNameSeccion(String nameSeccion) {
         this.nameSeccion = nameSeccion;
+    }
+    
+    public boolean studentsCompatibles(ArrayList<Integer> students){
+        ArrayList<Integer>studentsValidos= new ArrayList();
+        for(Integer student: students){
+            if(this.idStudents.contains(student)){
+                studentsValidos.add(student);
+            }else{
+                return false;
+            }
+        }
+        if(students.size()==studentsValidos.size() && students.size()>0){
+            return true;
+        }
+        return false;
     }
     
     

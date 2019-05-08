@@ -33,6 +33,8 @@ public class Student {
     private ArrayList<Seccion> seccionesFromRenWeb;
     private String gradeLevel;
 
+    
+    
     public String getGradeLevel() {
         return gradeLevel;
     }
@@ -89,6 +91,7 @@ public class Student {
         huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
         this.seccionesAsignadas = new ArrayList<>();
         this.seccionesFromRenWeb = new ArrayList<>();
+        this.numPatrones = 0;
     }
 
     public Student(int id, String name, String genero) {
@@ -100,6 +103,7 @@ public class Student {
         this.genero = genero;
         this.seccionesAsignadas = new ArrayList<>();
         this.seccionesFromRenWeb = new ArrayList<>();
+        this.numPatrones = 0;
 
     }
 
@@ -309,7 +313,7 @@ public class Student {
         
         for (Seccion seccionesFromRenWeb1 : this.seccionesFromRenWeb) {
             if(!coursesEnrolled.contains(seccionesFromRenWeb1.courseID)){
-                auxCoursesUnenrolled += "<strong>" + Consultas.courseName.get(seccionesFromRenWeb1.courseID) + "</strong>. No se pudo matricular. <br>";    
+                auxCoursesUnenrolled += "<strong>" + Consultas.courseName.get(seccionesFromRenWeb1.courseID) + "</strong>. Unenrolled course. <br>";    
             }
         }     
         return auxCoursesUnenrolled;

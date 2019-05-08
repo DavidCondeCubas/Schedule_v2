@@ -44,6 +44,7 @@ public class LoginVerification {
  //-->A través de getBean se obtiene la información almacenada en el fichero applicationContext.
  //applicationContext es un fichero que guarda los datos de las credenciales necesarias para entrar en la aplicación web.
  //Si al aplicar el LoginVerification, los datos coinciden con los de la applicationContext.xml, dicha aplicación permite acceder al usuario.
+//Este getBean es el que se usa en fillDataConnection para conectarse a la BBDD que guarda las credenciales en definitiva.    
      private Object getBean(String nombrebean, ServletContext servlet) {
 //AplicationContext es una interfaz que proporciona configuración a aplicaciones, en este caso servlet.         
 //WebApplicationContextUtils.getRequiredWebApplicationContext(servlet)-->Encuentre la raíz WebApplicationContext para esta aplicación web.
@@ -52,18 +53,21 @@ public class LoginVerification {
         Object beanobject = contexto.getBean(nombrebean);
         return beanobject;
     }
-     
+//En función del districtCode elegido en la primera vista, se accede a diferentes BBDD de colegios.
+//El getBean previo permite establecer la conexion en la BBDD de las credenciales (applicationContext.xml), y con districtCode se hace una consulta
+//que devuelve url,loginname y password para que posteriormente se pueda acceder a la BBDD del colegio seleccionado(esto se hará en DBConnect).     
     private void fillDataConnection(String districtCode, HttpServletRequest hsr){
- //Guarda consultas de la BBDD cuyo districtCode viene dado de antemano:
+ //Guarda consultas de la BBDD (a la que se accede con) cuyo districtCode viene dado de antemano:
         String consulta = "select * from schoolsdata where districtcode='" +districtCode+"'";
-//AQUÍ SE CAMBIA LA ESTRUCTURA A LA CONEXIÓN DE BBDD PARA PODER CERRARLA HAYA FALLOS O NO
-//Se capturan excepciones de tipo SQL para mayor depuración:
+
         Connection cn = null;
         Statement s = null;
         ResultSet rs = null;
         try {
 //Para coger datos de la bean de aplicationContext cuyo Id es"dataSource",
-//a través de la URL específica del colegio, con su loginName y password:           
+//a través de la URL específica del colegio, con su loginName y password:
+//Se obtiene así la url, loginName y password para poder usar estos datos en DBConnect y conectar a una base de datos u otra,
+//en funcion de la consulta que se le pasa a rs (que haya una consulta u otra depende del districtCode que se haya elegido en la primera vista):
             DriverManagerDataSource dataSource2 = (DriverManagerDataSource) this.getBean("dataSource", hsr.getServletContext());
 
             cn = dataSource2.getConnection();
@@ -74,6 +78,7 @@ public class LoginVerification {
                 loginName = rs.getString("loginname");
                 password= rs.getString("password");
             }
+//Se capturan excepciones de tipo SQL para mayor depuración:            
         } catch (SQLException e) {
             e.getMessage();
         }
@@ -83,14 +88,14 @@ public class LoginVerification {
                     rs.close();
                 }
             } catch (SQLException e) {
-               
+                e.getMessage();
             }
             try {
                 if (s != null) {
                     s.close();
                 }
             } catch (SQLException e) {
-                
+                 e.getMessage();
             }
             try {
                 if (cn != null) {
@@ -101,8 +106,8 @@ public class LoginVerification {
             }
         }
     }
-//Los siguientes 3 métodos: SQLConnection, Query y SQLQuery son necesarios para obtener el query y posteriormente 
-//En ConsultUserDB se comprueba si el usuario está en la BBDD (a través de la comprobación de username, passoword y el ID PERSONAL)
+//Los siguientes 3 métodos: SQLConnection, Query y SQLQuery son necesarios para obtener el query que posteriormente se usará 
+//en ConsultUserDB: con este método se comprueba si el usuario que está accediendo está en la BBDD (a través de la comprobación de username, passoword y el ID PERSONAL):
     public static Connection SQLConnection() throws SQLException {
       
         DriverManager.registerDriver(new SQLServerDriver());
@@ -136,9 +141,12 @@ public class LoginVerification {
         String query = "select * from Person where username = '"+user+"' and pswd = HASHBYTES('MD5', CONVERT(nvarchar(4000),'"+password+"'));";
 
          ResultSet rs = SQLQuery(query);
+//Se establece id=0 si no encuentra ninguno,         
          if(!rs.next()) 
          {u=new User();
                  u.setId(0);}
+//si por otro lado encuentra datos, significa que el usuario está registrado y tiene permisos para entrar, con lo que estos datos se
+//transmiten al objeto de tipo user u, se devuelve a Homepage.login y ahí se harán una serie de comprobaciones:         
          else{
              rs.beforeFirst();
             while(rs.next()){

@@ -76,14 +76,7 @@
                     $("#selecttemplate").empty();
                 }
             }
-            function hideroomsgroup() {
-                var selectval = $('#roomsmode').val();
-                if (selectval === 0 || selectval === 1) {
-                    $('#grouprooms').hide();
-                } else {
-                    $('#grouprooms').show();
-                }
-            }
+            
             function enviando()
             {
                 $('#crearhorario').submit();
@@ -118,7 +111,12 @@
         <div class="modal fade" id="selectIS" role="dialog">
             <div class="modal-dialog">
 
-                <!-- Modal content-->
+                <%-- Se accede aquí desde menu de Homepage:
+                Seleccion de la escuela (ventana de aviso que se abre al iniciar el menú) Al pinchar en una opción se cargan los años en la pestaña de Select Year
+                gracias al  método getYears().
+                En getYears se cargan los años académicos en función de la escuela seleccionada de items="${schools}" (en getYears() se hace referencia al id divSelectDepartment,
+                es decir, la escuela seleccionada, y se cargan los años de dicha escuela con ajax, a través de un request y response al controlador(en url: "menu/temp.htm?id=" + id),
+                para obtener los años en Homepage.getYears(que accede a consultas.getYears) y después se parsean con JSON y se cargan con un for:--%>
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -128,22 +126,22 @@
                         <div id="divSelectDepartament" style="text-align: center;">
                             <select style="width: 50%;" onchange="getYears()">
                                 <option></option>
-                                <%--Se accede aquí desde menu de Homepage: Este forEach coge los datos que se han establecido en dicho menu,
-                               y se introducen los datos de x e y(codigo y nombre de las escuelas), a través de ${schools} --%>                                
-                                <c:forEach var="year" items="${schools}">
-                                    <%-- year.x y year.y son los cogidos y nombres de escuelas que se han añadido a través del método getSchools de Consultas(que conecta con menu de Homepage) --%>                     
-                                    <option value="${year.x}">${year.y}</option>                                 
+                                <%--: Este forEach carga los nombres y los ids de las escuelas en el controlador.
+                                Se transmiten aquí a través del mv.addObject("schools", schools); que se realiza en Homepage.menu,
+                                donde schools se carga de consultas.getSchools(districtCode).
+                                Los datos se cargan con extensión x e y porque se han obtenido con la clase Tupla(x,y):
+                                --%>                                
+                                <c:forEach var="school" items="${schools}">                                  
+                                    <option value="${school.x}">${school.y}</option>                                 
                                 </c:forEach>
                             </select>
                         </div>
                     </div>
 
-                </div>
-                <%--Después de aplicar el evento de selección de la escuela (High School por ejemplo), se pasa a menu/create.htm,
-                para poder crear un horario(indicado más abajo)--%>   
+                </div>   
             </div>
         </div>
-        <!-- Modal -->
+        <%-- Barra de carga al acceder a Create Schedule --%>
         <div class="modal fade" id="pleaseWaitDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -163,36 +161,38 @@
         <div class="col-xs-12">
             <%-- A través de menu/create.htm puede enviar esta información al Controlador de Homepage, RequestMapping@(menu/create.htm)
             Aquí no pasa por el dispatcher porque se indica la dirección entera(menu/create.htm), aunque lo correcto sería usar el dispatcher.
-            Gracias a esto se puede crear el horario, con los siguientes 4 campos(year, template,rosters, rooms) y el boton buttonCreate--%>            
+            Gracias a esto se puede crear el horario, con los siguientes 4 campos(select year,select template, shuffle rosters, active rooms) y el boton buttonCreate--%>            
             <form:form action="menu/create.htm" method="POST" id="crearhorario">                
                 <input id="schoolcode" name="schoolcode" type="hidden" value="">
                 <input id="schoolName" name="schoolName" type="hidden" value="">
                 <div class="col-xs-3">        
                     <fieldset>
                         <legend>Select Year</legend>
-    <%--El siguiente select coge los datos de Year desde la funcion templates. Dicha funcion coge la url menu/temp.htm?id=
-    que lleva a HomePage.getTemplates. Esto es así porque al modificar una opción en SelectYear, se modifica automáticamente
-    la opcion de Template, pero no de las opciones de Check y Room(y por eso pasa por la función de JavaScript y modificarlo por pantalla)--%> 
-    
+                        <%--El siguiente select carga los datos del ajax de getYears(ver más arriba), es decir, los años de la escuela seleccionada al inicar el menú
+                        gracias al id="selectyears", que imprime todos estos years. Al seleccionar un año en templates() se cargan los templates del año seleccionado
+                        de forma similar a como ocurre en getYears(): se captura opcion seleccionada del año, y con ajax se hace un request y response  (url: "menu/temp.htm?id=" + id),
+                       (Homepage.getTemplates y consultas.getTemplates), se parsean con JSON y se cargan con un for.
+                        Nota: en templates(), al cargar todos los templates e imprimir los nombres
+                        ,se capturan y se mandan también al controlador:id del template-filas-columnas#nº opcion selecionada: 
+                        --%> 
+
                         <select class="form-control" id="selectyear" name="yearid" onchange="templates()">
-                            <option></option>
-                            <%-- Aquí se implantan las distintas opciones que se pueden elegir(años académicos) a través de ${years}: --%>                         
-                            <c:forEach var="year" items="${years}">
-                                <option value="${year.x}">${year.y}</option>
-                            </c:forEach>
+                            <option>                            
+                            </option>                                              
                         </select>
                     </fieldset>
                 </div>
+                    <%-- A partir de aquí se muestran en vista las opciones de Select Template, Shuffle Rosters, Active Rooms y el botón Create Schedule --%>            
                 <div class="col-xs-3">
                     <fieldset>
+                     <%-- Aquí se imprimen los templates generados previamente gracias a id="selecttemplate" --%>        
                         <legend>Select Template</legend>
                         <select class="form-control" name="templateInfo" id="selecttemplate">
                         </select>
                     </fieldset>
                 </div>
                 <div class="col-xs-2 ">
-                    <fieldset>
-<%-- Modificado Shuffle (estaba mal escrito, ponía Suffle)           --%>             
+                    <fieldset>     
                         <legend>Shuffle Rosters</legend>
                         <select class="form-control" id="suffleCheck" name="suffleCheck">
                             <option value="0">disabled</option>

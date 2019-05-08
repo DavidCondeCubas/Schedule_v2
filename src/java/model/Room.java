@@ -17,6 +17,7 @@ import java.util.logging.Logger;
  * @author Chema
  */
 public class Room {
+
     private int roomid;
     private int[][] huecos;
     private int[][] huecosSeccion;
@@ -24,7 +25,7 @@ public class Room {
     private int size;
     private int disponibilidad;
     private int ocupacion;
-    /*  private int numSecciones;
+    private int numSecciones;
 
     public int getNumSecciones() {
         return numSecciones;
@@ -33,59 +34,46 @@ public class Room {
     public void setNumSecciones(int numSecciones) {
         this.numSecciones = numSecciones;
     }
-    public void incrementarNumSecciones(){
+
+    public void incrementarNumSecciones() {
         this.numSecciones++;
-    }*/
-//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU: 
-    //insertarOActualizarDB no está para renweb porque desde nuestra aplicacion no se puede modificar la DB
- /*    
-    public void insertarOActualizarDB(){
-        String consulta="select * from rooms where id="+roomid;
-        boolean actualizar = false;
-        try {
-            ResultSet rs = DBConnect.own.executeQuery(consulta);
-            while(rs.next()){
-                actualizar = true;
-            }
-            if(!actualizar){
-                consulta="insert into rooms values("+roomid+",'"+name
-                        + "',"+size+")";
-                DBConnect.own.executeUpdate(consulta);
-            }else{
-                //to do: UPDATE
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(Teacher.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
-*/    
+
     public Room(int roomid, String name, int size) {
         this.roomid = roomid;
         this.name = name;
         this.size = size;
         this.disponibilidad = Algoritmo.TAMX * Algoritmo.TAMY;
-        this.huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY]; 
-        this.huecosSeccion = new int[Algoritmo.TAMX][Algoritmo.TAMY]; 
-    
+        this.huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
+        this.huecosSeccion = new int[Algoritmo.TAMX][Algoritmo.TAMY];
+
     }
-    
-    public ArrayList<ArrayList<Tupla>> patronescompatibles(ArrayList<ArrayList<Tupla>> sec){
+
+    public Room() {
+        this.roomid=0;
+        this.name="There is no room available";
+        this.size=50;
+        this.disponibilidad = Algoritmo.TAMX * Algoritmo.TAMY;
+        this.huecos = new int[Algoritmo.TAMX][Algoritmo.TAMY];
+        this.huecosSeccion = new int[Algoritmo.TAMX][Algoritmo.TAMY];
+    }
+
+    public ArrayList<ArrayList<Tupla>> patronescompatibles(ArrayList<ArrayList<Tupla>> sec) {
         ArrayList<ArrayList<Tupla>> ret = new ArrayList();
-        for(ArrayList<Tupla> ar:sec){
-            if(this.patronCompatible(ar))
+        for (ArrayList<Tupla> ar : sec) {
+            if (this.patronCompatible(ar)) {
                 ret.add(ar);
+            }
         }
         return ret;
     }
-    
-    
-    
-    public boolean ocuparHueco(int idCourse ,int seccion,ArrayList<Tupla> patron){
-        for(Tupla<Integer,Integer> t:patron){
-            if(huecos[t.x][t.y] == 0){
-               huecos[t.x][t.y] = idCourse;
-               huecosSeccion[t.x][t.y] = seccion;
-            }else{
+
+    public boolean ocuparHueco(int idCourse, int seccion, ArrayList<Tupla> patron) {
+        for (Tupla<Integer, Integer> t : patron) {
+            if (huecos[t.x][t.y] == 0) {
+                huecos[t.x][t.y] = idCourse;
+                huecosSeccion[t.x][t.y] = seccion;
+            } else {
                 return false;
             }
         }
@@ -93,14 +81,11 @@ public class Room {
         this.disponibilidad--;
         return true;
     }
-    
-    public boolean patronCompatible(ArrayList<Tupla> ar){
-        return ar.stream().noneMatch((t) -> (huecos[(Integer)t.x][(Integer)t.y] != 0));
+
+    public boolean patronCompatible(ArrayList<Tupla> ar) {
+        return ar.stream().noneMatch((t) -> (huecos[(Integer) t.x][(Integer) t.y] != 0));
     }
 
-    
-    
-    
     public int getDisponibilidad() {
         return disponibilidad;
     }
@@ -110,13 +95,12 @@ public class Room {
     //GETTER AND SETTER//
     /////////////////////
      */
-    
-    public double getPercentOcupation(){
+    public double getPercentOcupation() {
         double o = this.ocupacion;
         double d = this.disponibilidad;
-        return o/(o+d)*100;
+        return o / (o + d) * 100;
     }
-    
+
     public int getOcupacion() {
         return ocupacion;
     }
@@ -161,6 +145,4 @@ public class Room {
         this.huecosSeccion = huecosSeccion;
     }
 
-    
-   
 }

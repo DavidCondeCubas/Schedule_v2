@@ -15,7 +15,6 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Mapping Families</title>
 
-
         <script>
             $().ready(function ()
             {
@@ -40,9 +39,6 @@
                 });
             });
         </script>
-        <style>
-     
-        </style>
     </head>
     <body>
         <h1>Mapping Families</h1>
@@ -50,20 +46,18 @@
             <div class="col-xs-3">
                 <div class="col-xs-12">QuickBooks Customers</div>
                 <select class="form-control" size="20" name="origen" id="origen" style="width: 100% !important;">
-                     <c:forEach var="custs" items="${QBcust}">
-                                    <option value="${custs.id}" >${custs.name}</option>
-                                </c:forEach>
+                    <c:forEach var="custs" items="${QBcust}">
+                        <option value="${custs.id}" >${custs.name}</option>
+                    </c:forEach>
                 </select>
             </div>
-
-            
 
             <div class="col-xs-3">
                 <div class="col-xs-12">Renweb Family</div>
                 <select class="form-control" size="20" name="destino" id="destino" style="width: 100% !important;"> 
-                     <c:forEach var="family" items="${RWfamily}">
-                            <option value="${family.id}" >${family.familyName}</option>
-                            </c:forEach>
+                    <c:forEach var="family" items="${RWfamily}">
+                        <option value="${family.id}" >${family.familyName}</option>
+                    </c:forEach>
                 </select>
             </div>
 
@@ -71,19 +65,5 @@
                 <input type="submit" class="btn btn-success" value="<spring:message code="etiq.txtmapfamilies"/>">
             </div>
         </form:form>
-        <%--<table border="1">
-        <c:forEach items="${allfamily}">
-                     var="family">
-              <tr>
-                  <td>
-                      <c:out value="${family.familyName}"/>
-                  </td>
-                  <td>
-                      <c:out value="${family.id}"/>
-                  </td>   
-                         
-              </tr>
-          </c:forEach>
-          </table>--%>
     </body>
 </html>

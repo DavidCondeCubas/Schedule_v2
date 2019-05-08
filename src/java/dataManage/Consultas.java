@@ -1,4 +1,3 @@
-
 package dataManage;
 
 import java.sql.ResultSet;
@@ -24,57 +23,53 @@ import model.Template;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-
 public class Consultas {
 
     private ArrayList<Integer> teachers;
-    public static HashMap<Integer, ArrayList<Integer>> teachersCOURSE;
+    public static HashMap<Integer, ArrayList<Integer>> teachersCOURSE = new HashMap<>();
     private Teacher tdefault;
     private Student stDefault;
-    public static HashMap<Integer, String> courseName;
+    public static HashMap<Integer, String> courseName = new HashMap<>();
     public static int DEFAULT_RANK = 10;
     private HashMap<Integer, String> namePersons;
     private HashMap<Integer, String> nameCourses;
     private HashMap<Integer, String> abbrevCourses;
-    public static String cursosSin1;
-    public static HashMap<Integer, String> CoursesWithoutStudents;
     public int templateIdSection;
     public static TreeMap<String, ArrayList<String>> tempIdSect = new TreeMap<>();
     public static String tempidsect;
-    public static ArrayList<String> arrayStuderroneos = new ArrayList<>();
     public static TreeMap<String, TreeMap< String, ArrayList<String>>> studError = new TreeMap<>();
     public static String studE;
-    public static String error;
+    public static String error = "";
     public static HashMap<Integer, Integer> countCourse = new HashMap<>();
     public static HashMap<Integer, ArrayList<Integer>> countCourse2 = new HashMap<>();
     public static HashMap<Integer, ArrayList<Integer>> countSchool = new HashMap<>();
     public static String alert = "";
-
     private ArrayList<ArrayList<Boolean>> totalBlocksStart;
     private int totalBlocks;
 
-    public Consultas(String tempid) {
+    public Consultas(String tempid, int x, int y) {
+//Datos por defecto que se establecen (profesores, instructor por defecto, condiciones de alumnos,
+//carga de nombres de personas y cursos, y bloques con los que se inicia el template):        
         teachers = new ArrayList<>();
-        teachersCOURSE = new HashMap<>();
-        tdefault = teacherDefault();
+//Se establecen las restricciones que tendrá un profesor por defecto en el caso de que,
+//al buscar en BBDD las restricciones, no las encuentre:
+        tdefault = teacherDefault(x, y);
         stDefault = new Student(0);
         stDefault.setGenero("Male");
         stDefault.setName("default");
-        courseName = new HashMap<>();
+//Se definen los totalBlocksStart, y con esos se definen los totalBlocks en SetTotalBlocks:        
         totalBlocksStart = this.totalBlocksStart(tempid);
-        //El siguiente totalBlocks es de prueba, el bueno es totalBlocksStart.
-        totalBlocks = this.totalBlocks();
-        CoursesWithoutStudents = new HashMap<>();
+        setTotalBlocks(totalBlocksStart);
         cargarNames();
-        error = "";
     }
+//Se cargan nombres de personas y cursos con el siguiente método:
 
     private void cargarNames() {
         this.namePersons = new HashMap<>();
         this.nameCourses = new HashMap<>();
         this.abbrevCourses = new HashMap<>();
 
-        String consulta = "select * from person";
+        String consulta = "select firstname, lastname, personid from person";
         String ret = "";
         ResultSet rs;
         try {
@@ -87,7 +82,7 @@ public class Consultas {
                 }
             }
 
-            consulta = "select * from courses";
+            consulta = "select CourseID, Title, Abbreviation from courses";
             ResultSet rs2 = DBConnect.renweb.executeQuery(consulta);
 
             while (rs2.next()) {
@@ -143,20 +138,23 @@ public class Consultas {
         }
         return ret;
     }
-//Aquí se accede a través del método menu de Homepage para poder obtener los datos de las escuelas según el districtCode:
+//Aquí se accede a través del método menu de Homepage para poder obtener los datos de las escuelas según el districtCode
+//El districtCode realmente aquí ya no hace falta (se incluye para ver que número tiene al lanzar el debugger),
+//porque se van a obtener los datos en función de la BBDD a la que se haya accedido previamente (id de school y schoolname son diferentes).    
+//Coge el id de School y el nombre para vincularlos posteriormente a la vista:
 
-    public static ArrayList<Tupla<String, String>> getSchools(String districtCode) { // OBTIENE EL GETYEATS FALTA FILTRAR POR COLEGIO 
+    public static ArrayList<Tupla<String, String>> getSchools(String districtCode) {
 
         ArrayList<Tupla<String, String>> ret = new ArrayList<>();
         String consulta = "SELECT SchoolName,SchoolCode FROM ConfigSchool ";
         try {
-//Con el rs se pueden rastrear el SchoolName y el SchoolCode de la tabla CongigSchool        :    
+//Con el rs se pueden rastrear el SchoolName y el SchoolCode de la tabla CongigSchool:    
             ResultSet rs = DBConnect.renweb.executeQuery(consulta);
-//En el siguiente método guarda los datos del colegio en cuestión, y se guardan en la tupla ret (por ejemplo:x= GCS1,y= Elementary School)            
+//En el siguiente método guarda los datos del colegio en cuestión, y se guardan en la tupla ret (por ejemplo:x= GCS1(schoolid),y= Elementary School(schoolName))            
             while (rs.next()) {
-                String yearid = rs.getString("SchoolCode");
-                String yearName = rs.getString("SchoolName");
-                ret.add(new Tupla<>(yearid, yearName));
+                String schoolid = rs.getString("SchoolCode");
+                String schoolName = rs.getString("SchoolName");
+                ret.add(new Tupla<>(schoolid, schoolName));
             }
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
@@ -195,25 +193,11 @@ public class Consultas {
 
             for (Integer g : groups) {
                 classes.put(g, new ArrayList());
-                /*consulta = "select * from ClassGroupClasses where GroupID=" + g;
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    classes.get(g).add(rs.getInt("classid"));
-                }*/
                 if (classesData.containsKey(rs.getInt("classid"))) {
                     classes.get(g).add(classesData.get(g));
                 }
 
                 for (Integer c : classes.get(g)) {
-                    /*  consulta = "select * from classes where classid=" + c;
-                    rs = DBConnect.renweb.executeQuery(consulta);
-                    while (rs.next()) {
-                        if (!courses.containsKey(rs.getInt("courseid"))) {
-                            courses.put(rs.getInt("courseid"), new ArrayList());
-                            listaCourses.add(rs.getInt("courseid"));
-                        }
-                        courses.get(rs.getInt("courseid")).add(g);
-                    }*/
                     if (!courses.containsKey(coursesData.get(c))) {
                         courses.put(coursesData.get(c), new ArrayList());
                         listaCourses.add(coursesData.get(c));
@@ -233,9 +217,6 @@ public class Consultas {
         ArrayList<Template> ret = new ArrayList();
         String consulta = "select * from ScheduleTemplate where yearid=" + yearid;
         try {
-            // SELECT count(*) FROM IS_PAN.dbo.ScheduleTemplateTimeTable where templateid = 51 and col =0; para las rows
-            // SELECT count(*) FROM IS_PAN.dbo.ScheduleTemplateTimeTable where templateid = 51 and row =0; para las cols
-            //  int numRowsVacias = 2;
             ResultSet rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 String name = rs.getString("TemplateName");
@@ -249,59 +230,93 @@ public class Consultas {
         }
         return ret;
     }
-//Este método lo va a capturar el ScheduleEduweb de la clase ScheduleControler para implementar cabeceras de filas 
-//Por eso se sacan datos de columna=0:
-//Se obtienen los datos de la tabla ScheduleTemplateTimeTable
+//Este método lo va a capturar el método ScheduleEduweb de la clase ScheduleControler para implementar cabeceras de filas 
+//(por eso se sacan datos de columna=0, que es la columna con los datos de la cabecera de las filas):
+//Se tiene en cuenta el template (id):
 
-    public static ArrayList<Tupla<String, String>> getRowHeader(int id, int rows) {
+    public static ArrayList<Tupla<String, String>> getRowHeader(int id) {
         String consulta = "";
 
         ResultSet rs;
         ArrayList<Tupla<String, String>> ret = new ArrayList();
-        for (int i = 1; i <= rows; i++) {
-            consulta = "select * from ScheduleTemplateTimeTable "
-                    + "where templateid=" + id + " and Row=" + i + " and Col=0";
-            // SELECT count(*) FROM IS_PAN.dbo.ScheduleTemplateTimeTable where templateid = 51 and col =0; para las rows
-            // SELECT count(*) FROM IS_PAN.dbo.ScheduleTemplateTimeTable where templateid = 51 and row =0; para las cols
+        consulta = "select TemplateTime, TemplateText from ScheduleTemplateTimeTable "
+                + "where templateid=" + id + " and Col=0";
 
-            try {
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    ret.add(new Tupla(rs.getString("TemplateTime"),
-                            rs.getString("TemplateText")));
-                }
-            } catch (SQLException ex) {
-                Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+        try {
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                ret.add(new Tupla(rs.getString("TemplateTime"),
+                        rs.getString("TemplateText")));
             }
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         return ret;
     }
-//Este método lo va a capturar el ScheduleEduweb de la clase ScheduleControler para implementar cabeceras de columnas(por eso se sacan datos de fila=0):
-//Se obtienen los datos de la tabla ScheduleTemplateTimeTable    
+//Este método lo va a capturar el ScheduleEduweb de la clase ScheduleControler para implementar cabeceras de columnas(por eso se sacan datos de fila=0,
+//es decir, fila con los datos de la cabecera de las columnas):
 
-    public static ArrayList<String> getColHeader(int id, int cols) { //modificar 
+    public static ArrayList<String> getColHeader(int id) { //modificar 
         String consulta = "";
         ResultSet rs;
         ArrayList<String> ret = new ArrayList();
-        for (int i = 1; i <= cols; i++) {
-            // SELECT count(*) FROM IS_PAN.dbo.ScheduleTemplateTimeTable where templateid = 51 and col =0; para las rows
-            // SELECT count(*) FROM IS_PAN.dbo.ScheduleTemplateTimeTable where templateid = 51 and row =0; para las cols
 
-            consulta = "select * from ScheduleTemplateTimeTable "
-                    + "where templateid=" + id + " and Col=" + i + " and Row=0";
-            try {
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    ret.add(rs.getString("TemplateText"));
-                }
-            } catch (SQLException ex) {
-                Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+        consulta = "select * from ScheduleTemplateTimeTable "
+                + "where templateid=" + id + " and Row=0";
+        try {
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                ret.add(rs.getString("TemplateText"));
             }
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         return ret;
     }
-//Este método se usa para los HashMap de los Objetos de cada uno de los elementos de las restricciones de los cursos:
 
+    public static String[][] getTemplateText(int id, int x, int y) {
+        String consulta = "";
+
+        ResultSet rs;
+        String[][] ret = new String[x + 1][y + 1];
+        consulta = "select TemplateTime, TemplateText, Col, Row  from ScheduleTemplateTimeTable "
+                + "where templateid=" + id;
+
+        try {
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                int col = Integer.parseInt(rs.getString("Col"));
+                int row = Integer.parseInt(rs.getString("Row"));
+                if (rs.getString("TemplateTime").isEmpty()) {
+                    ret[col][row] = rs.getString("TemplateText");
+                } else if (rs.getString("TemplateText").isEmpty()) {
+                    ret[col][row] = rs.getString("TemplateTime");
+                } else if (rs.getString("TemplateText").isEmpty() && "TemplateTime".isEmpty()) {
+                    ret[col][row] = "";
+                } else {
+                    ret[col][row] = rs.getString("TemplateTime") + " " + rs.getString("TemplateText");
+                }
+
+            }
+            System.out.println("");
+            System.out.println("");
+            for (int i = 0; i < x + 1; i++) {
+                for (int j = 0; j < y + 1; j++) {
+                    if (ret[i][j] == null) {
+                        ret[i][j] = "";
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return ret;
+    }
+
+//Este método se usa para los HashMap de los Objetos de cada uno de los elementos de las restricciones de los cursos:
     private void cargarHashMap(HashMap<Integer, Object> hashObject, String groupType, String fieldName, String type) {
         String consulta = "select udd.data,udd.id\n"
                 + "                from uddata udd\n"
@@ -319,11 +334,12 @@ public class Consultas {
             while (rs.next()) {
                 String aux = rs.getString("data");
                 if (rs.getString("data") != null && !rs.getString("data").equals("")) {
-                    //   ret.get(i).setBlocksWeek(rs.getInt(1));
                     switch (type) {
                         case "Integer":
-                            hashObject.put(rs.getInt("id"), Integer.parseInt(aux));
-                            break;
+                            if (!aux.contains(",")) {
+                                hashObject.put(rs.getInt("id"), Integer.parseInt(aux));
+                                break;
+                            }
                         case "Boolean":
                             if (aux.equals("1")) {
                                 hashObject.put(rs.getInt("id"), true);
@@ -334,6 +350,7 @@ public class Consultas {
                         case "String":
                             hashObject.put(rs.getInt("id"), aux);
                             break;
+
                         default:
                             break;
                     }
@@ -345,9 +362,8 @@ public class Consultas {
 
     }
 
-    //AQUI ES DONDE TARDA *****
     //Aquí se obtienen las restricciones para los cursos. Si por ejemplo se ha cogido el template standard, el templateID=10:
-    public ArrayList<Course> getRestriccionesCourses(int[] ids, int[] tempinfo, String templateID, HashMap<String, ArrayList<Integer>> groupCourses) {
+    public ArrayList<Course> getRestriccionesCourses(int[] ids, String templateID, HashMap<String, ArrayList<Integer>> groupCourses, String schoolCode, Exceptions aviso) {
 //ESTE ES EL ARRAY DONDE SE VAN A CARGAR TODAS LAS RESTRICCIONES DE LOS CURSOS(ret):        
         ArrayList<Course> ret = new ArrayList<>();
         String consulta = "";
@@ -362,17 +378,6 @@ public class Consultas {
         try {
             ResultSet rs;
 
-            /*  consulta = "select * from courses"
-                    + " where Elementary=" + tempinfo[0]
-                    + " and HS=" + tempinfo[1]
-                    + " and MidleSchool=" + tempinfo[2]
-                    + " and PreSchool=" + tempinfo[3]
-                    + " and active=1";*/
- /*  consulta = "select * from courses"
-                    + " where "                  
-                    + getWhereTemplate(tempinfo, "MidleSchool")
-                    + " and active=1";*/
-//          
             consulta = "select udd.id\n"
                     + "                from uddata udd\n"
                     + "                inner join udfield udf\n"
@@ -384,10 +389,11 @@ public class Consultas {
                     + "                    and udf.fieldName = 'Templateid'\n"
                     + "                    and udd.data =" + templateID;
             rs = DBConnect.renweb.executeQuery(consulta);
-//El has1 coge los cursos que tiene asignado el template : RenWeb/ReportManager/Schedules/SchedulesCourseTemplate y print        
+//El hash1 coge los cursos que tiene asignado el template : RenWeb/ReportManager/Schedules/SchedulesCourseTemplate y print        
             while (rs.next()) {
                 hashUno.put(rs.getInt(1), "");
             }
+
 //Después se cambia el Query, para seleccionar los IDs que se asignaran al hash2:
             consulta = "select udd.data,udd.id\n"
                     + "                from uddata udd\n"
@@ -398,44 +404,24 @@ public class Consultas {
                     + "                    and udg.grouptype = 'course'\n"
                     + "                    and udg.groupname = 'Schedule'\n"
                     + "                    and udf.fieldName = 'Schedule'\n"
-                    + "                    and udd.data =1";
+                    + "                    and udd.data =1"
+                    + "                    and udg.SchoolCode= '" + schoolCode + "'";
 //Y estos datos se introducen en el hashDos. Se cogen los ids que tienen data=1 en la BBDD, es decir, los que están activados.
 //Estos se guardan en hash2 (se puede comprobar en:RenWeb/Academic/Courses y se selecciona el curso, se aplica en User Defined y se comprueba
-//si el apartado Schedule Schedule esta marcado en Yes ):
+//si el apartado Schedule/Schedule esta marcado en Yes):
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 hashDos.put(rs.getInt("id"), rs.getString("data"));
             }
-
+            
+            if (hashUno.isEmpty()) {
+                aviso.addAvisoCourseWithoutTemplate(templateID);
+            }
+            if (hashDos.isEmpty()) {
+                aviso.addAvisoSchoolWithoutScheduleActive(schoolCode);
+            }
             for (int i = 0; i < ids.length; i++) {
-                /*tempcorrect = false;
-                consulta = "select * from courses where courseid=" + ids[i]
-                        + " and Elementary=" + tempinfo[0]
-                        + " and HS=" + tempinfo[1]
-                        + " and MidleSchool=" + tempinfo[2]
-                        + " and PreSchool=" + tempinfo[3];
-                rs = DBConnect.renweb.executeQuery(consulta);
-                if (rs.next()) {
-                    tempcorrect = true;
-                }
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'Schedule'\n"
-                        + "                where udd.id =" + ids[i];
-                rs = DBConnect.renweb.executeQuery(consulta);
-                if (rs.next() && tempcorrect) {
-                    if (rs.getInt(1) == 1) {
-                        Course r = new Course(ids[i]);
-                        ret.add(r);
-                        courseName.put(ids[i], this.nameCourses.get(ids[i]));
-                    }
-                }*/
+
 //Se necesita que ambos Hash tengan las ids para poder establecer las restricciones de los cursos:                
                 if (hashUno.containsKey(ids[i]) && hashDos.containsKey(ids[i])) {
 //Se crea un objeto de curso en funcion de los ids recogidos, para luego guardar los datos en el array hecho previamente de curso:                    
@@ -444,14 +430,12 @@ public class Consultas {
 //Aquí se asignan el nombre de los cursos en función de su id, pero no se carga en ret:                    
                     courseName.put(ids[i], this.nameCourses.get(ids[i]));
                 }
+
             }
-            //HashMap<String, String> map = new HashMap<>();
-            /*  for (HashMap.Entry<Integer, String> entry : hashUno.entrySet()) {
-                Course r = new Course(entry.getKey());
-                ret.add(r);
-                courseName.put(entry.getKey(), this.nameCourses.get(entry.getKey()));
+            if (ret.isEmpty()) {
+                aviso.addAvisoWithoutMatches(templateID, schoolCode);
             }
-             */
+
 //Se hace un HashMap para cada una de las restricciones de cursos, para que posteriormente pueda ser cargado cada Hash:          
             HashMap<Integer, Object> hashBlocksPerWeek = new HashMap<>();
             HashMap<Integer, Object> hashGR = new HashMap<>();
@@ -461,7 +445,6 @@ public class Consultas {
             HashMap<Integer, Object> hashMinGapDays = new HashMap<>();
             HashMap<Integer, Object> hashRank = new HashMap<>();
             HashMap<Integer, Object> hashTeachers = new HashMap<>();
-//hashRooms no aparece cargado en ret            
             HashMap<Integer, Object> hashRooms = new HashMap<>();
             HashMap<Integer, Object> hashExcludeBlocksCourse = new HashMap<>();
             HashMap<Integer, Object> hashExcludeBlocksSchool = new HashMap<>();
@@ -471,7 +454,6 @@ public class Consultas {
             HashMap<Integer, Object> hashmaxBxD = new HashMap<>();
             HashMap<Integer, Object> hashminSizePerSection = new HashMap<>();
 
-            //cargarHashMap(hashBlocksPerWeek,'course','BlocksPerWeek','int');
 //Se carga cada hash que se ha definido previamente, independientemente de los ids obtenidos en el match de hash1 y hash2.
 //La carga se hace en funcion de 4 parametros: el hash especifico a cargar, si es cargado con datos del user defined de course, school(NOTA) u otros...,
 //,la restriccion especifica que es al fin y al cabo el nombre de la columna en la BBDD de donde se saca, y el tipo de dato.
@@ -492,14 +474,14 @@ public class Consultas {
             cargarHashMap(hashMandatoryBlocksRange, "course", "MandatoryBlocksRange", "String");
             cargarHashMap(hashmaxBxD, "course", "maxBxD", "Integer");
             cargarHashMap(hashminSizePerSection, "course", "minSizePerSection", "Integer");
-            //cargarHashMap(hashminSizePerSectionSchool, "school", "minSizePerSection", "Integer");
+
 //Gracias al siguiente for y a los siguientes if(cada uno por cada Hash especifico), se cargan 
 //en el array ret(tipo Course) las variables de su constructor con los datos
-//del hash (por la condicion que se establece dentro del if:a través de correspondencia de Ids). 
+//del hash (por la condicion que se establece dentro del if: a través de correspondencia de Ids). 
 //Cuando el for ha acabado, en el ret se han cargado todos
 //los valores de las distintas restricciones en funcion del curso(id).
             int minSizePerSectionSchool = 0;
-            consulta = "select udd.data,udd.id\n"
+            consulta = "select udd.data\n"
                     + "                from uddata udd\n"
                     + "                inner join udfield udf\n"
                     + "                    on udd.fieldid = udf.fieldid\n"
@@ -507,11 +489,17 @@ public class Consultas {
                     + "                    on udg.groupid = udf.groupid\n"
                     + "                    and udg.grouptype = 'school'\n"
                     + "                    and udg.groupname = 'Schedule'\n"
-                    + "                    and udf.fieldName = 'minSizePerSection'\n";
+                    + "                    and udf.fieldName = 'minSizePerSection'\n"
+                    + "                    and udg.schoolCode = '" + schoolCode + "'";
 
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
-                minSizePerSectionSchool = rs.getInt(1);
+                try {
+                    minSizePerSectionSchool = rs.getInt(1);
+                } catch (Exception e) {
+                    minSizePerSectionSchool = 0;
+                }
+
             }
             int maxSectionSchool = 0;
             consulta = "select udd.data\n"
@@ -522,7 +510,8 @@ public class Consultas {
                     + "  on udg.groupid = udf.groupid\n"
                     + " and udg.grouptype = 'school'\n"
                     + " and udg.groupname = 'Schedule'\n"
-                    + "and udf.fieldName = 'MaxSections'\n";
+                    + "and udf.fieldName = 'MaxSections'\n"
+                    + "                    and udg.schoolCode = '" + schoolCode + "'";
 
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
@@ -531,140 +520,31 @@ public class Consultas {
 
             for (int i = 0; i < ret.size(); i++) {
 
-                /*int prueba1 = (int) hashBlocksPerWeek.get(ret.get(i).getIdCourse());
-                boolean prueba2 = (boolean) hashGR.get(ret.get(i).getIdCourse());
-                // for (int i = 0; i < 1; i++) {
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'BlocksPerWeek'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    ret.get(i).setBlocksWeek(rs.getInt(1));
-                }*/
 //Los set se consiguen gracias a setters,getters y variables definidos en la clase Course:
-//Los hashBlocks aquí ya están cargados con la información de las restricciones. Por ejemplo:
-//hashBlocksPerWeek--> tiene 7 identificadores de cursos(cursos que no tienen porque tener el schedule ni el template activados) y 
+//Los hashBlocks aquí ya están cargados con la información de las restricciones. La carga se hace en función del id del curso: 
+//Los hash tienen toda la información y cuando se hace un match con algún id de un curso, se carga la información que se contenga en ese curso en función de los hash.
+//Por ejemplo: hashBlocksPerWeek--> tiene 7 identificadores de cursos(cursos que no tienen porque tener el schedule ni el template activados) y 
 //cada identificador está asociado a un valor concreto. En este punto, hay dos cursos que coinciden en que tienen el template y el schedule:
 //que son english1 y admath1 con ids 1245 y 1216, respectivamente. De los 7 identificadores que tiene hashBlocksPerWeek, 
 //uno de ellos es 1245, con un valor asociado de 5, es decir, que para el curso de english1 se cargan en user defined 
-//5 bloques por semana de restricciones
+//5 bloques por semana, que es la restricción que tiene el hash para el curso 1245:
                 if (hashBlocksPerWeek.containsKey(ret.get(i).getIdCourse())) {
                     ret.get(i).setBlocksWeek((int) hashBlocksPerWeek.get(ret.get(i).getIdCourse()));
                 }
-                /*
-                
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'GR'\n"
-                        + "                where udd.id=" + ret.get(i).getIdCourse();
 
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    ret.get(i).setGR(rs.getBoolean(1));
-                }
-                 */
                 if (hashGR.containsKey(ret.get(i).getIdCourse())) {
                     ret.get(i).setGR((boolean) hashGR.get(ret.get(i).getIdCourse()));
                 }
-                /*
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'MaxSections'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
 
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    ret.get(i).setMaxSections(rs.getString(1));
-                }
-                 */
                 if (hashMaxSections.containsKey(ret.get(i).getIdCourse())) {
                     ret.get(i).setMaxSections((String) hashMaxSections.get(ret.get(i).getIdCourse()));
                 } else {
                     ret.get(i).setMaxSections(String.valueOf(maxSectionSchool));
                 }
 
-                /*
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'MinGapBlocks'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    ret.get(i).setMinGapBlocks(rs.getString(1));
-                }
-/*/
-                if (hashMinGapBlocks.containsKey(ret.get(i).getIdCourse())) {
-                    ret.get(i).setMinGapBlocks((Integer) hashMinGapBlocks.get(ret.get(i).getIdCourse()));
-                }
-                /*
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'MinGapDays'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    try {
-                        ret.get(i).setMinGapDays(rs.getInt(1));
-                    } catch (Exception e) {
-                    }
-                }*/
-
                 if (hashMinGapDays.containsKey(ret.get(i).getIdCourse())) {
                     ret.get(i).setMinGapDays((int) hashMinGapDays.get(ret.get(i).getIdCourse()));
                 }
-                /*
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'Rank'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    try {
-                        ret.get(i).setRank(rs.getInt(1));
-                    } catch (Exception e) {
-                    }
-                }*/
                 if (hashRank.containsKey(ret.get(i).getIdCourse())) {
                     if (!hashRank.containsKey(ret.get(i).getIdCourse())) {
                         ret.get(i).setRank(DEFAULT_RANK);
@@ -672,23 +552,6 @@ public class Consultas {
                         ret.get(i).setRank((int) hashRank.get(ret.get(i).getIdCourse()));
                     }
                 }
-                /*
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'Teachers'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                String[] s = new String[2];
-                while (rs.next()) {
-                    s = rs.getString(1).split(",");
-                }*/
 //El hash tiene los profesores de los UD de los cursos que tienen activado el Schedule.                
 //Aquí los ids de ret y hasTeachers que coincidan--> se saca el valor de hashTeachers: por ejemplo de 1245--> se saca el
 //valor: 11038, 10630 . Se hace un split y se guarda cada uno de los 2 valores en el array [] s.
@@ -700,8 +563,6 @@ public class Consultas {
                     s = ((String) hashTeachers.get(ret.get(i).getIdCourse())).split(",");
                 }
 
-                /* SOLO MD-PAN al principio, ahora se aplica a todos:*/
-                ArrayList<String> aux = new ArrayList<String>(Arrays.asList(s));
                 int auxTeacherDefault = -1;
                 int auxRoomDefault = -1;
                 ArrayList<Integer> ar = new ArrayList<>();
@@ -712,16 +573,13 @@ public class Consultas {
                 while (rs.next()) {
                     if (rs.getInt(1) != 0) {
                         auxTeacherDefault = rs.getInt(1);
-                    }//;
+                    }
                     if (rs.getInt(2) != 0) {
                         auxRoomDefault = rs.getInt(2);
                     }
                 }
-               
+
                 ArrayList<Integer> sectionTeachers = new ArrayList<>();
-                /*  SELECT staffid, requiredroom FROM Classes left join roster on 
-                        (Classes.ClassID = roster.ClassID)
-                        where CourseId = 649 and templateid=57 */
                 consulta = "SELECT distinct StaffID,RequiredRoom FROM Classes left join roster on \n"
                         + "                        (Classes.ClassID = roster.ClassID)\n"
                         + "                        where CourseId = " + ret.get(i).getIdCourse() + " and templateId = " + templateID;
@@ -733,9 +591,9 @@ public class Consultas {
                         if (!teachers.contains(rs.getInt(1))) {
                             teachers.add(rs.getInt(1));
                         }
-                    }//;
+                    }
                 }
-                // s[s.length] = auxTeacherDefault;    
+
 //Se añade a ar y a teachers el id del profesor auxiliar:                
 //Se crea un array al que se le añade el id del profesor por defecto si es diferente de -1:
                 teachersCOURSE.put(ret.get(i).getIdCourse(), new ArrayList<>());
@@ -750,46 +608,24 @@ public class Consultas {
 //Y aquí se termina de añadir a teachers y a ar los dos valores de los profesores que se han seleccionado:
                 for (String s2 : s) {
                     if (s2 != null) {
-                        int idt = convertString(s2);
-                        ar.add(idt);
-                        if (!teachers.contains(idt)) {
-                            teachers.add(idt);
-                            teachersCOURSE.get(ret.get(i).getIdCourse()).add(idt);
+                        try {
+                            int idt = Integer.parseInt(s2);
+                            ar.add(idt);
+                            if (!teachers.contains(idt)) {
+                                teachers.add(idt);
+                                teachersCOURSE.get(ret.get(i).getIdCourse()).add(idt);
+                            }
+                        } catch (Exception e) {
+                            aviso.addAvisoCadena(this.nameCourse(ret.get(i).getIdCourse()), "Teachers", s2);
                         }
+
                     }
                 }
 //Con lo que al llegar a este punto: teachers y ar tienen los dos ids de profesores añadidos y el id por defecto:
 //Aquí ya se devolvería a ret las restricciones de profesores añadidas a ar, siempre y cuando el hash de profesores indique
 //el id de curso que coincida con alguno en ret:
                 ret.get(i).setTrestricctions(ar);
-//POR AHORA ESTÁN DESACTIVADAS LAS RESTRICCIONES EN ROOMS PORQUE FALTA TERMINAR CÓDIGO Y TESTEAR:                
 
-                /*consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'Rooms'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                String rooms = "";
-                while (rs.next()) {
-                    rooms = rs.getString(1);
-                }
-                if (!rooms.equals("")) {
-                    for (String room : rooms.split(",")) {
-                        try {
-                            ret.get(i).addRoom(Integer.parseInt(room));
-                        } catch (Exception e) {
-                            System.err.println("no se puede leer bien el campo rooms en el curso"
-                                    + ret.get(i).getIdCourse());
-                        }
-                    }
-                }*/
 //Aquí hay 3 opciones:
 //1ª: Se meten a ret las rooms que están configuradas en el course (si hay mas de 1, están separadas por comas, entonces se quitan
 //con split y se añaden a ret las rooms una por una (si solo hay una también funciona)):
@@ -806,7 +642,7 @@ public class Consultas {
                 while (rs.next()) {
                     if (rs.getInt(2) != 0) {
                         contaRoomsSec++;
-                        ret.get(i).addRoom(rs.getInt(2));
+                        //       ret.get(i).addRoom(rs.getInt(2));
                     }
                 }
                 if (auxRoomDefault != -1) {
@@ -825,88 +661,22 @@ public class Consultas {
                             countCourse2.get(ret.get(i).getIdCourse()).add(Integer.parseInt(room));
 
                         } catch (Exception e) {
-                            System.err.println("no se puede leer bien el campo rooms en el curso"
+                            System.err.println("No se puede leer bien el campo rooms en el curso"
                                     + ret.get(i).getIdCourse());
                         }
                     }
 
                 } else if (groupCourses.containsKey(templateID)) {
                     ret.get(i).addArrayRooms(groupCourses.get(templateID));
-                    
 
-                } //else if (!groupCourses.containsKey(templateID)) {
-//                    rooms = "-1";
-//                    ret.get(i).addRoom(Integer.parseInt(rooms));
-//                }
+                }
                 countCourse.put(ret.get(i).getIdCourse(), contaRoomsCourse);
-                if(groupCourses.containsKey(templateID)) {
-                   for (Integer room : groupCourses.get(templateID)) {
+                if (groupCourses.containsKey(templateID)) {
+                    for (Integer room : groupCourses.get(templateID)) {
                         countSchool.get(ret.get(i).getIdCourse()).add(room);
-                    } 
-                }
-                // groupOfRooms = rs.getString(1);
-                /* String result = rooms;
-                    String groupOfRooms;
-                    boolean exito = false;
-                    String[] resultSplit = result.split(";");
-                    int k = 0;
-
-                    while (k < resultSplit.length && !exito) {
-                        groupOfRooms = resultSplit[k].substring(1, resultSplit[k].length() - 1);
-
-                        String[] sResult;
-                        sResult = groupOfRooms.split(",");
-                        if (sResult.length == 2) {
-                            String auxTemplate = sResult[0];
-                            //  auxTemplate = auxTemplate.substring(1, auxTemplate.length());
-                            if (auxTemplate.equals(templateID)) {
-                                String auxRooms = sResult[1];
-                                auxRooms = auxRooms.substring(1, auxRooms.length() - 1);
-                                sResult = auxRooms.split("-");
-                                ret.get(i).resetRooms();
-                                for (String s2 : sResult) {
-                                    try {
-
-                                        ret.get(i).addRoom(Integer.parseInt(s2));
-
-                                    } catch (Exception ex) {
-                                        Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
-                                    }
-                                }
-                                //roomsTemplate.put(auxTemplate, rooms);
-                                exito = true;
-                            }
-                        }
-                        k++;
                     }
-
-                   for (String room : rooms.split(",")) {
-                        try {
-                            ret.get(i).addRoom(Integer.parseInt(room));
-                        } catch (Exception e) {
-                            System.err.println("no se puede leer bien el campo rooms en el curso"
-                                    + ret.get(i).getIdCourse());
-                        }
-                    }*/
-                //}
-                /*
-                consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'ExcludeBlocks'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                String excludes = "";
-                while (rs.next()) {
-                    excludes += rs.getString(1);
                 }
-                 */
+
 //Se añaden los bloques excluidos del hash a la variable excludes
 //para luego más abajo añadirle a la misma variable excludes los bloques excluidos por defecto de school,
 //con lo que se devolverá a ret las restricciones de bloques del curso concreto y de los user defined de school:
@@ -923,7 +693,8 @@ public class Consultas {
                         + "                    on udg.groupid = udf.groupid\n"
                         + "                    and udg.grouptype = 'school'\n"
                         + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'ExcludeBlocks'";
+                        + "                    and udf.fieldName = 'ExcludeBlocks'"
+                        + "                    and udg.schoolCode = '" + schoolCode + "'";
 
                 rs = DBConnect.renweb.executeQuery(consulta);
                 while (rs.next()) {
@@ -931,99 +702,42 @@ public class Consultas {
                         excludes += rs.getString(1);
                     }
                 }
-
-                ret.get(i).setExcludeBlocks(excludes);
-
-                //**David solo prueba**//         
-                String prefered = "";
-                /*consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'PreferredBlock'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
-
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    prefered += rs.getString(1);
-                }*/
-                if (hashPreferredBlock.containsKey(ret.get(i).getIdCourse())) {
-                    ret.get(i).setPreferedBlocks((String) hashPreferredBlock.get(ret.get(i).getIdCourse()));
+                try {
+                    ret.get(i).setExcludeBlocks(excludes);
+                } catch (Exception e) {
+                    aviso.addAvisoCadena(this.nameCourse(ret.get(i).getIdCourse()), "Exclude Blocks", excludes);
                 }
 
-                //**David solo prueba**//         
+                try {
+                    if (hashPreferredBlock.containsKey(ret.get(i).getIdCourse())) {
+                        ret.get(i).setPreferedBlocks((String) hashPreferredBlock.get(ret.get(i).getIdCourse()));
+                    }
+                } catch (Exception e) {
+                    aviso.addAvisoCadena(this.nameCourse(ret.get(i).getIdCourse()), "Prefered Blocks", (String) hashPreferredBlock.get(ret.get(i).getIdCourse()));
+                }
+
                 boolean balanceTeachers = false;
-                /* consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'balanceTeachers'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
 
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    balanceTeachers = rs.getBoolean(1);
-                }
-                 */
                 if (hashbalanceTeachers.containsKey(ret.get(i).getIdCourse())) {
                     balanceTeachers = (boolean) hashbalanceTeachers.get(ret.get(i).getIdCourse());
                 }
                 ret.get(i).setBalanceTeachers(balanceTeachers);
 
                 String mandatoryBlock = "";
-                /*consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'MandatoryBlocksRange'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
 
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    mandatoryBlock = rs.getString(1);
-                }
-                 */
                 if (hashMandatoryBlocksRange.containsKey(ret.get(i).getIdCourse())) {
                     mandatoryBlock = (String) hashMandatoryBlocksRange.get(ret.get(i).getIdCourse());
                 }
 
                 ret.get(i).setMandatoryBlockRange(mandatoryBlock);
 
-                int numBxD = 1;
-                /*consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'course'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'maxBxD'\n"
-                        + "                where udd.id =" + ret.get(i).getIdCourse();
+                int numBxD = Algoritmo.TAMY;
 
-                rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    numBxD = rs.getInt(1);
-                }
-                 */
                 if (hashmaxBxD.containsKey(ret.get(i).getIdCourse())) {
                     numBxD = (int) hashmaxBxD.get(ret.get(i).getIdCourse());
                 }
                 ret.get(i).setMaxBlocksPerDay(numBxD);
 
-                ///***///
                 consulta = "select MaxSize from courses where courseid="
                         + ret.get(i).getIdCourse();
                 rs = DBConnect.renweb.executeQuery(consulta);
@@ -1032,8 +746,43 @@ public class Consultas {
 //----CAMBIO----- Se guarda ahora la restricción de maximo tamaño de secciones en el array ret y en una variable.
 //En la variable se guarda también, porque es necesario para que más adelante calcular el número minimo de estudiantes por seccion
 //ya que del hashminSizePerSection se obtiene el porcentaje y se necesita el numero minimo para el algoritmo.
-                    ret.get(i).setMaxChildPerSection(rs.getInt(1));
-                    numeroMaxChildPerSection = rs.getInt(1);
+                    try {
+                        ret.get(i).setMaxChildPerSection(rs.getInt(1));
+                        numeroMaxChildPerSection = rs.getInt(1);
+                    } catch (Exception e) {
+                        ret.get(i).setMaxChildPerSection(0);
+                        numeroMaxChildPerSection = 0;
+                    }
+
+                }
+                if (numeroMaxChildPerSection == 0) {
+                    aviso.addAvisoMaxSizePerSectionCourse(this.nameCourses.get(ret.get(i).getIdCourse()));
+                    consulta = "select udd.data\n"
+                            + "                from uddata udd\n"
+                            + "                inner join udfield udf\n"
+                            + "                    on udd.fieldid = udf.fieldid\n"
+                            + "                inner join udgroup udg\n"
+                            + "                    on udg.groupid = udf.groupid\n"
+                            + "                    and udg.grouptype = 'school'\n"
+                            + "                    and udg.groupname = 'Schedule'\n"
+                            + "                    and udf.fieldName = 'MaxSizePerSection'"
+                            + "                    and udg.schoolCode = '" + schoolCode + "'";
+                    rs = DBConnect.renweb.executeQuery(consulta);
+                    while (rs.next()) {
+                        try {
+                            ret.get(i).setMaxChildPerSection(rs.getInt(1));
+                            numeroMaxChildPerSection = rs.getInt(1);
+                        } catch (Exception e) {
+                            ret.get(i).setMaxChildPerSection(25);
+                            numeroMaxChildPerSection = 25;
+                            aviso.addAvisoMaxSizePerSectionSchool(schoolCode);
+                        }
+                    }
+                }
+                if (numeroMaxChildPerSection == 0) {
+                    ret.get(i).setMaxChildPerSection(25);
+                    numeroMaxChildPerSection = 25;
+                    aviso.addAvisoMaxSizePerSectionSchool(schoolCode);
                 }
 //----CAMBIO----- Ahora se calcula el número mínimo de estudiantes aquí (antes simplemente se aplicaba 70% en el algoritmo y ya no):                   
 // No hace falta cargar un hash de minimo de niños por seccion en escuela porque es único(y esto está dentro de un for):
@@ -1044,19 +793,23 @@ public class Consultas {
 //En el caso de 1245 (eng1) no se obtiene ningún porcentaje de esta restricción en el Schedule de Cursos, por lo que se obtiene
 //el porcentaje por defecto de School, que es 30% siempre. Este 30% se aplica al máximo de estudiantes por seccion de eng1, que es 20,
 //y el método obtiene por lo tanto un mínimo de 6 alumnos:
+                ret.get(i).setMinChildPerSection(0);
                 if (hashminSizePerSection.containsKey(ret.get(i).getIdCourse())) {
-                    //  ret.get(i).setMinSections((int) hashminSizePerSection.get(ret.get(i)));
                     int numeroMinSizePerSection = ((int) (hashminSizePerSection.get(ret.get(i).getIdCourse())) * (numeroMaxChildPerSection)) / 100;
                     ret.get(i).setMinChildPerSection(numeroMinSizePerSection);
-                } else {
+                }
+                if (minSizePerSectionSchool > 0 && ret.get(i).getMinChildPerSection() == 0) {
+                    aviso.addAvisoMinSizePerSectionCourse(this.nameCourses.get(ret.get(i).getIdCourse()));
                     int numeroMinSizePerSection = (minSizePerSectionSchool * numeroMaxChildPerSection) / 100;
+                    ret.get(i).setMinChildPerSection(numeroMinSizePerSection);
+                } else if (!hashminSizePerSection.containsKey(ret.get(i).getIdCourse())) {
+                    aviso.addAvisoMinSizePerSectionCourse(this.nameCourses.get(ret.get(i).getIdCourse()));
+                    aviso.addAvisoMinSizePerSectionSchool(schoolCode);
+                    int numeroMinSizePerSection = (50 * numeroMaxChildPerSection) / 100;
                     ret.get(i).setMinChildPerSection(numeroMinSizePerSection);
                 }
 //Se actualizan los PatternGroups en funcion del curso y el template asignado:
                 updatePatternGroups(ret.get(i), templateID);
-
-                //prueba
-                //    ret.get(i).insertarOActualizarCurso();
             }
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
@@ -1092,7 +845,7 @@ public class Consultas {
             }
             rs.close();
         } catch (Exception e) {
-            System.out.println("dataManage.Consultas.updatePatternGroups()");
+            System.out.println("Failed: dataManage.Consultas.updatePatternGroups()");
         }
         System.out.println("dataManage.Consultas.updatePatternGroups()");
     }
@@ -1114,46 +867,11 @@ public class Consultas {
         return rooms;
     }
 
-    private int totalBlocks() {
-
-        String excludes = "";
-        int ret = Algoritmo.TAMX * Algoritmo.TAMY;
-        Course caux = new Course(1);
-        String consulta = "select udd.data\n"
-                + "                from uddata udd\n"
-                + "                inner join udfield udf\n"
-                + "                    on udd.fieldid = udf.fieldid\n"
-                + "                inner join udgroup udg\n"
-                + "                    on udg.groupid = udf.groupid\n"
-                + "                    and udg.grouptype = 'school'\n"
-                + "                    and udg.groupname = 'Schedule'\n"
-                + "                    and udf.fieldName = 'ExcludeBlocks03'";
-
-        ResultSet rs;
-        try {
-            rs = DBConnect.renweb.executeQuery(consulta);
-
-            while (rs.next()) {
-                if (!excludes.contains(rs.getString(1))) {
-                    excludes += rs.getString(1);
-                }
-            }
-            caux.setExcludeBlocks(excludes); //quita los bloques excluidos
-            //ret = caux.opciones().size(); 
-
-            ret = 33; //solo prueba
-
-        } catch (SQLException ex) {
-            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return ret;
-    }
-
-    // * @author David
-    protected HashMap<String, Course> getLinkedCourses() { //return hash de linkeados
-        //Como clave sera la asignatura(curso) que se debera insertar primero y como valor
-        // la que tiene que estar como consecutiva:
-//El getLinkedCourses sirve para aplicar las restricciones de un curso en otro(se copian los roster de cada seccion, o de las indicadas. NOTA: el nº de secciones debe ser igual en ambos cursos):
+    protected HashMap<String, Course> getLinkedCourses() {
+//Como clave será el curso padre y como valor curso hijo:
+//El getLinkedCourses sirve para aplicar las restricciones de un curso en otro
+//(se copian los roster de cada seccion, o de las indicadas). 
+//NOTA: el nº de secciones debe ser igual en ambos cursos:
 
         HashMap<String, Course> resultHash = new HashMap<>();
         String linkedIds = "";
@@ -1190,7 +908,6 @@ public class Consultas {
 //En el caso de que la longitud sea 2, significa que no se indican las secciones 
 // (se cogerían todas en este caso, por lo que es importante que el número de secciones sean las mismas).
 //Además se indicaría sólo el id del curso puesto que no es necesario añadir información de las secciones.
-
 //En el caso de que se indiquen las secciones, significa que la longitud es mayor que 2 (curso padre, secciones, curso hijo).
 //Además, se cogería un objeto de curso entero para añadir el id del curso y posteriormente las secciones linkeadas 
 //y el maxSections a través de la longitud de las secciones que hay.
@@ -1217,16 +934,16 @@ public class Consultas {
         return resultHash;
     }
 
-    // * @author David
 //Con este método se establece el total de bloques de inicio en un curso concreto en función del template:    
     private ArrayList<ArrayList<Boolean>> totalBlocksStart(String tempid) {
 
         String excludes = "";
-
+//Se establece un objeto course auxiliar para poder establecer bloques disponibles para el template elegido:
         Course caux = new Course(1);
 //El array de bloques es boolean: true es la activación de bloques que se van a usar:
-//Ejemplo:Hay 5 registros true por cada posición y un total de 10 posiciones: 5 columnas de días y 10 filas para las horas, total 50 bloques:
+//Ejemplo: hay 5 registros true por cada posición y un total de 10 posiciones: 5 columnas de días y 10 filas para las horas, total 50 bloques:
         ArrayList<ArrayList<Boolean>> auxTotalStart = new ArrayList<>();
+//Se quitan los bloques excluidos (los indicados en Configuration de School):        
         String consulta = "select udd.data\n"
                 + "                from uddata udd\n"
                 + "                inner join udfield udf\n"
@@ -1241,14 +958,16 @@ public class Consultas {
         try {
 
             rs = DBConnect.renweb.executeQuery(consulta);
-//Se quitan los bloques excluidos (los indicados en Configuration de School):
+
             while (rs.next()) {
                 if (!excludes.contains(rs.getString(1))) {
                     excludes += rs.getString(1);
                 }
             }
+//Se establece el curso auxiliar con ExcludeCols, ExcludeRows y ExcludeBlocks en función la consulta de ExcludeBlocks previa:            
             caux.setExcludeBlocks(excludes);
-
+//Palabras excluidas (Exclude Words de Configuration/School),
+//Por ejemplo: Lunch(esta palabra se recoge para luego aplicarla al template, y que en los bloques bloqueados ponga: Lunch):                
             consulta = "select udd.data\n"
                     + "                from uddata udd\n"
                     + "                inner join udfield udf\n"
@@ -1262,20 +981,27 @@ public class Consultas {
             rs = DBConnect.renweb.executeQuery(consulta);
             List<String> arrExcludeWords = new ArrayList<>();
             while (rs.next()) {
-//Palabras excluidas (Exclude Words de Configuration/School), en este caso: Lunch(esta palabra se recoge para luego aplicarla al template, y que en los bloques bloqueados ponga:Lunch):                
+
                 String[] auxS = rs.getString("data").split(",");
                 arrExcludeWords = Arrays.asList(auxS);
             }
-
+//Aquí es donde se limitan los huecos disponibles al inicio (para un curso, en función de excludeCols, excludeRows y excludeBlocks):
+//Se obtiene un array de size=filas, en cada fila: size=columnas, con los bloques disponibles a true:  
             auxTotalStart = caux.opcionesStart();
             consulta = "SELECT * FROM ScheduleTemplateTimeTable where templateid =" + tempid;
 
             rs = DBConnect.renweb.executeQuery(consulta);
-//Se añade el esquema del template(monday,tuesday... a tmpText):            
+//Se añade el esquema del template(monday,tuesday... a tmpText).
+//Se resta 1 porque aquí las filas y columnas empiezan en 0 y no en 1:
             while (rs.next()) {
                 int row = rs.getInt("row") - 1;
                 int col = rs.getInt("col") - 1;
                 String tmpText = rs.getString("TemplateText");
+//Aquí se comprueba si el template en concreto que se está usando contiene alguna de las palabras reservadas (arrExcludeWords.contains(tmpText)).
+//Se irán comprobando todas las palabras incluidas en el template, y se verificará la que no sea de cabecera
+//(las condiciones de row y col se incluyen para que no se refiera a las cabecera, ya que valdrían -1 con las condiciones establecidas previamente),
+//y que el hueco tampoco esté vacío.
+//Si se encuentra una palabra reservada que no sea cabecera, se establece ese hueco a false:
                 if (!tmpText.equals("") && arrExcludeWords.contains(tmpText)
                         && row >= 0 && col >= 0) {
                     auxTotalStart.get(row).set(col, false);
@@ -1284,10 +1010,13 @@ public class Consultas {
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
+//Se devuelve un boolean array de las filas x columnas que tenga el template, y quitando los ExcludeBlocks y los bloques que contengan ExcludeWords (todos estos a false, el resto a true):        
         return auxTotalStart;
     }
+//Se establecen los datos que se adjudicarán a los profesores en caso de que sus restricciones no estén configuradas
+//Es decir, los datos por defecto(con el máximo de secciones, máximo de cursos, y máximo de BxD que están configurados en el apartado de SetupSchoolSchedule):
 
-    private Teacher teacherDefault() {
+    public Teacher teacherDefault(int x, int y) {
         Teacher ret = new Teacher();
         String consulta;
         ResultSet rs;
@@ -1333,65 +1062,182 @@ public class Consultas {
             while (rs.next()) {
                 ret.setMaxBxD(rs.getInt(1));
             }
+
+            consulta = "select udd.data\n"
+                    + "        from uddata udd\n"
+                    + "        inner join udfield udf\n"
+                    + "            on udd.fieldid = udf.fieldid\n"
+                    + "        inner join udgroup udg\n"
+                    + "            on udg.groupid = udf.groupid\n"
+                    + "            and udg.grouptype = 'school'\n"
+                    + "            and udg.groupname = 'Schedule'\n"
+                    + "            and udf.fieldName = 'ExcludeBlocks'\n";
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                ret.setExcludeBlocks(rs.getString(1), x, y);
+            }
         } catch (Exception ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
     }
 
-    public ArrayList<Teacher> teachersList(String tempid, int[] tempinfo) {
-        ArrayList<Teacher> ret = new ArrayList<>();
+    public HashMap<Integer, Teacher> teachersList(String tempid, int[] tempinfo, int x, int y) {
+        HashMap<Integer, Teacher> ret = new HashMap<>();
         try {
-            /*
-             consulta = "select * from courses"
-                    + " where Elementary=" + tempinfo[0]
-                    + " and HS=" + tempinfo[1]
-            x        + " and MidleSchool=" + tempinfo[2]
-                    + " and PreSchool=" + tempinfo[3];
-            rs = DBConnect.renweb.executeQuery(consulta);
-             */
-            //   String consulta = "SELECT * FROM Person_Staff where active=1 and faculty=1";
-
+//Se obtiene una lista de profesores en función de los colegios asignados para dichos profesores(HS,MS...) 
+// que coincidan con los colegios del template y se añade a un array:
+//El array teachers ya tenía los ids de los profesores de UD y default de todos los cursos (se carga en getRestriccionesCourse). Aquí se añaden todos los demás
+//de las escuelas asignadas al template, para poder hacer en la vista una lista de los profesores que tienen disponibilidad y los que no:
             String consulta = "SELECT staffID FROM Person_Staff ps inner join Person p on (ps.StaffID = p.PersonID)\n"
-                    + "                        where ps.active=1 and ps.faculty=1 and "+getWhereTemplate(tempinfo);
-//Se guardan en el array teachers las ids de los profesores sacadas de la BBDD que hay en el PersonStaff de la escuela en concreto:
+                    + "where ps.active=1 and ps.faculty=1 and " + getWhereTemplate(tempinfo);
             ResultSet rs;
             rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 int staffId = rs.getInt(1);
+
                 if (!this.teachers.contains(staffId)) {
                     teachers.add(staffId);
                 }
             }
-//El siguiente for significa que para cada posición que haya un id(es decir, para cada profesor), se añaden restricciones en el array ret(que es de tipo teacher)
-//teniendo en cuenta tab el id del template del curso(qué template tiene asignado):            
-            for (Integer s : teachers) {
-                if (!s.equals("")) {
-                    ret.add(restriccionesTeacher(tempid, s));
-                }
-//Hasta aquí se han devuelto las restricciones de cada profesor contemplado en el template:                
+            for (Integer teacher : teachers) {
+                ret.put(teacher, new Teacher());
+                ret.get(teacher).setIdTeacher(teacher);
             }
+            consulta = "select udd.id,udd.data\n"
+                    + "from uddata udd\n"
+                    + "inner join udfield udf\n"
+                    + "on udd.fieldid = udf.fieldid\n"
+                    + "inner join udgroup udg\n"
+                    + "on udg.groupid = udf.groupid\n"
+                    + "and udg.grouptype = 'Staff'\n"
+                    + "and udg.groupname = 'Schedule'\n"
+                    + "and udf.fieldName = 'MaxSections'\n";
+
+            rs = DBConnect.renweb.executeQuery(consulta);
+
+            while (rs.next()) {
+                int staffId = rs.getInt(1);
+                if (this.teachers.contains(staffId)) {
+                    ret.get(staffId).setMaxSections(rs.getInt(2));
+
+                }
+            }
+            for (Integer teacher : teachers) {
+                if (ret.get(teacher).getMaxSections() == 0) {
+                    ret.get(teacher).setMaxSections(tdefault.getMaxSections());
+                }
+            }
+
+            consulta = "               select udd.id,udd.data\n"
+                    + "                from uddata udd\n"
+                    + "                inner join udfield udf\n"
+                    + "                on udd.fieldid = udf.fieldid\n"
+                    + "                inner join udgroup udg\n"
+                    + "                on udg.groupid = udf.groupid\n"
+                    + "                    and udg.grouptype = 'Staff'\n"
+                    + "                    and udg.groupname = 'Schedule'\n"
+                    + "                    and udf.fieldName = 'Preps'\n";
+            rs = DBConnect.renweb.executeQuery(consulta);
+
+            while (rs.next()) {
+                int staffId = rs.getInt(1);
+                if (this.teachers.contains(staffId)) {
+                    ret.get(staffId).setPreps(rs.getInt(2));
+                }
+            }
+            for (Integer teacher : teachers) {
+                if (ret.get(teacher).getPreps() == 0) {
+                    ret.get(teacher).setPreps(tdefault.getPreps());
+                }
+            }
+            consulta = "               select udd.id,udd.data\n"
+                    + "                from uddata udd\n"
+                    + "                inner join udfield udf\n"
+                    + "                on udd.fieldid = udf.fieldid\n"
+                    + "                inner join udgroup udg\n"
+                    + "                on udg.groupid = udf.groupid\n"
+                    + "                    and udg.grouptype = 'Staff'\n"
+                    + "                    and udg.groupname = 'Schedule'\n"
+                    + "                    and udf.fieldName = 'MaxBxD'\n";
+            rs = DBConnect.renweb.executeQuery(consulta);
+
+            while (rs.next()) {
+                int staffId = rs.getInt(1);
+                if (this.teachers.contains(staffId)) {
+                    ret.get(staffId).setMaxBxD(rs.getInt(2));
+                }
+            }
+            for (Integer teacher : teachers) {
+                if (ret.get(teacher).getMaxBxD() == 0) {
+                    ret.get(teacher).setMaxBxD(tdefault.getMaxBxD());
+                }
+            }
+            consulta = "select * from ScheduleTemplateStaff where templateid=" + tempid;
+            rs = DBConnect.renweb.executeQuery(consulta);
+
+//Con esta consulta obtiene de la BBDD si, primero, se aplica el esquema de bloques(con el boolean).
+//Si es así se aplica en ret las restricciones de exclusion de bloques, por dia y por periodo para el profesor en concreto.
+//Se establece así los bloques que no se pueden adjuntar a un profesor por defecto.
+//(Exclusion de bloques:excluir un conjunto de bloques para todos los cursos. 
+//Seleccionando como primer valor la hora y como segundo el día definido en el Scheduling):                 
+            while (rs.next()) {
+                int staffId = rs.getInt("staffid");
+                if (rs.getBoolean("scheduleblock") && this.teachers.contains(staffId)) {
+                    Tupla t = new Tupla(rs.getInt("day") - 1, rs.getInt("period") - 1);
+                    ret.get(staffId).addExcludeBlock(t);
+                }
+            }
+            consulta = "select udd.id, udd.data\n"
+                    + "                from uddata udd\n"
+                    + "                inner join udfield udf\n"
+                    + "                    on udd.fieldid = udf.fieldid\n"
+                    + "                inner join udgroup udg\n"
+                    + "                    on udg.groupid = udf.groupid\n"
+                    + "                    and udg.grouptype = 'Staff'\n"
+                    + "                    and udg.groupname = 'Schedule'\n"
+                    + "                    and udf.fieldName = 'ExcludeBlocks'";
+            rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                int staffId = rs.getInt(1);
+
+                if (this.teachers.contains(staffId)) {
+                    String ExcludeBlocks = rs.getString(2);
+                    ret.get(staffId).setExcludeBlocks(ExcludeBlocks, x, y);
+                }
+            }
+            for (Integer teacher : teachers) {
+                if (ret.get(teacher).getExcludeBlocks().isEmpty()) {
+                    ret.get(teacher).setExcludeBlocks(tdefault.getExcludeBlocksString(), x, y);
+                }
+            }
+            for (Integer teacher : teachers) {
+                ret.get(teacher).setName(this.namePersons.get(teacher));
+            }
+
         } catch (SQLException ex) {
             Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
     }
+//Aquí se cargan las restricciones de cada profesor cuando se entra en teachersList:
 
+    //ESTE SIGUIENTE MÉTODO YA NO SE USA:
     public Teacher restriccionesTeacher(String tempid, int id) {
         Teacher ret = new Teacher();
         String consulta = "";
-//El parametro id de restriccionesTeacher es el id de cada profesor que se recorre en el for de teachers de teacherList(arriba):
+//El parametro id de restriccionesTeacher es el id de cada profesor que se recorre en el for de teachers de teachersList(arriba):
 //
         ResultSet rs;
 //Se coge el ide de cada profesor y se consulta en la BBDD, la información de cada una de las restricciones:   
         if (id != 0) {
             try {
-                consulta = "select udd.data\n"
+                consulta = "                select udd.data\n"
                         + "                from uddata udd\n"
                         + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
+                        + "                on udd.fieldid = udf.fieldid\n"
                         + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
+                        + "                on udg.groupid = udf.groupid\n"
                         + "                    and udg.grouptype = 'Staff'\n"
                         + "                    and udg.groupname = 'Schedule'\n"
                         + "                    and udf.fieldName = 'MaxSections'\n"
@@ -1402,7 +1248,9 @@ public class Consultas {
                 while (rs.next()) {
                     ret.setMaxSections(rs.getInt(1));
                 }
-//Si no encuentra el dato en la BBDD, se asigna el valor por defecto del MaxSections:                
+//Si no encuentra el dato en la BBDD, se asigna el valor por defecto del MaxSections
+//(este valor ha sido asignado Restrictions, al cargar el constructor de consultas
+//(se han volcado los datos del método teacherDefault() en tdefault)):                
                 if (ret.getMaxSections() == 0) {
                     ret.setMaxSections(tdefault.getMaxSections());
                 }
@@ -1468,8 +1316,10 @@ public class Consultas {
                     }
                 }
                 ret.setIdTeacher(id);
+
             } catch (Exception ex) {
-                Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Consultas.class
+                        .getName()).log(Level.SEVERE, null, ex);
             }
         }
 //Se guarda el nombre de los profesores en ret, en función de su id :      
@@ -1477,26 +1327,6 @@ public class Consultas {
         return ret;
     }
 
-    //to do: FUNCION NO PROBADA CONVIERTE EXCLUDE BLOCKS ENTRE TEMPLATES
-    //SE LO EXPLIQUE A DAVID EL ULTIMO DIA.
-//Esta función no hace falta porque ya se tiene en cuenta el template al usar las restricciones de profesores:
-    /* private void setExcludeBlocksTeacher(Teacher t, String tempid) {
-        String consulta = "select * from ScheduleTemplateStaff where staffid=" + t.getIdTeacher();
-        try {
-            ResultSet rs = DBConnect.renweb.executeQuery(consulta);
-            while (rs.next()) {
-                if (rs.getBoolean("scheduleblock")) {
-                    ArrayList<Tupla> ar = conversionTemplatesBlocks(tempid, rs.getString("templateid"),
-                            rs.getInt("day"), rs.getInt("period"));
-                    for (Tupla t2 : ar) {
-                        t.addExcludeBlock(t2);
-                    }
-                }
-            }
-        } catch (Exception e) {
-
-        }
-    }*/
     private boolean esMultiplo(int x, int y) {
         if (x % y == 0 || y % x == 0) {
             return true;
@@ -1586,14 +1416,18 @@ public class Consultas {
                 for (Integer i : colsBlock) {
                     for (Integer row : rowsBlock) {
                         ret.add(new Tupla(i, row));
+
                     }
                 }
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Consultas.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
     }
+//Con este método se recoge un array de 4 posiciones para las diferentes escuelas, 1 es que true y 0 false.
+//Para el ejemplo de RWI-SPAIN, serían todos a 0, menos HS que sería 1:    
 
     public int[] templateInfo(String tempid) {
         int[] ret = new int[4];
@@ -1605,69 +1439,71 @@ public class Consultas {
                 ret[1] = rs.getInt("HighSchool");
                 ret[2] = rs.getInt("MiddleSchool");
                 ret[3] = rs.getInt("Preschool");
+
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Consultas.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
     }
 
-    public HashMap<String, ArrayList<Integer>> roomsGroup(String groupOfRooms, String tmpId) {
+    public HashMap<String, ArrayList<Integer>> roomsGroup(String tmpId) {
         HashMap<String, ArrayList<Integer>> roomsTemplate = new HashMap();
         ArrayList<Integer> rooms = new ArrayList();
-        boolean exito = false;
+        String groupOfRooms = "";
 
-        //De esta consulta se sacan los rooms asignados en School, que tienen asignado para determinados template
-        if (!groupOfRooms.equals("0")) {
-            try {
-                String consulta = "select udd.data\n"
-                        + "                from uddata udd\n"
-                        + "                inner join udfield udf\n"
-                        + "                    on udd.fieldid = udf.fieldid\n"
-                        + "                inner join udgroup udg\n"
-                        + "                    on udg.groupid = udf.groupid\n"
-                        + "                    and udg.grouptype = 'school'\n"
-                        + "                    and udg.groupname = 'Schedule'\n"
-                        + "                    and udf.fieldName = 'Rooms'";
+//De esta consulta se sacan los rooms asignados en School, que tienen asignado para determinados template
+        try {
+            String consulta = "select udd.data\n"
+                    + "                from uddata udd\n"
+                    + "                inner join udfield udf\n"
+                    + "                    on udd.fieldid = udf.fieldid\n"
+                    + "                inner join udgroup udg\n"
+                    + "                    on udg.groupid = udf.groupid\n"
+                    + "                    and udg.grouptype = 'school'\n"
+                    + "                    and udg.groupname = 'Schedule'\n"
+                    + "                    and udf.fieldName = 'Rooms'";
 //Con lo siguiente se quitan los ; parentesis y otros caracteres, para almacenar todo en el hashmap roomsTemplate(
 //con key: id de los template, y value: los ids que tienen asignado a determinado id de template )
-                ResultSet rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    // groupOfRooms = rs.getString(1);
-                    String result = rs.getString(1);
+            ResultSet rs = DBConnect.renweb.executeQuery(consulta);
+            while (rs.next()) {
+                String result = rs.getString(1);
 
-                    String[] resultSplit = result.split(";");
-                    int i = 0;
-                    while (i < resultSplit.length) {
-                        groupOfRooms = resultSplit[i].substring(1, resultSplit[i].length() - 1);
-                        rooms = new ArrayList<>();
-                        String[] s;
-                        s = groupOfRooms.split(",");
-                        if (s.length == 2) {
-                            String auxTemplate = s[0];
-                            //  auxTemplate = auxTemplate.substring(1, auxTemplate.length());
+                String[] resultSplit = result.split(";");
+                int i = 0;
+                while (i < resultSplit.length) {
+                    groupOfRooms = resultSplit[i].substring(1, resultSplit[i].length() - 1);
+                    rooms = new ArrayList<>();
+                    String[] s;
+                    s = groupOfRooms.split(",");
+                    if (s.length == 2) {
+                        String auxTemplate = s[0];
 
-                            String auxRooms = s[1];
-                            auxRooms = auxRooms.substring(1, auxRooms.length() - 1);
-                            s = auxRooms.split("-");
+                        String auxRooms = s[1];
+                        auxRooms = auxRooms.substring(1, auxRooms.length() - 1);
+                        s = auxRooms.split("-");
 
-                            for (String s2 : s) {
-                                try {
-                                    rooms.add(Integer.parseInt(s2));
-                                } catch (Exception ex) {
-                                    Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
-                                }
+                        for (String s2 : s) {
+                            try {
+                                rooms.add(Integer.parseInt(s2));
+
+                            } catch (Exception ex) {
+                                Logger.getLogger(Consultas.class
+                                        .getName()).log(Level.SEVERE, null, ex);
                             }
-                            roomsTemplate.put(auxTemplate, (ArrayList<Integer>) rooms.clone());
-                            //exito = true;
                         }
-                        i++;
+                        roomsTemplate.put(auxTemplate, (ArrayList<Integer>) rooms.clone());
                     }
+                    i++;
+
                 }
-            } catch (SQLException ex) {
-                Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
             }
+        } catch (SQLException ex) {
+            Logger.getLogger(Consultas.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
+
         return roomsTemplate;
     }
 
@@ -1676,10 +1512,14 @@ public class Consultas {
      * @param c
      * @param stCourse
      * @param yearid
+     * @param tempid
+     * @param schoolCode
+     * @param aviso
+     * @return
      * @returng
      */
     //@ExceptionHandler
-    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int tempid, String schoolCode) throws Exception {
+    public ArrayList<Student> restriccionesStudent(ArrayList<Integer> c, HashMap<Integer, ArrayList<Integer>> stCourse, String yearid, int tempid, String schoolCode, Exceptions aviso) throws Exception {
         String consulta = "";
         HashMap<Integer, String> hashUno = new HashMap<>();
         ResultSet rs;
@@ -1711,7 +1551,8 @@ public class Consultas {
                     + "                    and udg.grouptype = 'course'\n"
                     + "                    and udg.groupname = 'Schedule'\n"
                     + "                    and udf.fieldName = 'Schedule'\n"
-                    + "                    and udd.data = '1'";
+                    + "                    and udd.data = '1'"
+                    + "                    and udg.SchoolCode= '" + schoolCode + "'";
             rs = DBConnect.renweb.executeQuery(consulta);
 
 //CAMBIO:Ahora el hash1 tiene los ids con el template asignado, y estos se comparan con los ids que tienen el schedule active. Los que coincidan
@@ -1729,20 +1570,6 @@ public class Consultas {
         }
 
         ArrayList<Student> ret = new ArrayList<>();
-        /*     consulta = "    select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n"
-                + "    from studentrequests sr, person p, person_student ps,courses c \n"
-                + "    where sr.studentid = p.personid\n"
-                + "    and ps.studentid = p.personid\n"
-                + "    and sr.yearid = " + yearid
-                + "    and ps.status = 'enrolled'\n"
-                + "    and ps.nextstatus = 'enrolled'\n"
-                + "    and c.CourseID = sr.courseid"
-                + "    and c.Elementary=" + tempinfo[0]
-                + "    and c.HS=" + tempinfo[1]
-                + "    and c.MidleSchool=" + tempinfo[2]
-                + "    and c.PreSchool=" + tempinfo[3];
-        //+ "    order by gender";
-         */
         consulta = " select sr.courseid, sr.studentid, p.gender, ps.gradelevel\n"
                 + "    from studentrequests sr\n"
                 + "    inner join person p\n"
@@ -1773,8 +1600,24 @@ public class Consultas {
                 if (CoursesScheduleActive.contains(courseid)) {
                     int studentid = rs.getInt("studentid");
                     Student st = new Student(studentid);
-                    st.setGenero(rs.getString("gender"));
-                    st.setGradeLevel(rs.getString("gradelevel"));
+                    try {
+                        if (rs.getString("gender") != null) {
+                            st.setGenero(rs.getString("gender"));
+                        } else {
+                            st.setGenero("Male");
+                        }
+                    } catch (NullPointerException e) {
+                        st.setGenero("Male");
+                    }
+                    try {
+                        if (rs.getString("gradelevel") != null) {
+                            st.setGradeLevel(rs.getString("gradelevel"));
+                        } else {
+                            st.setGradeLevel("There's no gradelevel");
+                        }
+                    } catch (NullPointerException e) {
+                        st.setGradeLevel("There's no gradelevel");
+                    }
 //estos id de cursos se van a añadir a c(c se va a devolver en la clase Restrictions y se va a aplicar como parámetro también en 
 //las restricciones de cursos:)                    
                     if (!c.contains(courseid)) {
@@ -1793,6 +1636,7 @@ public class Consultas {
                     }
                     stCourse.get(courseid).add(studentid);
                 }
+
             }
 //Si difiere el size de stCourse del size de CoursesScheduleActive significa que hay curso/s que no tienen estudiantes asignados
 //porque si pasa esto significa que stCourse.size es menor. La razón por la que es menor es que la consulta previa solo captura estudiantes de cursos que tienen estudiantes.
@@ -1804,29 +1648,13 @@ public class Consultas {
 //diciendo los cursos (nombres e ids) que no tiene estudiantes cargados y parar el programa. Para ello es necesario capturar estos datos con las excepciones:
 
             //----------------------------------->CAPTURAR EXCEPCION PARA VISTA: NECESARIO:          
-            System.out.println("Nº cursos a los que se han añadido estudiantes: " + stCourse.size());
-            System.out.println("Nº cursos con Schedule Active: " + CoursesScheduleActive.size());
-            if (stCourse.size() != CoursesScheduleActive.size()) {
-                for (int i = 0; i < CoursesScheduleActive.size(); i++) {
-                    if (!stCourse.containsKey(CoursesScheduleActive.get(i))) {
-                        System.out.println(CoursesScheduleActive.get(i));
-                        CoursesWithoutStudents.put(CoursesScheduleActive.get(i), this.nameCourses.get(CoursesScheduleActive.get(i)));
-                        // cursosSin1 = CoursesWithoutStudents.toString();
-                        /*consulta = "select Title from courses where CourseID = "+CoursesScheduleActive.get(i);
-                            ResultSet rs2 = DBConnect.renweb.executeQuery(consulta);
+//            System.out.println("Nº cursos a los que se han añadido estudiantes: " + stCourse.size());
+//            System.out.println("Nº cursos con Schedule Active: " + CoursesScheduleActive.size());
+            aviso.CourseWithoutStudents(stCourse, CoursesScheduleActive, this.nameCourses);
 
-            while (rs2.next()) {
-  
-                String title = rs2.getString("Title");
-                CoursesWithoutStudents.put(CoursesScheduleActive.get(i),title);
-                System.out.println(title);
-            }*/
-                    }
-                }
-
-            }
         } catch (SQLException ex) {
-            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Consultas.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
 
 //Aquí te dice que si el array está vacío, se asignen datos por defecto(male y nombre:default), y en caso contrario,
@@ -1841,6 +1669,7 @@ public class Consultas {
         }
         return ret;
     }
+//Convierte un ArrayList de enteros a un array [] de enteros:
 
     public static int[] convertIntegers(ArrayList<Integer> integers) {
         int[] ret = new int[integers.size()];
@@ -1857,9 +1686,11 @@ public class Consultas {
             ResultSet rs = DBConnect.renweb.executeQuery(consulta);
             while (rs.next()) {
                 ret = rs.getString("title");
+
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Consultas.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
     }
@@ -1898,6 +1729,7 @@ public class Consultas {
                 nombre = entry.getValue();
             }
         }
+
         return nombre;
     }
 
@@ -1910,9 +1742,11 @@ public class Consultas {
             while (rs.next()) {
                 ret = rs.getString("lastname") + ", ";
                 ret += rs.getString("firstname");
+
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Consultas.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Consultas.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
     }
@@ -1946,76 +1780,7 @@ public class Consultas {
     --CONSULTAS OWN SERVER--
     ------------------------
      */
-    //OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:
-/*    
-    public ArrayList<Course> getCoursesOwnDB() {
-        ArrayList<Course> ret = new ArrayList();
-        String consulta = "select * from courses order by id ASC";
-        String teachers = "";
-        try {
-            ResultSet rs = DBConnect.own.executeQuery(consulta);
-            while (rs.next()) {
-                Course c = new Course(rs.getInt("id"));
-                c.setBlocksWeek(rs.getInt("blocksperweek"));
-                c.setMaxSections("" + rs.getInt("maxsections"));
-                c.setMinGapBlocks(rs.getInt("mingapblocks"));
-                c.setMinGapDays(rs.getInt("mingapdays"));
-                c.setRank(rs.getInt("rank"));
-                c.setGR(rs.getBoolean("gender"));
-                c.setExcludeBlocksOwnDB(rs.getString("excludeblocks"));
-                // c.setMaxBlocksPerDay(rs.getInt("maxblocksperday"));
-                c.setRooms(rs.getString("rooms"));
-                c.setExcludeCols("excludecols");
-                c.setExcludeRows("ecluderows");
-                /**//*
-                c.setBalanceTeachers(rs.getBoolean("balanceteacher"));
-
-                // String sAux = rs.getString("preferedblocks");
-                //sAux = sAux.substring(1, sAux.length()-1);
-                c.setPreferedBlocks(rs.getString("preferedblocks"));
-                /**/
- /*
-                teachers = rs.getString("teachers");
-                teachers = teachers.replace("[", "");
-                teachers = teachers.replace("]", "");
-                String[] tlist = teachers.split(",");
-                ArrayList<Integer> tids = new ArrayList();
-                for (String s : tlist) {
-                    try {
-                        tids.add(Integer.parseInt(s));
-                    } catch (Exception e) {
-                    }
-                }
-                c.setTrestricctions(tids);
-                ret.add(c);
-            }
-        } catch (Exception e) {
-        }
-        return ret;
-    }
-
-    public ArrayList<Teacher> getTeachersOwnDB() {
-        ArrayList<Teacher> ret = new ArrayList();
-        String consulta = "select * from teachers";
-        try {
-            ResultSet rs = DBConnect.own.executeQuery(consulta);
-            while (rs.next()) {
-                Teacher t = new Teacher();
-                t.setIdTeacher(rs.getInt("id"));
-                t.setMaxSections(rs.getInt("maxsections"));
-                t.setPreps(rs.getInt("maxpreps"));
-                t.setMaxBxD(rs.getInt("maxblocksperday"));
-                t.setExcludeBlocks(rs.getString("excludeblocks"));
-                t.setName(rs.getString("name"));
-                ret.add(t);
-            }
-        } catch (Exception e) {
-        }
-        return ret;
-    }
-    //HashMap<Integer,HashMap<Integer,Seccion>> mapSecciones;//HashMap<idCourse,HashMap<numSeccion,Seccion>>
-     */
-    public HashMap<Integer, ArrayList<Seccion>> getDataSections(HashMap<Integer, Student> students, HashMap<Integer, Teacher> teachers, HashMap<Integer, Room> rooms, ArrayList<Course> courses, String yearID, String templateID, HashMap<String, Course> linkedCourses, String schoolCode, HashMap<Integer, ArrayList<Integer>> stCourse) {
+    public HashMap<Integer, ArrayList<Seccion>> getDataSections(HashMap<Integer, Student> students, HashMap<Integer, Teacher> teachers, HashMap<Integer, Room> rooms, ArrayList<Course> courses, String yearID, String templateID, HashMap<String, Course> linkedCourses, String schoolCode, HashMap<Integer, ArrayList<Integer>> stCourse, Exceptions aviso) {
         //HashMap<Integer,ArrayList<Seccion>> rsSection = new ArrayList();
         HashMap<Integer, ArrayList<Seccion>> auxSections = new HashMap<>();
         ArrayList<ArrayList<Integer>> sectionsModificadas = new ArrayList<>();
@@ -2023,30 +1788,13 @@ public class Consultas {
         ArrayList<String> sectionsModificadasFullName = new ArrayList<>();
         ArrayList<String> CourseName = new ArrayList<>();
         ArrayList<Seccion> auxSectionsIn;
-        tempidsect = "";
 
-        /*        String consulta = "SELECT distinct Section,Classes.YearId,StaffID,Pattern,CourseId FROM Classes inner join roster on\n" +
-"                                           (Classes.ClassID = roster.ClassID)";
-                ResultSet rs = DBConnect.renweb.executeQuery(consulta);
-                while (rs.next()) {
-                    ArrayList<Integer> aux = new ArrayList<>();
-                    aux.add(rs.getInt(1)); // section
-                    aux.add(rs.getInt(2)); // staffId
-                    aux.add(rs.getInt(3)); // pattern
-                    sectionsModificadas.add(aux);
-                }
-         */
 //Los cursos que hay hasta ahora (en este caso dos) se van añadiendo a course. Se van a obtener los ids:)        
         for (Course course : courses) {
             try {
                 int count = 1;
                 int idCourse = course.getIdCourse();
 
-                if (idCourse == 1303) {
-                    System.err.println("");
-                }
-                //int numSeccion = 1;
-                //String sAux =
                 auxSectionsIn = new ArrayList<>();
                 sectionsModificadas = new ArrayList<>();
                 sectionsModificadasName = new ArrayList<>();
@@ -2064,16 +1812,12 @@ public class Consultas {
                 ResultSet rs = DBConnect.renweb.executeQuery(consulta);
                 while (rs.next()) {
                     ArrayList<Integer> aux = new ArrayList<>();
-                    //try {
 //En el array aux se van añadiendo los datos y restricciones, uno en cada posición. La sección, staffID, Pattern, LockEnroolment, LockSchedule, classId, Room:     
 
 //El id no se coge de la BBDD, se genera un autoincremento para evitar que si se pone un string en vez de un numero, se pueda guardar igualmente la sección:
 //Es por eso que el primer dato se guarda como string en  sectionsModificadasName más abajo. Este es el dato que mostrará al usuario, pero el programa realmente
 //cogerá el count y así poder manejarlo.
                     aux.add(count); // section
-                    /* } catch (Exception e) {
-                        aux.add(1);
-                    }*/
 
                     aux.add(rs.getInt(2)); // staffId
                     if (rs.getBoolean(5)) {
@@ -2096,9 +1840,7 @@ public class Consultas {
                     aux.add(rs.getInt(6)); // classID
 
                     aux.add(rs.getInt(7)); // room
-//                    if(rs.getInt(7)==0 && Consultas.countCourse.get(course.getIdCourse())){ Se ha usado más abajo
-//                        )
-//                    }
+
                     //AÑADIDO: templateId de la SECCION EN CONCRETO.
                     templateIdSection = rs.getInt(8);
 
@@ -2118,18 +1860,19 @@ public class Consultas {
                         count++;
                         //En tempIdSect se guardan las secciones con un template diferente a la del curso de origen.
                     } else {
-                        String p1 = "Course Name: " + this.nameCourses.get(course.getIdCourse());
-                        String p2 = "-Class Section: " + rs.getString(9) + ":" + rs.getString(1);
-
-                        if (!tempIdSect.containsKey(p1)) {
-                            tempIdSect.put(p1, new ArrayList<>());
-                            tempIdSect.get(p1).add(p2);
-                            tempidsect = tempidsect.concat("<br/>" + p1 + ": " + "<br/>" + p2);
-
-                        } else {
-                            tempIdSect.get(p1).add(p2);
-                            tempidsect = tempidsect.concat("<br/>" + p2);
+                        if (aux.get(4) == 1) {
+                            aux.set(4, 0);
                         }
+                        sectionsModificadas.add((ArrayList<Integer>) aux.clone());
+                        sectionsModificadasName.add(rs.getString(1));
+                        sectionsModificadasFullName.add(this.nameCourses.get(course.getIdCourse()) + ": " + rs.getString(1));
+
+                        CourseName.add(this.nameCourses.get(course.getIdCourse()));
+
+                        NumNomSection.put(idCourse * 100 + count, rs.getString(1));
+
+                        count++;
+                        aviso.templateIdSection(nameCourses, course, rs);
                     }
                 }
 //Ahora se van añadiendo a sectionsModificadas los ids de estudiantes que están almacenados en renweb/academic/classes/roster al arrayStud y posteriormente se añaden a auxSec:
@@ -2139,7 +1882,6 @@ public class Consultas {
                     for (int i = 0; i < sectionsModificadas.size(); i++) {
                         Seccion auxSec = new Seccion();
                         ArrayList<Integer> arrayStud = new ArrayList<>();
-                        ArrayList<Integer> arrayStud2 = new ArrayList<>();
                         consulta = "SELECT StudentID FROM Classes inner join roster on"
                                 + "(Classes.ClassID = roster.ClassID)"
                                 + " where roster.enrolled = 1 and Classes.CourseId = " + course.getIdCourse() + " and Classes.YearId = " + yearID
@@ -2157,102 +1899,59 @@ public class Consultas {
                         auxSec.setLockEnrollment(sectionsModificadas.get(i).get(3));
                         auxSec.setLockSchedule(sectionsModificadas.get(i).get(4));
                         auxSec.setTeacher(teachers.get(sectionsModificadas.get(i).get(1)));
-                        if (auxSec.getIdTeacher() == 0 && !Consultas.teachersCOURSE.get(course.getIdCourse()).isEmpty()) {
-                            auxSec.setTeacher(teachers.get(Consultas.teachersCOURSE.get(course.getIdCourse()).get(0)));
-                            auxSec.setIdTeacher(Consultas.teachersCOURSE.get(course.getIdCourse()).get(0));
-                        }
+//                        if (auxSec.getIdTeacher() == 0 && !Consultas.teachersCOURSE.get(course.getIdCourse()).isEmpty() && auxSec.isLockSchedule()) {
+//                                auxSec.setTeacher(teachers.get(Consultas.teachersCOURSE.get(course.getIdCourse()).get(0)));
+//                                auxSec.setIdTeacher(Consultas.teachersCOURSE.get(course.getIdCourse()).get(0));
+//                             
+//
+//                        }
                         auxSec.setClassId(sectionsModificadas.get(i).get(5));
 //Aquí se le añade el id del Room para que posteriormente se le pueda añadir el nombre:                        
                         auxSec.setIdRoom(sectionsModificadas.get(i).get(6));
                         auxSec.setRoom(rooms.get(sectionsModificadas.get(i).get(6)));
 
-                        if ((auxSec.getIdRoom() == 0 || course.getMaxChildPerSection() > auxSec.getRoom().getSize()) && !Consultas.countCourse2.get(course.getIdCourse()).isEmpty()) {
-                            if (auxSec.getIdRoom() == 0) {
-                                alert += "Room text field in " + sectionsModificadasFullName.get(i) + " is empty. <br/>";
-                            }
-                            if (auxSec.getIdRoom() != 0 && course.getMaxChildPerSection() > auxSec.getRoom().getSize()) {
-                                alert += "Room "+auxSec.getRoom().getName()+" size in Section " + sectionsModificadasFullName.get(i) + " is smaller than Course " + CourseName.get(i) + " max size. <br/>";
-                            }
-                            auxSec.setRoom(rooms.get(Consultas.countCourse2.get(course.getIdCourse()).get(0)));
-                            auxSec.setIdRoom(Consultas.countCourse2.get(course.getIdCourse()).get(0));
-
-                            if (course.getMaxChildPerSection() > auxSec.getRoom().getSize()) {
-                                alert += "Room "+auxSec.getRoom().getName()+" size in Course " + CourseName.get(i) + " is smaller than course max size too. <br/>";
-                                if (!Consultas.countSchool.get(course.getIdCourse()).isEmpty()) {
-                                    auxSec.setRoom(rooms.get(Consultas.countSchool.get(course.getIdCourse()).get(0)));
-                                     auxSec.setIdRoom(Consultas.countSchool.get(course.getIdCourse()).get(0));
-                                }
-                               
-                            }
-
-                        } else if ((auxSec.getIdRoom() == 0 || course.getMaxChildPerSection() > auxSec.getRoom().getSize()) && !Consultas.countSchool.get(course.getIdCourse()).isEmpty()) {
-                            auxSec.setRoom(rooms.get(Consultas.countSchool.get(course.getIdCourse()).get(0)));
-                            auxSec.setIdRoom(Consultas.countSchool.get(course.getIdCourse()).get(0));
-                            if (auxSec.getIdRoom() == 0) {
-                                alert += "Room text fields in " + sectionsModificadasFullName.get(i) + " and " + CourseName.get(i) + " are empty. <br/>";
-                            } else if (course.getMaxChildPerSection() > auxSec.getRoom().getSize()) {
-                                alert += "Room "+auxSec.getRoom().getName()+" size in Course " + CourseName.get(i) + " is smaller than course max size. <br/>";
-                            }
-                        }
-
-//                        consulta = " select sr.studentid\n"
-//                + "    from studentrequests sr\n"
-//                + "    inner join person p\n"
-//                + "        on p.PersonID = sr.StudentID\n"
-//                + "    inner join courses c\n"
-//                + "        on c.CourseID = sr.courseid\n"
-//                + "    inner join students s\n"
-//                + "        on s.studentid = sr.StudentID\n"
-//                + "        and p.personid = s.studentid\n"
-//                + "    inner join person_student ps\n"
-//                + "        on ps.StudentID = s.StudentID\n"
-//                + "        and ps.StudentID = p.PersonID\n"
-//                + "        and ps.StudentID = sr.StudentID"
-//                + "        where sr.yearid =" + yearID
-//                + "        and ps.SchoolCode = '" + schoolCode + "'"
-//                + "        and c.CourseId= "+course.getIdCourse();
-//                        rs = DBConnect.renweb.executeQuery(consulta);
 //Para añadir a arrayStud2 los alumnos que hay en la sección y en el curso (se coge los que coinciden en ambos, arrayStud son los que están en el roster de las secciones): 
 //Esto se hace para que no de error, porque si se cogieran alumnos de la seccion que no se encuentran en el Request del curso daría fallo en todos los cursos (la obtención de datos
 //se realiza de forma global):
-                        for (int j = 0; j < stCourse.get(idCourse).size(); j++) {
+                        if (arrayStud.size() > 0 && stCourse.containsKey(idCourse)) {
+                            for (int j = 0; j < arrayStud.size(); j++) {
+                                if (!stCourse.get(idCourse).contains(arrayStud.get(j))) {
+                                    aviso.addDifStudents(course.getNameCourse(), sectionsModificadasName.get(i), arrayStud.get(j), this.namePersons.get(arrayStud.get(j)));
+                                }
+                            }
 
-                            if (arrayStud.contains(stCourse.get(idCourse).get(j))) {
-                                arrayStud2.add(stCourse.get(idCourse).get(j));
+                            for (int j = 0; j < arrayStud.size(); j++) {
+                                if (!stCourse.get(idCourse).contains(arrayStud.get(j))) {
+                                    arrayStud.remove(j);
+                                }
                             }
                         }
-                        //     if(arrayStud.contains(rs.getInt(1)))
-                        //    arrayStud2.add(rs.getInt(1));
 
 //Con este for se cogen los alumnos que están en el roster de la sección pero no se encuentran en el request del curso (el arrayStuderroneos se utiliza para lanzar un mensaje al usuario si
 //existen alumnos que no pertenecen al curso en sección, y así el usuario será consciente de que debe cambiarlo):
-                        for (Integer arrayStud1 : arrayStud) {
+                        auxSec.setIdStudents((ArrayList<Integer>) arrayStud.clone());
+//                        auxSec.setStudents((ArrayList<Student>)this.namePersons.get(arrayStud.clone()));
 
-                            if (!arrayStud2.contains(arrayStud1)) {
-                                arrayStuderroneos.add(this.nameCourses.get(course.getIdCourse()) + ";" + sectionsModificadasFullName.get(i) + ";" + this.namePersons.get(arrayStud1) + ";");
-                            }
-
-                        }
-
-                        auxSec.setIdStudents((ArrayList<Integer>) arrayStud2.clone());
-
-                        consulta = "SELECT * from SchedulePatternsTimeTable "
-                                + " where patternnumber = " + sectionsModificadas.get(i).get(2) + " and templateID =" + templateID;
+                        if (auxSec.isLockSchedule()) {
+                            consulta = "SELECT * from SchedulePatternsTimeTable "
+                                    + " where patternnumber = " + sectionsModificadas.get(i).get(2) + " and templateID =" + templateID;
 //De esta consulta se obtienen las columnas y filas necesarias para aplicar el patron especifico seleccionado en: 
 //Renweb/Academic/Classes/Schedule(aquí se puede elegir el pattern en función del template asignado):
 
-                        rs = DBConnect.renweb.executeQuery(consulta);
+                            rs = DBConnect.renweb.executeQuery(consulta);
 //Se añade a auxSec el patronUsado en función de las columnas y filas obtenidas de la consulta previa:
 //Nota: al añadir a la tupla se empieza la x y la y por 0: es por eso por lo que respecto a row y col se le resta 1
 //Aquí también se asignan los patrones a las rooms que se hayan cargado previamente (se guarda en el hashmap de rooms los huecos de secciones ocupados).
 //Por lo tanto, por una parte se aplica a auxSec, y por otra parte, si encuentra el idRoom concreto en rooms, se guarda también el
 //hueco en la room de una sección concreta.
-                        while (rs.next()) {
-                            auxSec.addTuplaPatron(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
-                            if (rooms.containsKey(auxSec.getIdRoom())) {
-                                ArrayList<Tupla> auxTupla = new ArrayList<>();
-                                auxTupla.add(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
-                                rooms.get(auxSec.getIdRoom()).ocuparHueco(course.getIdCourse(), auxSec.getNumSeccion(), auxTupla);
+
+                            while (rs.next()) {
+                                auxSec.addTuplaPatron(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
+                                if (rooms.containsKey(auxSec.getIdRoom())) {
+                                    ArrayList<Tupla> auxTupla = new ArrayList<>();
+                                    auxTupla.add(new Tupla(rs.getInt("col") - 1, rs.getInt("row") - 1));
+//                                rooms.get(auxSec.getIdRoom()).ocuparHueco(course.getIdCourse(), auxSec.getNumSeccion(), auxTupla);
+                                }
                             }
                         }
 //Se asigna a auxSec el id de curso, y el auxSec (con los datos anteriores y el id) se añade como una posición de auxSectionIn                        
@@ -2264,14 +1963,14 @@ public class Consultas {
                         updateStudent_fromRenWeb_Sections(students, arrayStud, auxSec, linkedCourses);
                     }
                     //-->En cada posición de auxSection se almacenan todas las restricciones de las secciones, y se acceden a ellas a través del identificador,
-                    //que es el id de cada curso:
-                    //Por ejemplo, en una posición del HashMap del curso 1245, se almacenan a su vez las 5 posiciones de 5 secciones
+//que es el id de cada curso:
+//Por ejemplo, en una posición del HashMap del curso 1245, se almacenan a su vez las 5 posiciones de 5 secciones
 //(son las secciones que están añadidas desde RenWeb/Academics/Classes y en el curso de ENG1) con sus respectivas restricciones:
-                    //Este es el Hash que se va a retornar para devolver todaa la información que contiene a la clase Restricciones:
+//Este es el Hash que se va a retornar para devolver todaa la información que contiene a la clase Restricciones:
                     auxSections.put(course.getIdCourse(), (ArrayList<Seccion>) auxSectionsIn.clone());
                 }
             } catch (Exception e) {
-                System.err.println("");
+                e.getMessage();
             }
         }
 //Gracias a este treemap se puede visualizar por pantalla de forma correcta si hay alumnos que están asignados en secciones de un curso(roster de class section en renweb),
@@ -2279,33 +1978,6 @@ public class Consultas {
 //NOTA: lo que hace es visualizarlo de forma correcta, pero los datos ya han sido obtenidos previamente en arrayStuderroneos.
 //La visualización correcta consiste en que no se repiten los nombres de los cursos y las secciones cuando se van a 
 //visualizar los estudiantes en cuestión que están mal asignados a seccion/es.
-//-----------PENDIENTE REALIZAR ESTO EN LA VISTA-(AUNQUE HOY POR HOY FUNCIONA PERFECTAMENTE)-----
-        if (!Consultas.arrayStuderroneos.isEmpty()) {
-            studE = "";
-            for (String array : Consultas.arrayStuderroneos) {
-                String[] hueco = array.split(";");
-                String p1 = hueco[0];
-                String p2 = hueco[1];
-                String p3 = hueco[2];
-                if (!studError.containsKey(p1)) {
-                    studError.put(p1, new TreeMap<>());
-                    studError.get(p1).put(p2, new ArrayList<>());
-                    studError.get(p1).get(p2).add(p3);
-                    studE = studE.concat("<br/>" + p1 + ": " + "<br/>" + p2 + ": " + "<br/>" + p3);
-
-                } else if (!studError.get(p1).containsKey(p2)) {
-                    studError.get(p1).put(p2, new ArrayList<>());
-                    studError.get(p1).get(p2).add(p3);
-                    studE = studE.concat("<br/>" + p2 + ": " + "<br/>" + p3);
-                } else {
-                    studError.get(p1).get(p2).add(p3);
-                    studE = studE.concat("; " + p3);
-                }
-
-            }
- 
-        }
-  
 
         return auxSections;
     }
@@ -2330,59 +2002,9 @@ public class Consultas {
         return false;
     }
 
-//OWN:Se obvia esta conexion porque ya no se usa la cuenta de EEUU:    
-/*
-    public HashMap<Integer, Room> getRoomsOwnDB() {
-        HashMap<Integer, Room> ret = new HashMap();
-        String consulta = "select * from rooms";
-        try {
-            ResultSet rs = DBConnect.own.executeQuery(consulta);
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                Room r = new Room(id, rs.getString("name"), rs.getInt("size"));
-                ret.put(id, r);
-            }
-        } catch (Exception e) {
-        }
-        return ret;
-    }
-    
-    public HashMap<Integer, Student> getStudnetsOwnDB() {
-        HashMap<Integer, Student> ret = new HashMap();
-        String consulta = "select * from students";
-        try {
-            ResultSet rs = DBConnect.own.executeQuery(consulta);
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                Student st = new Student(id, rs.getString("name"), rs.getString("genero"));
-                ret.put(id, st);
-            }
-        } catch (Exception e) {
-        }
-        return ret;
-    }
 
-    public HashMap<Integer, ArrayList<Integer>> getStudentsCourseOwnDB() {
-        HashMap<Integer, ArrayList<Integer>> ret = new HashMap();
-        String consulta = "select distinct * from students_course";
-        try {
-            ResultSet rs = DBConnect.own.executeQuery(consulta);
-            while (rs.next()) {
-                int idc = rs.getInt("id_course");
-                int ids = rs.getInt("id_student");
-                if (ret.containsKey(idc)) {
-                    ret.get(idc).add(ids);
-                } else {
-                    ret.put(idc, new ArrayList());
-                    ret.get(idc).add(ids);
-                }
-            }
-        } catch (Exception e) {
-        }
-        return ret;
-    }
-     */
- /*
+    /*
+ 
     -----------------------
     --GETTERS AND SETTERS--
     -----------------------
@@ -2398,6 +2020,7 @@ public class Consultas {
     void fillHashCourses(ArrayList<Course> courses) {
         for (int i = 0; i < courses.size(); i++) {
             courseName.put(courses.get(i).getIdCourse(), this.nameCourses.get(courses.get(i).getIdCourse()));
+            courses.get(i).setNameCourse(this.nameCourses.get(courses.get(i).getIdCourse()));
         }
     }
 
@@ -2405,8 +2028,15 @@ public class Consultas {
         return totalBlocks;
     }
 
-    public void setTotalBlocks(int totalBlocks) {
-        this.totalBlocks = totalBlocks;
+    public void setTotalBlocks(ArrayList<ArrayList<Boolean>> totalBlocks) {
+        this.totalBlocks = 0;
+        for (int i = 0; i < totalBlocks.size(); i++) {
+            for (int j = 0; j < totalBlocks.get(i).size(); j++) {
+                if (totalBlocks.get(i).get(j) == true) {
+                    this.totalBlocks++;
+                }
+            }
+        }
     }
 
     public static HashMap<Integer, String> getPersons() {
@@ -2424,44 +2054,7 @@ public class Consultas {
 //Esto se devuelve a getRestriccionesCourses los siguientes datos en función de los valores de los array:
     //Esto permite seleccionar los tipos de escuela que son susceptibles de aplicar a los horarios desde los template:
 
-//    private String getWhereTemplate(int[] tempInfo, String MS_Column) {
-//        if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-//            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
-//        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-//            return " Elementary=0 and HS=0 and " + MS_Column + "=0 and PreSchool=1 ";
-//        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-//            return " Elementary=0 and HS=0 and " + MS_Column + "=1 and PreSchool=0 ";
-//        } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
-//            return " Elementary=0 and HS=0 and ( " + MS_Column + "=1 or PreSchool=1 ) ";
-//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-//            return " Elementary=0 and HS=1 and " + MS_Column + "=0 and PreSchool=0 ";
-//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-//            return " Elementary=0  and " + MS_Column + "=0 and (PreSchool=1 or HS=1) ";
-//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-//            return " Elementary=0 and (HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
-//        } else if (tempInfo[0] == 0 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 1) {
-//            return " Elementary=0 and (HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
-//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-//            return " Elementary=1 and HS=0 and " + MS_Column + "=0 and PreSchool=0 ";
-//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-//            return "  HS=0 and " + MS_Column + "=0 and (Elementary=1 or PreSchool=1) ";
-//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-//            return " (Elementary=1 and " + MS_Column + "=1) and HS=0  and PreSchool=0 ";
-//        } else if (tempInfo[0] == 1 && tempInfo[1] == 0 && tempInfo[2] == 1 && tempInfo[3] == 1) {
-//            return "  HS=0 and (Elementary=1 or " + MS_Column + "=1 or PreSchool=1) ";
-//        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 0) {
-//            return " ( Elementary=1 or HS=1 ) and " + MS_Column + "=0 and PreSchool=0 ";
-//        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 0 && tempInfo[3] == 1) {
-//            return " ( Elementary=1 or HS=1 or PreSchool=1 )and " + MS_Column + "=0 ";
-//        } else if (tempInfo[0] == 1 && tempInfo[1] == 1 && tempInfo[2] == 1 && tempInfo[3] == 0) {
-//            return " (Elementary=1 or HS=1 or " + MS_Column + "=1) and PreSchool=0 ";
-//        } else {
-//            return " (Elementary=1 or HS=1 or " + MS_Column + "=1 or PreSchool=1) ";
-//
-//        }
-//    }
-        
-        private String getWhereTemplate(int[] tempInfo) {
+    private String getWhereTemplate(int[] tempInfo) {
         if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 0) {
             return "Elementary=0 and HS=0 and MiddleSchool=0 and PreSchool=0";
         } else if (tempInfo[0] == 0 && tempInfo[1] == 0 && tempInfo[2] == 0 && tempInfo[3] == 1) {

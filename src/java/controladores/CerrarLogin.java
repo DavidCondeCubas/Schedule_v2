@@ -19,8 +19,10 @@ import org.springframework.web.servlet.ModelAndView;
  */
 @Controller
 public class CerrarLogin {
-    
-    //     @Override
+//El ModelAndView inicio del controlador Homepage.java es lo que hace que cargue la primera vista(mismo procedimiento que en Homepage.java/inicio).
+//Este mv (cerrarLogin) está vinculado al botón Log Out en la vista infouser.jsp.
+//En dicha vista, se aplica una function de JavaScript llamada logout(), que
+//contiene:   document.location.href = "<c:url value="/cerrarLogin.htm"/>", y esto es lo que hace que redireccione al inicio).
     @RequestMapping(value="/cerrarLogin")
     public ModelAndView cerrarLogin(HttpServletRequest hsr, HttpServletResponse hsr1) throws Exception {
             ModelAndView mv =  new ModelAndView("redirect:/userform.htm?opcion=inicio");

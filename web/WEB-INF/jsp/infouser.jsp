@@ -4,7 +4,7 @@
     Author     : Jesús Aragón
 --%>
 <%@page import="java.util.ArrayList"%>
-<%@ page session="true" %>
+<%@page session="true" %>
 <%@taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="spring" uri="http://www.springframework.org/tags"%>
@@ -23,7 +23,6 @@
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/style.css" />"/>
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/menu-lateral.css"/>"/>
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/bootstrap.min.css"/>"/>
-    <%--    <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/calendar.css"/>"/>--%>
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/bootstrap-theme.min.css"/>"/>
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/bootstrap-datetimepicker.css"/>"/>
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/bootstrap-toggle.css"/>"/>
@@ -53,21 +52,15 @@
     <script type="text/javascript" src="<c:url value="/recursos/js/collapse.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/recursos/js/bootstrap-toggle.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/recursos/js/bootstrap-datetimepicker.js"/>"></script>
-    <%--<script type="text/javascript" src="<c:url value="/scripts/json.min.js" /> "></script>--%>
     <script type="text/javascript" src="<c:url value="/recursos/js/es.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/recursos/js/ar.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/recursos/js/moment.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/recursos/fullcalendar/fullcalendar.js"/>"></script>
-    <!--        CKEDITOR-->
     <script type="text/javascript" src="<c:url value="/recursos/js/ckeditor.js"/>"></script>
 
-    <!--        DATATABLES-->
-    <%--        <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/dataTables.bootstrap.css"/>" />--%>
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/dataTables.foundation.css"/>" />
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/dataTables.jqueryui.css"/>" />
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/dataTables.semanticui.css"/>" />
-    <%--        <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/dataTables.material.css"/>" />--%>
-    <%--        <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/dataTables.uikit.css"/>" />--%>
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/jquery.dataTables.css"/>" />
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/dataTables/jquery.dataTables_themeroller.css"/>" />
     <link rel="stylesheet" type="text/css" href="<c:url value="/recursos/css/estilocolegio.css" />"/>
@@ -82,17 +75,18 @@
     <script type="text/javascript" src="<c:url value="/recursos/js/dataTables/dataTables.material.js"/>" ></script>
     <script type="text/javascript" src="<c:url value="/recursos/js/dataTables/dataTables.uikit.js"/>" ></script>
 </head>
-
+<%-- Este jsp muestra información del usuario (tipo session), como el mensaje de Hi Scheduler, o el mensaje que te pregunta si estás seguro de que quieres salir 
+(cuando se arranca el menú para la creación del Schedule)--%>
 <script>
     $(document).ready(function () {
         setInterval(function () {
-            alert("Your session is going to be end by 5 min, Please click OK and continue")
+            alert("Your session is going to be end by 5 min, please click OK and continue")
         }, 3000000);
  
     });
     var ajax;
     function terms() {
-        if (window.XMLHttpRequest) //mozilla
+        if (window.XMLHttpRequest) //Mozilla
         {
             ajax = new XMLHttpRequest(); //No Internet explorer
         } else
@@ -117,7 +111,7 @@
         }
     }
     function changeTermYear() {
-        if (window.XMLHttpRequest) //mozilla
+        if (window.XMLHttpRequest) //Mozilla
         {
             ajax = new XMLHttpRequest(); //No Internet explorer
         } else
@@ -145,10 +139,11 @@
     <div class="col-xs-9 text-center">
         <div class="col-xs-12">
             <h1 id="nameSchoolTitle" class="text-center">
+                <%--Nombre de la escuela:--%>  
                 <c:out value="${sessionScope.schoolName}"/>
             </h1>
         </div>
-<%--El idioma por defecto es en inglés:--%>  
+<%--El idioma por defecto es en inglés (Hi,). Después se indica el nombre del usuario:--%>  
         <div class="col-xs-12">
             <h3 class="text-center">Hi, <c:out value="${sessionScope.user.name}"/></h3>
         </div>
@@ -216,11 +211,11 @@
 <div id="logoutmodal" class="modal fade" role="dialog">
     <div class="modal-dialog">
 
-        <!-- Modal content-->
+    <%--Botón para salir de la aplicación y puedes elegir Sí o No --%> 
         <div class="modal-content">
             <div class="modal-header modal-header-delete">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">are you sure you want to logout?</h4>
+                <h4 class="modal-title">Are you sure you want to logout?</h4>
             </div>
             <div class="modal-footer text-center">
                 <button id="buttonDelete" type="button" class="btn btn-danger" data-dismiss="modal" onclick="logout()">Yes</button>

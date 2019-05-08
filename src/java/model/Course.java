@@ -6,6 +6,7 @@
 package model;
 
 import dataManage.Consultas;
+import dataManage.Exceptions;
 import dataManage.Tupla;
 import static java.lang.Integer.max;
 import static java.lang.Math.random;
@@ -30,8 +31,8 @@ import java.util.logging.Logger;
 public class Course {
 //Aqií se definen las variables que se van a utilizar como restricciones en Consultas.getRestriccionesCourses:
     static final int BLOCKS_BY_DEFAULT = 2;//2 bloques por defecto
-    public static int MUESTRA = 1000000;
-    public static int MAX_INTENTOS = 5000000;
+    public static int MUESTRA = 500000;
+    public static int MAX_INTENTOS = 2000000;
     private String[][] huecos; // cuadricula
     private int idCourse; // id del curso
     private String nameCourse;//nombre del curso
@@ -97,7 +98,7 @@ public class Course {
         this.minChildPerSection = c.getMinChildPerSection();
         this.opcionesPatternGroup = c.getOpcionesPatternGroup();
     }
-
+//Constructor para establecer cursos con condiciones mínimos:
     public Course(int idCourse) {
         this.idCourse = idCourse;
         this.rank = Integer.MAX_VALUE;
@@ -108,9 +109,9 @@ public class Course {
             }
         }
 
-        maxBlocksPerDay = 1;
+        maxBlocksPerDay = Algoritmo.TAMY;
         minGapBlocks = 0; // espacio minimo entre bloques
-        minGapDays =1; //cada cuantos dias entre bloques  
+        minGapDays =0; //cada cuantos dias entre bloques  
         sections = 1;
         studentsNoAsignados = new ArrayList<>();
         patronesStudents = new ArrayList<>();
@@ -283,44 +284,59 @@ public class Course {
 //fila habilitada: fila con todas los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de fila).
 //columna habilitada: columna con todos los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de columna).
 //tupla habilitada: se refiere solo a un bloque individual(las tuplas x e y marcan la posición).
-    private void calcularTuplas(ArrayList<String> log, ArrayList<Integer> colsHabilitadas, ArrayList<Integer> rowsHabilitadas, ArrayList<Tupla> tuplasHabilitadas) {
+    private void calcularTuplas(ArrayList<String> log, ArrayList<Integer> colsHabilitadas, ArrayList<Integer> rowsHabilitadas, ArrayList<Tupla> tuplasHabilitadas, Exceptions aviso) {
         if (this.mandatoryBlockRange != null && !this.mandatoryBlockRange.equals("") && !this.mandatoryBlockRange.equals("*,*;")) {
+            try {
             String[] parts = this.mandatoryBlockRange.split(";");
             for (int i = 0; i < parts.length; i++) {
-                try {
+            
                     String[] partsMand = parts[i].split(",");
                     if ("*".equals(partsMand[0])) {
                         rowsHabilitadas.add(Integer.parseInt(partsMand[1]) - 1);
-                        for (int k = 0; k < Algoritmo.TAMX; k++) {
-                            if (!colsHabilitadas.contains(k)) {
-                                colsHabilitadas.add(k);
-                            }
+                        for (int k = 0; k < Algoritmo.TAMY; k++) {
+//                            if (!colsHabilitadas.contains(k)) {
+//                                colsHabilitadas.add(k);
+//                            }
+                           tuplasHabilitadas.add(new Tupla(k,Integer.parseInt(partsMand[1]) - 1));
                         }
                     } else if ("*".equals(partsMand[1])) {
                         colsHabilitadas.add(Integer.parseInt(partsMand[0]) - 1);
-                        for (int j = 0; j < Algoritmo.TAMY; j++) {
-                            if (!rowsHabilitadas.contains(j)) {
-                                rowsHabilitadas.add(j);
-                            }
+                        for (int j = 0; j < Algoritmo.TAMX; j++) {
+//                            if (!rowsHabilitadas.contains(j)) {
+//                                rowsHabilitadas.add(j);
+//                                  }
+                                tuplasHabilitadas.add(new Tupla(Integer.parseInt(partsMand[0]) - 1,j ));
+                          
                         }
 
                     } else {
                         tuplasHabilitadas.add(new Tupla(Integer.parseInt(partsMand[0]) - 1, Integer.parseInt(partsMand[1]) - 1));
                     }
-                } catch (Exception e) {
-                    log.add("Problemas en  el mandatory block en el course con id= " + this.idCourse);
-                }
             }
-        } else {
-            for (int i = 0; i < Algoritmo.TAMX; i++) {
+            } catch (Exception e) {
+                   aviso.addAvisoCadena(this.nameCourse, "Mandatory Blocks Range", this.mandatoryBlockRange);
+                for (int i = 0; i < Algoritmo.TAMY; i++) {
                 if (!colsHabilitadas.contains(i)) {
                     colsHabilitadas.add(i);
                 }
-                for (int j = 0; j < Algoritmo.TAMY; j++) {
+                for (int j = 0; j < Algoritmo.TAMX; j++) {
                     if (!rowsHabilitadas.contains(j)) {
                         rowsHabilitadas.add(j);
                     }
-                    tuplasHabilitadas.add(new Tupla(i, j));
+                    tuplasHabilitadas.add(new Tupla(j, i));
+                }
+            }
+                }
+        } else {
+            for (int i = 0; i < Algoritmo.TAMY; i++) {
+                if (!colsHabilitadas.contains(i)) {
+                    colsHabilitadas.add(i);
+                }
+                for (int j = 0; j < Algoritmo.TAMX; j++) {
+                    if (!rowsHabilitadas.contains(j)) {
+                        rowsHabilitadas.add(j);
+                    }
+                    tuplasHabilitadas.add(new Tupla(j, i));
                 }
             }
         }
@@ -402,7 +418,7 @@ public class Course {
         return null;
     }
 
-    ArrayList<ArrayList<Tupla>> opciones(ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<String> log) {
+    ArrayList<ArrayList<Tupla>> opciones(ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<String> log, Exceptions aviso) {
 
 //-->AQUI HAY QUE LIMITAR LA CANTIDAD DE OCPIONES SI QUERERMOS QUE TENGAN BLOQUES OBLIGATORIOS ASIGNADOS.
         ArrayList<ArrayList<Tupla>> ret = new ArrayList<>();
@@ -422,31 +438,32 @@ public class Course {
 //fila habilitada: fila con todas los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de fila).
 //columna habilitada: columna con todos los bloques disponibles(no se marca por tuplas sino solo por un número que es el número de columna).
 //tupla habilitada: se refiere solo a un bloque individual(las tuplas x e y marcan la posición).
-        calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas);
+        calcularTuplas(log, colsHabilitadas, rowsHabilitadas, tuplasHabilitadas, aviso);
 //Si el campo de bloques por semana es 0 en el schedule, se cogen bloques por defecto(2), asignados aquí porque en RenWeb/school,
 //no hay un campo que se pueda utilizar para poner bloques por semana por defecto.
         if(this.blocksWeek == 0){
             this.blocksWeek = BLOCKS_BY_DEFAULT;
         }
+
         Tupla[] sol = new Tupla[this.blocksWeek];
-        boolean[][] marcas = new boolean[Algoritmo.TAMY][Algoritmo.TAMX];
+        boolean[][] marcas = new boolean[Algoritmo.TAMX][Algoritmo.TAMY];
 //Las marcas se refiere a la asignación/bloqueo de bloques(se asigna true o false, por eso es boolean):
         for (int i = 0; i < Algoritmo.TAMY; i++) {
             for (int j = 0; j < Algoritmo.TAMX; j++) {
-                marcas[i][j] = false;
+                marcas[j][i] = false;
             }
         }
         int maxVueltas = 0;
 //El recurOpciones sirve para vuelta atraás y adelante, tanteando opciones para ver si funciona:  
 //Para ello genera opciones previas basándose en el tamaño del template
 
-       
-        recurOpciones( maxVueltas,ret, Algoritmo.TAMX, Algoritmo.TAMY, sol, 0, marcas,  totalBlocks);
+  
+        recurOpciones( maxVueltas,ret, Algoritmo.TAMX, Algoritmo.TAMY, sol, 0, marcas,  totalBlocks, tuplasHabilitadas);
 
         //RECORRE LAS TUPLAS DEFINIDAS COMO MANDATORY
-        /*for (int ind = 0; ind < tuplasHabilitadas.size(); ind++) {
+      /*  for (int ind = 0; ind < tuplasHabilitadas.size(); ind++) {
             ArrayList<Tupla> t = new ArrayList<>();
-            k = this.blocksWeek;
+            int k = this.blocksWeek;
             Tupla taux = new Tupla(tuplasHabilitadas.get(ind).x, tuplasHabilitadas.get(ind).y);
 
             if (colsHabilitadas.contains(tuplasHabilitadas.get(ind).x) && !t.contains(taux) && !this.excludeBlocks.contains(taux)
@@ -461,7 +478,7 @@ public class Course {
                 } else {
                     //FORMA CORRECTA SERIA VUELTA ATRAS PERO SE CONSIGUE ENCONTRAR LA MAYORIA DE RESULTADOS RECORRIENDO BIDIRECCIONAL
                     for (int l = 0; l < Algoritmo.TAMX; l++) { //cambiar algoritmo para q funcione teniendo en cuenta el maxbxd
-                        if (Math.abs((int)tuplasHabilitadas.get(ind).x - l) >= gd) {
+                        if (Math.abs((int)tuplasHabilitadas.get(ind).x - l) >= getMinGapDays()) {
                             for (int m = 0; m < Algoritmo.TAMY; m++) {
                                 Tupla taux2 = new Tupla(l, m);
                                 if (((int)tuplasHabilitadas.get(ind).y != m && (int)tuplasHabilitadas.get(ind).x != l) && comprobarBxD(t, taux2) && !t.contains(taux2) && !this.excludeBlocks.contains(taux2)
@@ -483,7 +500,7 @@ public class Course {
 
         }*/
         // RECORRE LAS COLUMNAS Y FILAS HABILITADAS 
-        /*   for (int j = 0; j < Algoritmo.TAMY; j++) { // j son las filas  11 en MS
+         /*  for (int j = 0; j < Algoritmo.TAMY; j++) { // j son las filas  11 en MS
             if (rowsHabilitadas.contains(j) && (excludeRows == null && excludeCols == null && excludeBlocks == null) || !excludeRows.contains(j + 1)) {
                 for (int i = 0; i < Algoritmo.TAMX; i++) { //i son las cols 3 en MS 
                     ArrayList<Tupla> t = new ArrayList<>();
@@ -542,29 +559,30 @@ public class Course {
 
     private void recurOpciones(int vueltas,ArrayList<ArrayList<Tupla>> solucionFinal, int tamX, int tamY,
             Tupla[] sol, int k,
-            boolean[][] marcas,  ArrayList<ArrayList<Boolean>> totalBlocks) {
+            boolean[][] marcas,  ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<Tupla> tuplasHabilitadas) {
 
-     
-         vueltas ++;
-        if(vueltas >= MAX_INTENTOS) return;
+        vueltas ++;
+        if(vueltas >= MAX_INTENTOS){ 
+            return;
+        }
         
-//        int contadorj=0;
-//        int contadori=0;
-        for (int j = 0; j < tamY; j++) {            
-            for (int i = 0; i < tamX; i++) {
+        int contadorj=0; 
+        int contadori=0;
+        for (int j = 0; j < tamX; j++) {            
+            for (int i = 0; i < tamY; i++) {
                
-//                contadori=i;
-//                contadorj=j;
+                contadori=i;
+                contadorj=j;
                 
-                i = (int)(Math.random() * tamX); 
-                j = (int)(Math.random() * tamY); 
+//                i = (int)(Math.random() * tamX); 
+//                j = (int)(Math.random() * tamY); 
                 
                 
-                
-                sol[k] = new Tupla(i, j);
-                if ( solucionFinal.size() < MUESTRA && esValida(sol, k, marcas[j][i], j, i, totalBlocks)) {
+//             solucionFinal.size() < MUESTRA    
+                sol[k] = new Tupla(j, i);
+                if  (esValida(sol, k, marcas[j][i], j, i, totalBlocks, tuplasHabilitadas, tamX)) {
                     marcas[j][i] = true;
-                    sol[k] = new Tupla(i, j);
+                    sol[k] = new Tupla(j, i);
                     if (k == this.blocksWeek - 1) {
                         //solucionFinal.add(sol);
 
@@ -572,34 +590,43 @@ public class Course {
                         solucionFinal.add(aList);
                     } else {
                         k = k + 1;
-                        recurOpciones(vueltas,solucionFinal, tamX, tamY, sol, k, marcas, totalBlocks);
+                        recurOpciones(vueltas,solucionFinal, tamX, tamY, sol, k, marcas, totalBlocks,tuplasHabilitadas);
                         k = k - 1;
                     }
                     marcas[j][i] = false;
-                }
-                // k = antK;    
-//                i=contadori;
-//                j=contadorj;
+                } 
+                i=contadori;
+                j=contadorj; 
             }
         }
     }
 
-    private boolean esValida(Tupla[] sol, int k, boolean marca, int y, int x,    ArrayList<ArrayList<Boolean>> totalBlocks) {
-
-        if (x == 3 && y == 3) { //solo pruebas
-            System.out.println("model.Course.esValida()");
+    private boolean esValida(Tupla[] sol, int k, boolean marca, int colum, int fil, ArrayList<ArrayList<Boolean>> totalBlocks, ArrayList<Tupla> tuplasHabilitadas, int tamX) {
+        boolean noRepetBlocks;
+        
+        if(k==0 || fil*tamX+colum>sol[k-1].get_y_Int()*tamX+sol[k-1].get_x_Int()){
+            noRepetBlocks = true;
+        }else{
+            noRepetBlocks = false;
         }
-                            boolean boolExcludes = this.excludeCols.contains(x + 1) || this.excludeRows.contains(y + 1) || this.excludeBlocks.contains(new Tupla(y + 1, x + 1));
+     
+        boolean boolExcludes = this.excludeCols.contains(colum + 1) || this.excludeRows.contains(fil + 1) || this.excludeBlocks.contains(new Tupla(colum + 1, fil + 1));
+        boolean boolMandatory = tuplasHabilitadas.contains(new Tupla(colum,fil));
+        boolean boolMaxBxD = true;
+        boolMaxBxD = comprobarBxD (sol,sol[k]);
+        
 
+        
         int i = 0;
         while (i < k) {
-            if (Math.abs((Integer) sol[i].x - x) < this.minGapDays || (Math.abs((Integer) sol[i].y - y) < this.minGapBlocks  &&  (Integer) sol[i].x==x)) {
+            if (Math.abs((Integer) sol[i].get_x_Int() - colum) < this.minGapDays || 
+                    (Math.abs((Integer) sol[i].get_y_Int() - fil) < this.minGapBlocks  &&  (Integer) sol[i].get_x_Int()==colum)){
                 return false;
             }
             i++;
         }
         
-        return !boolExcludes && !marca  && totalBlocks.get(y).get(x);
+        return boolMandatory && !boolExcludes && !marca  && totalBlocks.get(fil).get(colum) && noRepetBlocks && boolMaxBxD;
         /*if (rowsHabilitadas.contains(j) && (excludeRows == null && excludeCols == null && excludeBlocks == null) || !excludeRows.contains(j + 1)) {
                 for (int i = 0; i < Algoritmo.TAMX; i++) { //i son las cols 3 en MS 
                     ArrayList<Tupla> t = new ArrayList<>();
@@ -614,14 +641,17 @@ public class Course {
 
     }
 
-    private boolean comprobarBxD(ArrayList<Tupla> t, Tupla taux2) {
+    private boolean comprobarBxD(Tupla [] t, Tupla taux2) {
         int numBlocksWeek = 0;
-        for (int i = 0; i < t.size(); i++) {
-            if (t.get(i).x == taux2.x) {
-                numBlocksWeek++;
+        for (int i = 0; i < t.length; i++) {
+            if(t[i]!=null){
+                if (t[i].x == taux2.x) {
+                    numBlocksWeek++;
             }
+            }
+
         }
-        return this.maxBlocksPerDay > numBlocksWeek;
+        return this.maxBlocksPerDay >= numBlocksWeek;
     }
 
     ArrayList<ArrayList<Tupla>> opciones(ArrayList<ArrayList<Boolean>> totalBlocks) {
@@ -754,61 +784,17 @@ public class Course {
         return ret;
     }
 
-    /**
-     * Devuelve los huecos donde se puede colocar una seccion
-     *
-     * @return
-     */
-    /*public ArrayList<ArrayList<Tupla>> opciones() {
-        ArrayList<ArrayList<Tupla>> ret = new ArrayList<>();
-        try {
-            if (maxSections == null && Integer.parseInt(maxSections) == 0
-                    && Integer.parseInt(maxSections) <= sections) {
-                return ret;
-            }
-        } catch (Exception e) {
-        }
-        for (int j = 0; j < Algoritmo.TAMY; j++) { // j son las filas  11 en MS
-            if ((excludeRows == null && excludeCols == null && excludeBlocks == null)
-                    || !excludeRows.contains(j + 1)) {
-                int k, bloqueados;
-                int gd = this.minGapDays;
-                if (gd == 0) {
-                    gd++;
-                }
-                for (int i = 0; i < Algoritmo.TAMX; i++) { //  i son las filas 11 en MS
-                    ArrayList<Tupla> t = new ArrayList<>();
-                    int sum = 0;
-                    bloqueados = 0;
-                    k = this.blocksWeek;
-                    while (k > 0) {
-                        Tupla taux = new Tupla((i + sum) % Algoritmo.TAMX, j);
-                        if (!t.contains(taux) && !this.excludeBlocks.contains(taux)
-                                && !this.excludeCols.contains((i + sum) % Algoritmo.TAMX)) {
-                            t.add(taux);
-                            k--;
-                        } else {
-                            bloqueados++;
-                        }
-                        if (bloqueados > Algoritmo.TAMY) {
-                            break;
-                        }
-                        sum += gd;
-                    }
-                    if (k <= 0 && !ret.contains(t)) {
-                        ret.add(t);
-                    }
-                }
-            }
-        }
-        return ret;
-    }*/
-    public ArrayList<ArrayList<Boolean>> opcionesStart() { // AQUI ES DONDE SE LIMUTAN LOS HUECOS DISPONIBLES INICIO
+
+//Aquí es donde se limitan los huecos disponibles al inicio (para un curso):   
+//Se establecen true las columnas, filas y bloques que no están contenidas en: exculdeCols, excludeRows o excludeBlocks
+//(es decir, quedarán true los bloques con los que se podrá trabajar, y se devolverá un array boolean filasxcolumnas del template):    
+    public ArrayList<ArrayList<Boolean>> opcionesStart() { 
         ArrayList<ArrayList<Boolean>> ret = new ArrayList<>();
-        for (int j = 1; j <= Algoritmo.TAMY; j++) { // AQUI ES EL FALLO COMPARA LA HORA CON EL DIA TENIENDO EN CUENTA QUE LAS Y SON LAS HORAS Y LAS X LOS DIAS
+        for (int j = 1; j <= Algoritmo.TAMY; j++) { 
             if (!excludeCols.contains(j)) {
                 ArrayList<Boolean> t = new ArrayList<>();
-                for (int i = 1; i <= Algoritmo.TAMX; i++) { // cambiar!  
+                for (int i = 1; i <= Algoritmo.TAMX; i++) { 
+//La variable bloqueados no se usa, pero es útil en el debugger para saber cuantos bloques hay bloqueados:                    
                     int bloqueados = 0;
                     Tupla taux = new Tupla(i, j);
                     if (!this.excludeBlocks.contains(taux) && !this.excludeRows.contains(i)) {
@@ -996,14 +982,9 @@ public class Course {
                 elem = s2.split(",");
                 int row = -1;
                 int col = -1;
-                try {
                     row = Integer.parseInt(elem[0]);
-                } catch (Exception e) {
-                }
-                try {
                     col = Integer.parseInt(elem[1]);
-                } catch (Exception e) {
-                }
+
                 if (row == -1) {
                     this.excludeCols.add(col);
                 } else if (col == -1) {
@@ -1026,7 +1007,7 @@ public class Course {
     public String[][] getHuecos() {
         return huecos;
     }
-
+    
     private String excludeBlocksToString() {
         String ret = "";
         for (Tupla t : this.excludeBlocks) {
@@ -1074,12 +1055,9 @@ public class Course {
                     restric_elem = restric_bloq1.split(",");
                     int row = -1;
                     int col = -1;
-                    try {
                         row = Integer.parseInt(restric_elem[0]);
                         col = Integer.parseInt(restric_elem[1]);
-                    } catch (Exception e) {
-                        System.out.println("Problemas model.Course.setPreferedBlocks()");
-                    }
+
                     if (row != -1 && col != -1) {
                         arrayAux.add(new Tupla(row, col));
                     }
@@ -1309,7 +1287,6 @@ public class Course {
         this.opcionesPatternGroup = opcionesPatternGroup;
     }
     
-    //solo testing
     public boolean hayEstudiantes(){
         for (int i = 0; i < this.getArraySecciones().size(); i++) {
             if(this.getArraySecciones().get(i).getIdStudents().size() > 0) return true;
@@ -1320,4 +1297,5 @@ public class Course {
     public Seccion getLastSeccion(){
         return this.arraySecciones.get(this.arraySecciones.size()-1);
     }
+    
 }

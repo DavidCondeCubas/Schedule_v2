@@ -20,7 +20,9 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 
 
 public class DatosUsuarioControlador implements Controller {
-
+//Gracias a este mv se puede cargar el idioma correspondiente en userform.jsp, al elegirlo con uno de los vínculos que hay
+//(English, Español o عربي) en la vista. Al accionar uno de los vínculos, se carga el valor obtenido en el parametro lenguaje (ver userform.jsp).
+//Entonces se vuelve a cargar la página de inicio con el idioma correspondiente.    
     @Override
     public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

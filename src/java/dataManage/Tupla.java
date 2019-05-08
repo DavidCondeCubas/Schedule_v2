@@ -37,7 +37,7 @@ public class Tupla <X, Y>{
     }
   
      public int get_y_Int(){
-        return Integer.parseInt(x.toString());
+        return Integer.parseInt(y.toString());
     }
     @Override
     public boolean equals(Object o){

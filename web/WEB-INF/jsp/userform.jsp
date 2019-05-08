@@ -73,9 +73,12 @@
                             </div>
                             <div class="panel-body" >
  <%--form: Estructura de la introducción de datos(District Code, User, Password) --%> 
- <%-- A través de opcion=login puede entrar en @RequestMaping de la clase Homepage, método login mediante dispatcher(mappings--> prop key="userform.htm">homepage</prop):--%>
+ <%-- A través de opcion=login puede entrar en @RequestMapping de la clase Homepage.java , mediante dispatcher(
+<bean class="controladores.Homepage" id="homepage"> -> <property name="paramName" value="opcion"/>
+mappings--> prop key="userform.htm">homepage</prop)
+ y recuperar ModelAndView login. De esta forma accede a la siguiente página (menu) si los datos introducidos son correctos(ver controlador):--%>
                                 <form  name ="form1" action="userform.htm?opcion=login" method="post" >
-                                    <div
+                                    <div>
                                         <c:if test="${message != null}">
                                             <h5 style="color:blue">
                                                 <c:out value="${message}"/>
@@ -89,6 +92,7 @@
                                             <option value="IS-PAN">IS-PAN</option>
                                             <option value="MD-PAN">MD-PAN</option>
                                             <option value="RWI-SPAIN">RWI-SPAIN</option>
+                                            <option value="DEB-QAT">DEB-QAT</option>
                                         </select>                                     
                                     </div>
                                     <div class="form-group">
@@ -105,7 +109,9 @@
  <%--Fin de form, y el resto de divisiones: --%>                                    
                                 </form>
                                 <div class="center-block text-center">
-   <%--Se utiliza esto para el idioma; --%>                                    
+ <%-- Se utiliza esto para el idioma. Se redirecciona el idioma correspondiente gracias al controlador DatosUsuarioControlador (en el dispatcher:
+ <bean class="controladores.DatosUsuarioControlador" name="ControladorIdioma"/>
+ <prop key="datosIdioma.htm">ControladorIdioma</prop>) --%>                                    
                                     <a class="btn" href="datosIdioma.htm?lenguaje=en"><spring:message code="etiq.txtenglish"/></a>
                                     <a class="btn" href="datosIdioma.htm?lenguaje=es"><spring:message code="etiq.txtspanish"/></a>
                                     <a class="btn" href="datosIdioma.htm?lenguaje=ar"><spring:message code="etiq.txtarabic"/></a>

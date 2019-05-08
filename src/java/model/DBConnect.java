@@ -24,7 +24,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
  *
  * @author Norhan
  */
-//ESTA CLASE SE USA PARA UTILIZAR LA CONEXION A RENWEB
+//En general, esta clase permite conectarse a una BBDD u otra(es decir, a un colegio u otro) en función de la url,loginNmae y password obtenidos en LoginVerification:
 public class DBConnect {
    
     private Connection cn;
