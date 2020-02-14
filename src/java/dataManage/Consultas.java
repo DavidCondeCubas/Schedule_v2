@@ -30,6 +30,7 @@ public class Consultas {
     private Teacher tdefault;
     private Student stDefault;
     public static HashMap<Integer, String> courseName = new HashMap<>();
+    public static HashMap<Integer, String> courseGrade = new HashMap<>();
     public static int DEFAULT_RANK = 10;
     private HashMap<Integer, String> namePersons;
     private HashMap<Integer, String> nameCourses;
@@ -363,7 +364,7 @@ public class Consultas {
     }
 
     //Aquí se obtienen las restricciones para los cursos. Si por ejemplo se ha cogido el template standard, el templateID=10:
-    public ArrayList<Course> getRestriccionesCourses(int[] ids, String templateID, HashMap<String, ArrayList<Integer>> groupCourses, String schoolCode, Exceptions aviso) {
+    public ArrayList<Course> getRestriccionesCourses(int[] ids, String templateID, HashMap<String, ArrayList<Integer>> groupCourses, String schoolCode, Exceptions aviso,int x, int y) {
 //ESTE ES EL ARRAY DONDE SE VAN A CARGAR TODAS LAS RESTRICCIONES DE LOS CURSOS(ret):        
         ArrayList<Course> ret = new ArrayList<>();
         String consulta = "";
@@ -703,7 +704,7 @@ public class Consultas {
                     }
                 }
                 try {
-                    ret.get(i).setExcludeBlocks(excludes);
+                    ret.get(i).setExcludeBlocks(excludes,x,y);
                 } catch (Exception e) {
                     aviso.addAvisoCadena(this.nameCourse(ret.get(i).getIdCourse()), "Exclude Blocks", excludes);
                 }
@@ -1715,7 +1716,7 @@ public class Consultas {
 
         }
 
-        return nameCourse(idc) + " Section: " + nombre;
+        return this.abbrevCourses.get(idc) + "<br>\n"+ nameCourse(idc) + "<br>Section: " + nombre;
     }
 
     public String nameSection(int id) {

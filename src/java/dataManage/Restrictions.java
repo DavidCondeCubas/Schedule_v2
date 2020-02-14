@@ -8,6 +8,7 @@ package dataManage;
 import com.google.gson.Gson;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -102,11 +103,24 @@ public class Restrictions {
 //2º-->Obtencion de las restricciones de los cursos y teachers de la clase consultas:      
 //Se guardan todas las restricciones recogidas de cada curso a través de los hash de consultas en el array courses declarado al principio de esta clase:
 //También se guardan en el Array teachers los ids de todos los profesores de los cursos (de User Defined y Default)
-        this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses),tempid,this.groupRooms,schoolCode, aviso);
+        this.courses = cs.getRestriccionesCourses(Consultas.convertIntegers(idCourses),tempid,this.groupRooms,schoolCode, aviso,x,y);
 //Se priorizan unos cursos sobre otros (a través de los rangos) una vez aplicadas las restricciones anteriores: 
         
-        this.courses.sort(new Restrictions.CompCoursesRank());
+        //this.courses.sort(new Restrictions.CompCoursesRank());
 
+        Collections.sort(this.courses, new Comparator<Course>() {
+            @Override
+            public int compare(Course o1, Course o2) {
+                Integer w = new Integer(o1.getRank()); 
+                Integer z = new Integer(o2.getRank()); 
+
+                // as 15 is greater than 8, Output will be a value greater than zero 
+             //   System.out.println(w.compareTo(z)); 
+                
+                return w.compareTo(z);
+            }
+        });
+        
 //Se guarda la lista de profesores con sus restricciones obtenidas de cada uno en teachers:            
         this.hashTeachers = cs.teachersList(tempid,tempInfo, x, y);
 //Se agregan los datos de Hashteachers al teachers, con identificador el id de Teacher. Esto se hace para todos:
@@ -134,14 +148,22 @@ public class Restrictions {
 
         @Override
         public int compare(Course e1, Course e2) {
-            if (e1.getRank() < e2.getRank()) {
-                return -1;
-            } else {
-                return 1;
+            try{
+                if (e1.getRank() < e2.getRank()) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }catch(Exception e){
+                System.err.println("gfg");
             }
+            return -1;
         }
     }
 
+  
+ 
+    
     public String studentsJSON() {
         if (this.students == null) {
             return "ejecuta el algoritmo";

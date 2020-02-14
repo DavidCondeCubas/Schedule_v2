@@ -147,6 +147,7 @@ public class Teacher {
         return true;
     }
 
+     
     public boolean patronCompatibleEB(ArrayList<Tupla> ar, ArrayList<Tupla> ExcludeBlocks) {
 
         for (Tupla t : ar) {
@@ -158,8 +159,7 @@ public class Teacher {
             }
         }
         return true;
-    }
-
+    } 
     /**
      * Devuelve el numero de secciones disponibles que tiene el profesor
      *

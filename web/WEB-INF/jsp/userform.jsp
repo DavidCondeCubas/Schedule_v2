@@ -93,6 +93,7 @@ mappings--> prop key="userform.htm">homepage</prop)
                                             <option value="MD-PAN">MD-PAN</option>
                                             <option value="RWI-SPAIN">RWI-SPAIN</option>
                                             <option value="DEB-QAT">DEB-QAT</option>
+                                            <option value="IGA-GUA">IGA-GUA</option>
                                         </select>                                     
                                     </div>
                                     <div class="form-group">

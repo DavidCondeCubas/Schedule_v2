@@ -112,8 +112,16 @@ public class Algoritmo {
 
         for (Course course : r.courses) {
 
-
-            HashMap<Integer, Integer> teachers_numSections = new HashMap<>();
+            if (course.getIdCourse() == 307) {
+                System.err.println("");
+            }
+            if (course.getIdCourse() == 4) {
+                System.err.println("");
+            }
+            if (course.getIdCourse() == 36) {
+                System.err.println("");
+            }
+                HashMap<Integer, Integer> teachers_numSections = new HashMap<>();
             HashMap<Integer, Integer> rooms_numSections = new HashMap<>();
 
             vueltas++;
@@ -123,9 +131,9 @@ public class Algoritmo {
             if (!containsValueInLinkedCourse(r, course.getIdCourse())) {
 
                 course.setArraySecciones(chargeArraySections(r, course));
-               if(course.getArraySecciones().isEmpty()){
-                r.aviso.addCourseWithoutSections(course);
-            }
+                if (course.getArraySecciones().isEmpty()) {
+                    r.aviso.addCourseWithoutSections(course);
+                }
 
                 int maxSections;
 //---CAMBIO---Si el apartado maximo de secciones de curso y school esta vacío(en RenWeb, primero analiza si está vacío el de curso,
@@ -171,7 +179,13 @@ public class Algoritmo {
 //generado previamente.
 //Si se cumplen estas dos premisas, se rellena opciones en base a los totalBlocks de restricciones y log:
                 if (course.getOpcionesPatternGroup().isEmpty() && needGenerateOptions(course)) { //totalBlocks es un array bidimensional con todos los bloques asignados:
+                     //**************************************//
+                   //****************************************//
                     opciones = course.opciones(r.totalBlocks, Log, r.aviso);
+                    //CAMBIO DE OPCIONES
+                    //opciones = course.opciones(r.totalBlocks);
+                    //**************************************//
+                   //****************************************//
                 } //Si ya hay opciones en el PatternGroup, se capturan las opciones que ya existen en base a dicho PatternGroup(no se generan nuevos patterngroup ni opciones)
                 //Se cogen las patternGroup definidas en RenWeb:                
                 else if (!course.getOpcionesPatternGroup().isEmpty()) {
@@ -205,17 +219,23 @@ public class Algoritmo {
 //En cualquiera de los dos casos se genera un patrón específico para la sección en base a las opciones.
 //-Si está activado el lockSchedule: no hace falta tener en cuenta opciones, simplemente se rellena las secciones con el patrón
 //específico que ya se ha indicado.
-                    if(course.getIdCourse()==1363){
+                    if (course.getIdCourse() == 1363) {
                         System.out.println("check");
                     }
                     if (course.getArraySecciones().get(i).patronUsado.isEmpty() && course.getArraySecciones().get(i).lockSchedule == true) {
                         r.aviso.addAvisoWithoutPatterns(course.getNameCourse(), course.getArraySecciones().get(i).getNameSeccion());
                         course.getArraySecciones().get(i).setLockSchedule(false);
                         if (opciones.isEmpty()) {
-                            opciones = course.opciones(r.totalBlocks, Log, r.aviso);
+                            //**************************************//
+                   //****************************************//
+                    opciones = course.opciones(r.totalBlocks, Log, r.aviso);
+                    //CAMBIO DE OPCIONES
+                    //opciones = course.opciones(r.totalBlocks);
+                    //**************************************//
+                   //****************************************//
                         }
                     }
-                    if(course.getArraySecciones().get(i).idStudents.isEmpty() && course.getArraySecciones().get(i).lockEnrollment == true){
+                    if (course.getArraySecciones().get(i).idStudents.isEmpty() && course.getArraySecciones().get(i).lockEnrollment == true) {
                         course.getArraySecciones().get(i).setLockEnrollment(false);
                     }
                     if (!course.getArraySecciones().get(i).lockSchedule && course.getArraySecciones().get(i).lockEnrollment) {
@@ -269,10 +289,10 @@ public class Algoritmo {
                             roomsForCourse = CompararRooms(r.rooms, roomsForCourse, course, course.getArraySecciones().get(i), templateId, r.groupRooms, r.aviso, schoolCode);
                             if (roomsForCourse.size() > 0) {
                                 Room r_Aux = roomsForCourse.get(0);
-                                r.rooms.get(r_Aux.getRoomid()).ocuparHueco(course.getIdCourse(), course.getArraySecciones().get(i).getNumSeccion(), course.getArraySecciones().get(i).getPatronUsado());                             
+                                r.rooms.get(r_Aux.getRoomid()).ocuparHueco(course.getIdCourse(), course.getArraySecciones().get(i).getNumSeccion(), course.getArraySecciones().get(i).getPatronUsado());
                                 r.rooms.get(r_Aux.getRoomid()).incrementarNumSecciones();
                                 course.getArraySecciones().get(i).setRoom(r.rooms.get(r_Aux.getRoomid()));
-                                
+
                             }
 
                         }
@@ -403,7 +423,14 @@ public class Algoritmo {
 //o si el curso hijo no tiene un patron usado(se refiere al Pattern del Schedule de cada seccion)): en ese caso genera opciones
 //de la misma forma que en el apartado de cursos no linkeados:
                     if (courseAsociado.getOpcionesPatternGroup().isEmpty() && needGenerateOptionsLinked(courseAsociado, course)) {
-                        opcionesAsoc = courseAsociado.opciones(r.totalBlocks, Log, r.aviso);
+                           //**************************************//
+                   //****************************************//
+                    opcionesAsoc = courseAsociado.opciones(r.totalBlocks, Log, r.aviso);
+                    //CAMBIO DE OPCIONES
+                    //opcionesAsoc = courseAsociado.opciones(r.totalBlocks);
+                    //**************************************//
+                   //****************************************//
+                        
                     } //Si no hay necesidad de generar opciones pero existe un patterngroup del curso padre: se vincula ese patrón al curso hijo:                    
                     else if (!course.getOpcionesPatternGroup().isEmpty()) {
                         opcionesAsoc = courseAsociado.getOpcionesPatternGroup();
@@ -479,7 +506,7 @@ public class Algoritmo {
         }
 
 //Guardado de resultados en archivo y se devuelven a la vista:        
-        saveXML_FTP(yearId, templateId, schoolCode, r);
+     //   saveXML_FTP(yearId, templateId, schoolCode, r);
         HashMap<Integer, String> persons = Consultas.getPersons();
         sortSectionsAndStudents(r.courses, persons);
 
@@ -608,7 +635,7 @@ public class Algoritmo {
 //y para saber posteriormente si han podido ser asignados o no.
 //Estos ids van siendo cada vez más según se van recorriendo las secciones (fuera del generatePattern). Así en la primera vuelta tiene 6 estudiantes,
 //pero en las siguientes vueltas tiene 12, 18...
-        idsAsignados = c.getAllIds();
+        //idsAsignados = c.getAllIds();
 //Este hash almacena la cantidad de opciones válidas para cada estudiante(id: de cada estudiante, cantidad de opciones válidas):
         HashMap<Integer, Integer> hashStudents_cantPatrones = new HashMap<>();
 //initHashStudents hace que se inicialicen a 0 los estudiantes para sumarlos de 1 en 1:        
@@ -661,19 +688,19 @@ public class Algoritmo {
         }
         int idCourse = c.getIdCourse();
 
-//En el caso de que la seccion no sea separada por restricciones de género, se aplica un equilibrado en género masculino y femenino:        
+        //En el caso de que la seccion no sea separada por restricciones de género, se aplica un equilibrado en género masculino y femenino:        
         if (!c.isGR()) {
             equilibrarGender(stids, students);
         }
-//1ª ORDENACIÓN de stids-->Ordena la lista de conjuntos por numero de estudiantes de mayor a menor(es decir, las opciones compatibles con mayor número de estudiantes serán las primeras):        
+        //1ª ORDENACIÓN de stids-->Ordena la lista de conjuntos por numero de estudiantes de mayor a menor(es decir, las opciones compatibles con mayor número de estudiantes serán las primeras):        
         stids = SortStids(stids);
 
-//2ª ORDENACIÓN de stids: Después de aplicar la ordenación previa se ordena por prioridad de preferedBlocks(es decir, que las opciones que tengan en cuenta bloques preferentes, se posicionarán primero,
-//incluso por encima de aquellas opciones que tengan mayor número de estudiantes pero no posean preferedBlocks(ver ejemplo de foto tomada)):
+        //2ª ORDENACIÓN de stids: Después de aplicar la ordenación previa se ordena por prioridad de preferedBlocks(es decir, que las opciones que tengan en cuenta bloques preferentes, se posicionarán primero,
+        //incluso por encima de aquellas opciones que tengan mayor número de estudiantes pero no posean preferedBlocks(ver ejemplo de foto tomada)):
         sortStidsByPriority(stids, sec, c, r);
 
-//3ª ORDENACIÓN de stids: Después de aplicar la segunda ordenación se aplica el orden por estudiante(NO POR CANTIDAD DE ESTUDIANTE, sino por estudiante).
-//Es decir, no se cambia ya el orden de las opciones de stids, sino el orden de los estudiantes del array dentro de la tupla stids):
+        //3ª ORDENACIÓN de stids: Después de aplicar la segunda ordenación se aplica el orden por estudiante(NO POR CANTIDAD DE ESTUDIANTE, sino por estudiante).
+        //Es decir, no se cambia ya el orden de las opciones de stids, sino el orden de los estudiantes del array dentro de la tupla stids):
         sortStudentsByPatron(stids, hashStudents_cantPatrones);
 
         int lastTeacher = -1;
@@ -710,7 +737,7 @@ public class Algoritmo {
 //Recorridos en función de las opciones compatibles y una variable llamada exito que permite que cuando se han asignado los profesores, salga del bucle:       
                 while (i < stids.size() && !exito) { // recorrido a los bloques disponibles
                     if (!exito && t.asignaturaCursable(c.getIdCourse()) // comprueba que el profesor puede iniciar una nueva seccion
-                            && t.patronCompatible(sec.get(stids.get(i).x))) {
+                            && t.patronCompatibleEB(sec.get(stids.get(i).x), t.getExcludeBlocks())) {
 //Recorridos a todos los profesores: dentro se evalúan las restricciones de los profesores, las asignaturas que pueden cursar y si tienen un patrón compatible con las opciones disponibles:       
 //teachersForCourse son los estudiantes que estan asignados al curso en concreto, mas el default (no incluye los profesores asignados a cada seccion):
 
@@ -949,8 +976,7 @@ public class Algoritmo {
         int i = 0;
 
         //recorro la lista de conjuntos y la de profesores
-        ArrayList<Teacher> teachersForCourse = new ArrayList<>();
-
+        ArrayList<Teacher> teachersForCourse = new ArrayList<>(); 
         for (int y = 0; y < r.teachers.size(); y++) {
             if (c.getTrestricctions().contains(r.teachers.get(y).getIdTeacher())) {
                 teachersForCourse.add(r.teachers.get(y));
@@ -965,8 +991,7 @@ public class Algoritmo {
 
                     for (Teacher t : teachersForCourse) { // recorrido a los teachers  totales
                         if (!exito && c.getTrestricctions().contains(t.getIdTeacher()) && t.asignaturaCursable(c.getIdCourse()) // comprueba que el profesor puede iniciar una nueva seccion
-                                && t.patronCompatible(sec.get(stids.get(i).x))) {
-
+                                && t.patronCompatible(sec.get(stids.get(i).x))) { 
                             int k = currentSec.getIdStudents().size();
                             lastTeacher = i;
                             // VAMOS A TENER QUE EN CUENTA CUANDO YA ESTAN MATRICULADOS Y NO TENEMOS ASIGNADO UN PATTERN EL CUAL DEBERA COMPROBAR QUE
@@ -1084,7 +1109,10 @@ public class Algoritmo {
     private void chargeStatusStudents(Restrictions r, Course c) {
         for (int i = 0; i < c.getArraySecciones().size(); i++) {
             for (int j = 0; j < c.getArraySecciones().get(i).getIdStudents().size(); j++) {
-                r.students.get(c.getArraySecciones().get(i).getIdStudents().get(j)).ocuparHueco(c.getArraySecciones().get(i).getPatronUsado(), c.getIdCourse() * 100 + c.getArraySecciones().get(i).getNumSeccion());
+
+                Integer idStudent = c.getArraySecciones().get(i).getIdStudents().get(j);
+                Integer secNum = c.getArraySecciones().get(i).getNumSeccion();
+                r.students.get(idStudent).ocuparHueco(c.getArraySecciones().get(i).getPatronUsado(), c.getIdCourse() * 100 + secNum);
             }
         }
     }
@@ -1275,7 +1303,13 @@ public class Algoritmo {
                 for (Integer i2 : ret) {
                     anadir += students.get(i2).getName() + ",";
                     if (aux == null) {
-                        aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log, r.aviso));
+                                 //**************************************//
+                   //****************************************//
+                    aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log, r.aviso));
+                    //CAMBIO DE OPCIONES
+                    //aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks));
+                    //**************************************//
+                   //****************************************// 
                     } else {
                         aux = students.get(i2).listPatronesCompatibles(aux);
                     }
@@ -1596,7 +1630,13 @@ public class Algoritmo {
                 for (Integer i2 : ret) {
                     anadir += students.get(i2).getName() + ",";
                     if (aux == null) {
-                        aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log, r.aviso));
+                                  //**************************************//
+                   //****************************************//
+                    aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log, r.aviso));
+                    //CAMBIO DE OPCIONES
+                    //aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks));
+                    //**************************************//
+                   //****************************************// 
                     } else {
                         aux = students.get(i2).listPatronesCompatibles(aux);
                     }
@@ -1931,7 +1971,13 @@ public class Algoritmo {
                 for (Integer i2 : ret) {
                     anadir += students.get(i2).getName() + ",";
                     if (aux == null) {
-                        aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log, r.aviso));
+                                  //**************************************//
+                   //****************************************//
+                    aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks, Log, r.aviso));
+                    //CAMBIO DE OPCIONES
+                    //aux = students.get(i2).listPatronesCompatibles(c.opciones(r.totalBlocks));
+                    //**************************************//
+                   //****************************************// 
                     } else {
                         aux = students.get(i2).listPatronesCompatibles(aux);
                     }
@@ -2097,14 +2143,24 @@ public class Algoritmo {
 
         return roomForCourse;
     }
-
+//CORREGIR ESTA FUNCION LA DE ORDENACION ESTA TOMANDO DEMASIADO TIEMPO LO QUE HACE QUE SE RETRASE TODA LA TAREA.
     public ArrayList<Tupla<Integer, ArrayList<Integer>>> SortStids(ArrayList<Tupla<Integer, ArrayList<Integer>>> stids) {
         ArrayList<Tupla<Integer, ArrayList<Integer>>> e2 = new ArrayList();
+        ArrayList<Tupla<Integer, ArrayList<Integer>>> aux = stids;
         try {
-            ArrayList<Tupla<Integer, ArrayList<Integer>>> aux = stids;
+            
+            //ArrayList<Tupla<Integer, ArrayList<Integer>>> aux = stids;
 
+            Collections.sort(aux, new Comparator<Tupla>() { 
+                 public int compare(Tupla o1, Tupla o2) { 
+                     return (((ArrayList)(o2.getY())).size()) >= ((ArrayList)(o1.getY())).size() ? -1 : 0;
+                 }
+            });
+
+          /*  
             while (!aux.isEmpty()) {
                 Tupla<Integer, ArrayList<Integer>> max = null;
+                Integer idMax=0;
                 for (Tupla<Integer, ArrayList<Integer>> e1 : aux) {
                     if (max == null) {
                         max = e1;
@@ -2113,15 +2169,16 @@ public class Algoritmo {
                     }
 
                 }
-                e2.add(max);
-                aux.remove(max);
+                e2.add(aux.get(idMax));
+                aux.remove(idMax);
             }
-
+*/
         } catch (Exception e) {
             e.getMessage();
             return null;
         }
-        return e2;
+        return aux;
     }
 
+    
 }

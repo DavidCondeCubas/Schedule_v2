@@ -90,7 +90,7 @@ public class ScheduleController {
             algo.algo(mv, r, schoolCode, yearid, tempid);
 
         } catch (Exception e) {
-            e.getMessage();
+                e.getMessage();
 
         }
 
